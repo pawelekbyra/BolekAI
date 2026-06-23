@@ -1,20 +1,32 @@
 import { google } from '@ai-sdk/google';
-import { convertToModelMessages, streamText, stepCountIs, type UIMessage } from 'ai';
-import { githubTools } from '@/lib/tools';
+import { convertToCoreMessages, streamText } from 'ai';
+import { githubTools, TOOLS_REQUIRING_APPROVAL } from '@/lib/tools';
 import { SYSTEM_PROMPT } from '@/lib/system-prompt';
 
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const { messages } = await req.json();
+
+  // Create a version of tools for the server that excludes 'execute' for tools requiring approval.
+  // This forces the AI SDK to pause and wait for client-side tool confirmation.
+  const toolsForServer = Object.fromEntries(
+    Object.entries(githubTools).map(([name, tool]) => {
+      if (TOOLS_REQUIRING_APPROVAL.includes(name)) {
+        const { execute, ...rest } = tool as any;
+        return [name, rest];
+      }
+      return [name, tool];
+    })
+  );
 
   const result = streamText({
-    model: google(process.env.GEMINI_MODEL ?? 'gemini-2.5-flash'),
+    model: google(process.env.GEMINI_MODEL ?? 'gemini-1.5-flash'),
     system: SYSTEM_PROMPT,
-    messages: await convertToModelMessages(messages),
-    tools: githubTools,
-    stopWhen: stepCountIs(5),
+    messages: convertToCoreMessages(messages),
+    tools: toolsForServer,
+    maxSteps: 5,
   });
 
-  return result.toUIMessageStreamResponse();
+  return result.toDataStreamResponse();
 }

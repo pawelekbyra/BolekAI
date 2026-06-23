@@ -2,31 +2,11 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useMemo, useState } from 'react';
-
-function renderPart(part: any, index: number) {
-  if (part.type === 'text') {
-    return (
-      <div key={index} className="message-text">
-        {part.text}
-      </div>
-    );
-  }
-
-  if (typeof part.type === 'string' && part.type.startsWith('tool-')) {
-    return (
-      <details key={index} className="tool-card">
-        <summary>{part.type.replace('tool-', 'tool: ')}</summary>
-        <pre>{JSON.stringify(part, null, 2)}</pre>
-      </details>
-    );
-  }
-
-  return null;
-}
+import { TOOLS_REQUIRING_APPROVAL } from '@/lib/tools';
 
 export default function Home() {
   const [input, setInput] = useState('');
-  const { messages, sendMessage, status, error } = useChat();
+  const { messages, input: chatInput, setInput: setChatInput, handleSubmit, status, error, addToolResult } = useChat() as any;
 
   const isBusy = status === 'submitted' || status === 'streaming';
 
@@ -72,11 +52,49 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            messages.map((message) => (
+            (messages as any[]).map((message) => (
               <article key={message.id} className={`message ${message.role}`}>
                 <div className="avatar">{message.role === 'user' ? 'Ty' : 'AI'}</div>
                 <div className="bubble">
-                  {message.parts.map((part, index) => renderPart(part, index))}
+                  {message.content && <div className="message-text">{message.content}</div>}
+
+                  {message.toolInvocations?.map((toolInvocation: any) => {
+                    const { toolName, toolCallId, state } = toolInvocation;
+                    const requiresApproval = TOOLS_REQUIRING_APPROVAL.includes(toolName);
+
+                    if (state === 'call') {
+                      return (
+                        <div key={toolCallId} className="tool-card">
+                          <div className="tool-header">Wywołanie narzędzia: {toolName}</div>
+                          <pre>{JSON.stringify(toolInvocation.args, null, 2)}</pre>
+                          {requiresApproval && (
+                            <div className="approval-actions">
+                              <p>To działanie wymaga Twojego potwierdzenia.</p>
+                              <button
+                                onClick={() => addToolResult({ toolCallId, output: 'Confirmed by user' })}
+                                className="approve-btn"
+                              >
+                                Potwierdź
+                              </button>
+                              <button
+                                onClick={() => addToolResult({ toolCallId, output: 'Cancelled by user' })}
+                                className="deny-btn"
+                              >
+                                Anuluj
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <details key={toolCallId} className="tool-card">
+                        <summary>Wynik narzędzia: {toolName}</summary>
+                        <pre>{JSON.stringify('result' in toolInvocation ? toolInvocation.result : toolInvocation.output, null, 2)}</pre>
+                      </details>
+                    );
+                  })}
                 </div>
               </article>
             ))
@@ -90,9 +108,9 @@ export default function Home() {
           className="composer"
           onSubmit={(event) => {
             event.preventDefault();
-            const text = input.trim();
-            if (!text || isBusy) return;
-            sendMessage({ text });
+            if (!input.trim() || isBusy) return;
+            setChatInput(input);
+            handleSubmit(event, { body: {} });
             setInput('');
           }}
         >
