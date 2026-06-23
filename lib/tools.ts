@@ -6,7 +6,7 @@ import { vercelRequest } from '@/lib/vercel';
 export const githubTools = {
   getRepoInfo: tool({
     description: 'Pobierz podstawowe informacje o skonfigurowanym repozytorium GitHub.',
-    inputSchema: z.object({}),
+    parameters: z.object({}),
     execute: async () => {
       const { owner, repo } = getGithubRepoConfig();
       return githubRequest(`/repos/${owner}/${repo}`);
@@ -15,7 +15,7 @@ export const githubTools = {
 
   listOpenIssues: tool({
     description: 'Pobierz otwarte issue z repozytorium GitHub.',
-    inputSchema: z.object({
+    parameters: z.object({
       limit: z.number().min(1).max(30).default(10),
     }),
     execute: async ({ limit }) => {
@@ -26,7 +26,7 @@ export const githubTools = {
 
   createGithubIssue: tool({
     description: 'Utwórz issue w GitHubie. Używaj dla bugów, feature requestów i zadań technicznych.',
-    inputSchema: z.object({
+    parameters: z.object({
       title: z.string().min(3),
       body: z.string().min(10),
       labels: z.array(z.string()).default([]),
@@ -42,7 +42,7 @@ export const githubTools = {
 
   createJulesTaskIssue: tool({
     description: 'Utwórz dobrze opisane issue oznaczone labelem jules, aby Jules mógł przejąć zadanie.',
-    inputSchema: z.object({
+    parameters: z.object({
       taskTitle: z.string().min(3),
       taskDescription: z.string().min(20),
       technicalContext: z.string().default('Brak dodatkowego kontekstu.'),
@@ -51,7 +51,7 @@ export const githubTools = {
     execute: async ({ taskTitle, taskDescription, technicalContext, acceptanceCriteria }) => {
       const { owner, repo } = getGithubRepoConfig();
       const body = `## Zadanie dla Julesa\n\n${taskDescription}\n\n## Kontekst techniczny\n\n${technicalContext}\n\n## Kryteria akceptacji\n\n${acceptanceCriteria
-        .map((item) => `- ${item}`)
+        .map((item: string) => `- ${item}`)
         .join('\n')}\n\n## Definicja ukończenia\n\n- Zmiany są w osobnym branchu.\n- Jest pull request do review.\n- Build przechodzi lokalnie lub w CI.\n- PR zawiera opis zmian i instrukcję testowania.\n`;
 
       return githubRequest(`/repos/${owner}/${repo}/issues`, {
@@ -67,7 +67,7 @@ export const githubTools = {
 
   listVercelDeployments: tool({
     description: 'Pobierz ostatnie deploymenty z Vercel. Wymaga VERCEL_TOKEN i opcjonalnie VERCEL_PROJECT_ID.',
-    inputSchema: z.object({
+    parameters: z.object({
       limit: z.number().min(1).max(20).default(5),
       projectId: z.string().optional(),
     }),

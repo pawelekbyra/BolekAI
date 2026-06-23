@@ -12,3 +12,4 @@ pnpm-debug.log*
 *.pem
 secret_backup
 dev_output.log
+tsconfig.tsbuildinfo

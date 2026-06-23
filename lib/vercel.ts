@@ -1,4 +1,8 @@
-export async function vercelRequest<T>(path: string) {
+type VercelRequestInit = Omit<RequestInit, 'body'> & {
+  body?: unknown;
+};
+
+export async function vercelRequest<T>(path: string, init: VercelRequestInit = {}) {
   const token = process.env.VERCEL_TOKEN;
 
   if (!token) {
@@ -10,9 +14,12 @@ export async function vercelRequest<T>(path: string) {
   const url = `https://api.vercel.com${path}${teamId ? `${separator}teamId=${teamId}` : ''}`;
 
   const response = await fetch(url, {
+    ...init,
     headers: {
       Authorization: `Bearer ${token}`,
+      ...(init.headers ?? {}),
     },
+    body: init.body === undefined ? undefined : JSON.stringify(init.body),
     cache: 'no-store',
   });
 
