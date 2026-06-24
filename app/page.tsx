@@ -1,7 +1,7 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { executeApprovedTool } from '@/lib/actions';
 import { TOOLS_REQUIRING_APPROVAL } from '@/lib/approval';
@@ -33,10 +33,11 @@ const statusCards = [
 ];
 
 export default function Home() {
-  const [input, setInput] = useState('');
   const {
     messages,
-    setInput: setChatInput,
+    input,
+    setInput,
+    handleInputChange,
     handleSubmit,
     status,
     error,
@@ -283,15 +284,13 @@ export default function Home() {
             onSubmit={(event) => {
               event.preventDefault();
               if (!input.trim() || isBusy) return;
-              setChatInput(input);
-              handleSubmit(event, { body: {} });
-              setInput('');
+              handleSubmit(event);
             }}
           >
             <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
               <Textarea
                 value={input}
-                onChange={(event) => setInput(event.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' && !event.shiftKey) {
                     event.preventDefault();
