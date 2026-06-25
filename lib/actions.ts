@@ -3,13 +3,15 @@
 import { githubTools } from './tools';
 import { TOOLS_REQUIRING_APPROVAL } from './approval';
 
+const toolsRequiringApproval = TOOLS_REQUIRING_APPROVAL as readonly string[];
+
 /**
  * Server Action to execute a tool that required user approval.
  * This ensures the execution happens on the server with access to environment variables.
  */
 export async function executeApprovedTool(toolName: string, args: any) {
   // Security check: only allow tools that are explicitly in the approval whitelist
-  if (!TOOLS_REQUIRING_APPROVAL.includes(toolName)) {
+  if (!toolsRequiringApproval.includes(toolName)) {
     throw new Error(`Narzędzie ${toolName} nie znajduje się na liście wymagającej potwierdzenia.`);
   }
 
