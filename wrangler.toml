@@ -16,7 +16,7 @@ binding = "KV"
 id = "8683744b08e3472ca144d7fb3b646a1c"
 
 [vars]
-AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+AI_MODEL = "@hf/nousresearch/hermes-2-pro-mistral-7b"
 
 [triggers]
 crons = ["* * * * *"]
