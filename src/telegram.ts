@@ -29,7 +29,8 @@ export async function handleUpdate(update: TelegramUpdate, env: Env): Promise<vo
   try {
     const reply = await orchestrate(msg.text, chatId, env)
     await send(env.TELEGRAM_BOT_TOKEN, chatId, reply)
-  } catch {
-    await send(env.TELEGRAM_BOT_TOKEN, chatId, 'Coś poszło nie tak. Spróbuj jeszcze raz.')
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    await send(env.TELEGRAM_BOT_TOKEN, chatId, `ERR: ${msg.slice(0, 300)}`)
   }
 }
