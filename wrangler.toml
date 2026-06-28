@@ -1,4 +1,4 @@
-name = "agent-bolek"
+name = "kulfon"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
@@ -16,7 +16,7 @@ binding = "KV"
 id = "8683744b08e3472ca144d7fb3b646a1c"
 
 [vars]
-AI_MODEL = "@cf/meta/llama-3.1-8b-instruct"
+AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [triggers]
 crons = ["* * * * *"]
