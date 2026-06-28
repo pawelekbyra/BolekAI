@@ -20,34 +20,41 @@ type AIResponse = {
   tool_calls?: Array<{ id: string; name: string; arguments: unknown }>
 }
 
-export async function orchestrate(userText: string, chatId: number, env: Env): Promise<string> {
-  await saveMessage(env.DB, chatId, 'user', userText)
+async function runAI(env: Env, messages: AIMessage[]): Promise<AIResponse> {
+  const ai = env.AI as Ai
+  return (await (ai.run as Function)(env.AI_MODEL, {
+    messages,
+    tools: tools.map((t) => ({
+      type: 'function',
+      function: { name: t.name, description: t.description, parameters: t.parameters },
+    })),
+  })) as AIResponse
+}
 
+async function buildMessages(userText: string, chatId: number, env: Env): Promise<AIMessage[]> {
   const history = await getHistory(env.DB, chatId, 10)
-
-  const messages: AIMessage[] = [
+  return [
     { role: 'system', content: SYSTEM_PROMPT },
     ...history.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
     { role: 'user', content: userText },
   ]
+}
 
-  const ai = env.AI as Ai
-  const first = await (ai.run as Function)(env.AI_MODEL, {
-    messages,
-    tools: tools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } })),
-  }) as AIResponse
+export async function orchestrate(userText: string, chatId: number, env: Env): Promise<string> {
+  await saveMessage(env.DB, chatId, 'user', userText)
+
+  const messages = await buildMessages(userText, chatId, env)
+  const first = await runAI(env, messages)
 
   if (first.tool_calls?.length) {
     const call = first.tool_calls[0]
     const result = await executeTool(call.name, call.arguments, env.DB)
 
-    const second = await (ai.run as Function)(env.AI_MODEL, {
-      messages: [
-        ...messages,
-        { role: 'assistant', content: null, tool_calls: first.tool_calls },
-        { role: 'tool', content: JSON.stringify(result), tool_call_id: call.id },
-      ],
-    }) as AIResponse
+    const second = await runAI(env, [
+      ...messages,
+      { role: 'assistant', content: null, tool_calls: first.tool_calls },
+      { role: 'tool', content: JSON.stringify(result), tool_call_id: call.id },
+    ])
 
     const reply = second.response ?? 'Gotowe.'
     await saveMessage(env.DB, chatId, 'assistant', reply)
@@ -57,4 +64,49 @@ export async function orchestrate(userText: string, chatId: number, env: Env): P
   const reply = first.response ?? 'Nie rozumiem, spróbuj inaczej.'
   await saveMessage(env.DB, chatId, 'assistant', reply)
   return reply
+}
+
+export async function orchestrateStream(
+  userText: string,
+  chatId: number,
+  env: Env
+): Promise<{ stream: ReadableStream }> {
+  await saveMessage(env.DB, chatId, 'user', userText)
+
+  const messages = await buildMessages(userText, chatId, env)
+  const first = await runAI(env, messages)
+
+  let reply = first.response ?? ''
+
+  if (first.tool_calls?.length) {
+    const call = first.tool_calls[0]
+    const result = await executeTool(call.name, call.arguments, env.DB)
+
+    const second = await runAI(env, [
+      ...messages,
+      { role: 'assistant', content: null, tool_calls: first.tool_calls },
+      { role: 'tool', content: JSON.stringify(result), tool_call_id: call.id },
+    ])
+
+    reply = second.response ?? 'Gotowe.'
+  }
+
+  await saveMessage(env.DB, chatId, 'assistant', reply)
+
+  // Stream reply word by word via SSE
+  const encoder = new TextEncoder()
+  const stream = new ReadableStream({
+    async start(controller) {
+      const words = reply.split(' ')
+      for (const word of words) {
+        const chunk = `data: ${JSON.stringify({ text: word + ' ' })}\n\n`
+        controller.enqueue(encoder.encode(chunk))
+        await new Promise((r) => setTimeout(r, 30))
+      }
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+      controller.close()
+    },
+  })
+
+  return { stream }
 }
