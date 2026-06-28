@@ -1,0 +1,23 @@
+name = "agent-bolek"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[ai]
+binding = "AI"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bolek-memory"
+database_id = "REPLACE_WITH_YOUR_D1_ID"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "REPLACE_WITH_YOUR_KV_ID"
+
+[vars]
+AI_MODEL = "@cf/meta/llama-3.1-8b-instruct"
+
+# Proactive behaviors — cron jobs
+# [[triggers.crons]]
+# crons = ["0 7 * * *"]  # daily briefing at 7:00 UTC

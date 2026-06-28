@@ -1,33 +1,20 @@
 {
-  "name": "kulfon-agent",
+  "name": "agent-bolek",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "db:migrate:local": "wrangler d1 migrations apply bolek-memory --local",
+    "db:migrate:remote": "wrangler d1 migrations apply bolek-memory --remote"
   },
   "dependencies": {
-    "@ai-sdk/google": "1.2.22",
-    "@ai-sdk/react": "1.2.12",
-    "@radix-ui/react-scroll-area": "^1.2.10",
-    "ai": "4.3.19",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "next": "15.5.19",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "tailwind-merge": "^3.3.1",
-    "tw-animate-css": "^1.4.0",
-    "zod": "^3.24.2"
+    "hono": "^4.6.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.17",
-    "@types/node": "^22.13.4",
-    "@types/react": "^19.0.8",
-    "@types/react-dom": "^19.0.3",
-    "tailwindcss": "^4.1.17",
-    "typescript": "^5.7.3"
+    "@cloudflare/workers-types": "^4.20241224.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^3.99.0"
   }
 }
