@@ -96,7 +96,20 @@ WEBHOOK_SECRET=$(node -e "console.log(require('crypto').randomBytes(24).toString
 wrangler secret put TELEGRAM_WEBHOOK_SECRET <<< "$WEBHOOK_SECRET"
 success "Webhook secret: $WEBHOOK_SECRET"
 
-# ── 8. Deploy ─────────────────────────────────────────────────────────────────
+# ── 8. Opcjonalne tokeny ──────────────────────────────────────────────────────
+echo ""
+warn "Opcjonalne: GitHub, Vercel, Anthropic (Enter żeby pominąć)"
+
+read -rp "GITHUB_TOKEN (github.com → Settings → Developer settings → PAT → scope: repo): " GH_TOKEN
+[ -n "$GH_TOKEN" ] && wrangler secret put GITHUB_TOKEN <<< "$GH_TOKEN" && success "GitHub token zapisany"
+
+read -rp "VERCEL_TOKEN (vercel.com → Settings → Tokens): " VC_TOKEN
+[ -n "$VC_TOKEN" ] && wrangler secret put VERCEL_TOKEN <<< "$VC_TOKEN" && success "Vercel token zapisany"
+
+read -rp "ANTHROPIC_API_KEY (console.anthropic.com → API Keys): " AN_KEY
+[ -n "$AN_KEY" ] && wrangler secret put ANTHROPIC_API_KEY <<< "$AN_KEY" && success "Anthropic key zapisany"
+
+# ── 9. Deploy ─────────────────────────────────────────────────────────────────
 info "Deploying AGENT BOLEK..."
 DEPLOY_OUTPUT=$(npm run deploy 2>&1)
 echo "$DEPLOY_OUTPUT"

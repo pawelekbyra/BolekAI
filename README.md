@@ -1,6 +1,6 @@
 # AGENT BOLEK
 
-Osobisty asystent AI. Działa przez Telegram i przeglądarkę. Pamięta wszystko. Rośnie bez końca.
+Osobisty asystent AI. Działa przez Telegram i przeglądarkę. Pamięta wszystko. Zarządza kodem, projektami i życiem. Rośnie bez końca.
 
 ---
 
@@ -10,44 +10,101 @@ Osobisty asystent AI. Działa przez Telegram i przeglądarkę. Pamięta wszystko
 Ty (Telegram lub web) → Cloudflare Worker → AI (llama) → Narzędzia → Baza D1
 ```
 
-Piszesz do Bolka normalnym językiem. On rozumie o co chodzi, wybiera odpowiednie narzędzie (zadania, notatki, itp.) i odpowiada. Historia rozmów jest zapisywana — Bolek pamięta poprzednie rozmowy.
+Piszesz do Bolka normalnym językiem. On rozumie o co chodzi, wybiera narzędzie i odpowiada. Historia rozmów jest zapisywana — Bolek pamięta poprzednie rozmowy i fakty o Tobie.
 
 ---
 
 ## Czego potrzebujesz zanim zaczniesz
 
 ### 1. Konto Cloudflare (bezpłatne)
-Wejdź na https://cloudflare.com i załóż konto. Darmowy plan w zupełności wystarczy — Workers AI, D1, KV i Cron Triggers są dostępne za darmo.
+Wejdź na https://cloudflare.com i załóż konto. Darmowy plan wystarczy — Workers AI, D1, KV i Cron Triggers są na free.
 
-### 2. Bot na Telegramie
+### 2. Bot na Telegramie (wymagane)
 - Otwórz Telegram i wyszukaj **@BotFather**
 - Wyślij `/newbot`
-- Podaj nazwę: `Bolek` i username: `twoj_bolek_bot`
-- Skopiuj token który dostaniesz — będzie potrzebny przy uruchomieniu
+- Podaj nazwę bota i username
+- Skopiuj token który dostaniesz — będzie potrzebny przy setup
 
-### 3. Node.js
+### 3. Node.js (wymagane)
 Wersja 18 lub nowsza: https://nodejs.org
+
+### 4. GitHub Token (opcjonalne — potrzebne do zarządzania kodem)
+- Wejdź na https://github.com → kliknij swój avatar → **Settings**
+- Lewy panel → **Developer settings** → **Personal access tokens** → **Tokens (classic)**
+- Kliknij **Generate new token (classic)**
+- Zaznacz scope: **repo** (pełny dostęp do repozytoriów)
+- Skopiuj token — zaczyna się od `ghp_...`
+
+### 5. Vercel Token (opcjonalne — potrzebne do monitorowania projektów)
+- Wejdź na https://vercel.com → kliknij swój avatar → **Settings**
+- Lewy panel → **Tokens**
+- Kliknij **Create** → podaj nazwę → skopiuj token
+
+### 6. Anthropic API Key (opcjonalne — potrzebne do zlecania zadań kodowania)
+- Wejdź na https://console.anthropic.com
+- Lewy panel → **API Keys** → **Create Key**
+- Skopiuj klucz — zaczyna się od `sk-ant-...`
 
 ---
 
-## Uruchomienie
+## Pierwsze uruchomienie
 
 ```bash
 npm install
 ./setup.sh
 ```
 
-Skrypt zrobi wszystko sam:
-- Stworzy bazę danych i przestrzeń KV na Cloudflare
-- Zapyta o token Telegrama
-- Wdroży Workera na Cloudflare
-- Ustawi webhook Telegrama automatycznie
+Skrypt przeprowadzi Cię przez cały proces:
+1. Zaloguje do Cloudflare
+2. Stworzy bazę D1 i przestrzeń KV
+3. Zapyta o token Telegrama (wymagany)
+4. Zapyta o tokeny GitHub, Vercel, Anthropic (opcjonalne — Enter żeby pominąć)
+5. Wdroży Workera na Cloudflare
+6. Ustawi webhook Telegrama
 
 Po zakończeniu napisz do swojego bota — Bolek odpowie.
 
 ---
 
-## Interfejs webowy (czat w przeglądarce)
+## Migracje bazy danych
+
+Baza danych D1 wymaga uruchomienia migracji — bez tego Bolek nie będzie pamiętał rozmów ani zadań.
+
+**Przy pierwszym uruchomieniu** setup.sh robi to automatycznie.
+
+**Gdy dodajesz nowe funkcje** (nowa migracja w `src/db/migrations/`) musisz ją uruchomić ręcznie:
+
+```bash
+# Lokalne testowanie
+npm run db:migrate:local
+
+# Produkcja (Cloudflare)
+npm run db:migrate:remote
+```
+
+Migracje są numerowane i stosowane po kolei — nigdy nie usuwaj starych plików migracji.
+
+**Lista migracji:**
+- `001_initial.sql` — wiadomości, zadania, notatki
+- `002_memory_reminders.sql` — fakty o właścicielu, przypomnienia
+
+---
+
+## Dodanie tokenów po fakcie
+
+Jeśli pominąłeś tokeny podczas setup lub chcesz je zmienić:
+
+```bash
+wrangler secret put GITHUB_TOKEN
+wrangler secret put VERCEL_TOKEN
+wrangler secret put ANTHROPIC_API_KEY
+```
+
+Wrangler zapyta o wartość — wklej token i Enter.
+
+---
+
+## Interfejs webowy
 
 ```bash
 cd web
@@ -59,26 +116,83 @@ npm run dev
 
 Otwórz http://localhost:3000 — czat z Bolkiem w przeglądarce.
 
-### Wdrożenie na Vercel (żeby działało publicznie)
-1. Wejdź na https://vercel.com → New Project → wybierz to repo
+### Gdzie znaleźć URL Workera
+Po deploy przez setup.sh lub `npm run deploy` — URL jest wypisany w terminalu. Wygląda tak:
+```
+https://agent-bolek.<twoj-subdomain>.workers.dev
+```
+
+### Deploy web na Vercel
+1. Wejdź na https://vercel.com → **New Project** → importuj repo
 2. Ustaw **Root Directory** na `web`
-3. Dodaj zmienną środowiskową: `NEXT_PUBLIC_BOLEK_API_URL` = URL Twojego Workera z Cloudflare
-4. Kliknij Deploy
+3. Dodaj zmienną: `NEXT_PUBLIC_BOLEK_API_URL` = URL Twojego Workera
+4. Deploy
 
 ---
 
-## Zmienne środowiskowe
+## Co Bolek umie
 
-### Worker (ustawiasz przez terminal: `wrangler secret put NAZWA`)
-| Zmienna | Opis | Skąd wziąć |
-|---|---|---|
-| `TELEGRAM_BOT_TOKEN` | Token bota Telegram | Od @BotFather |
-| `TELEGRAM_WEBHOOK_SECRET` | Losowe hasło zabezpieczające | Setup skrypt generuje automatycznie |
+### Zadania
+```
+"dodaj zadanie: zadzwonić do dentysty"
+"co mam do zrobienia?"
+"oznacz zadanie 3 jako zrobione"
+```
 
-### Web (plik `web/.env.local`)
-| Zmienna | Opis |
-|---|---|
-| `NEXT_PUBLIC_BOLEK_API_URL` | Adres URL Twojego Workera na Cloudflare |
+### Notatki
+```
+"zapisz notatkę: pomysł na biznes — sklep z..."
+"znajdź notatki o projekcie X"
+```
+
+### Przypomnienia
+```
+"przypomnij mi jutro o 9:00 o spotkaniu z Markiem"
+"za 2 godziny przypomnij mi wziąć leki"
+"jakie mam przypomnienia?"
+```
+Bolek sam napisze do Ciebie o wyznaczonej godzinie przez Telegram.
+
+### Pamięć o Tobie
+```
+"mam na imię Paweł, pracuję jako developer"
+"jestem alergikiem na gluten"
+"lubię kawę bez cukru"
+```
+Bolek zapamiętuje te fakty na zawsze i używa ich w każdej rozmowie.
+
+### GitHub (wymaga GITHUB_TOKEN)
+```
+"jakie mam repozytoria?"
+"pokaż otwarte issues w pawelekbyra/kulfon"
+"utwórz issue: błąd logowania na mobile"
+"pokaż zawartość pliku src/index.ts w moim repo"
+```
+
+### Vercel (wymaga VERCEL_TOKEN)
+```
+"jakie mam projekty na Vercel?"
+"pokaż ostatnie deploymenty projektu kulfon"
+"sprawdź logi z ostatniego deploymentu"
+"są jakieś błędy runtime w projekcie kulfon?"
+"zrób redeploy"
+```
+
+### Zadania kodowania (wymaga ANTHROPIC_API_KEY)
+```
+"napisz endpoint /health do projektu kulfon w pliku src/health.ts"
+"zrób review tego kodu: [wklej kod]"
+"dodaj obsługę błędów do funkcji fetchUser i zapisz w repo pawelekbyra/kulfon w pliku src/utils.ts"
+```
+Bolek zleca zadanie Claude AI, dostaje kod i opcjonalnie sam commituje go do repozytorium.
+
+### Tryb pracy agenta
+```
+"działaj autonomicznie"     → Bolek sam wykonuje akcje i tylko raportuje wynik
+"pytaj mnie o zgodę"        → przed każdą akcją (commit, redeploy itp.) czeka na Twoje "tak"
+"tryb manualny"             → tylko analizuje i sugeruje, nic nie wykonuje
+```
+Domyślny tryb to "pytaj o zgodę" — bezpieczny start.
 
 ---
 
@@ -86,30 +200,37 @@ Otwórz http://localhost:3000 — czat z Bolkiem w przeglądarce.
 
 ```
 src/
-  index.ts          # Główny Worker — odbiera Telegram i /api/chat z web
-  env.ts            # Definicje typów Cloudflare
-  telegram.ts       # Obsługa wiadomości z Telegrama
-  orchestrator.ts   # Mózg Bolka — AI + wybór narzędzi
-  memory.ts         # Zapis i odczyt historii rozmów
+  index.ts            # Worker — routes + cron handler (przypomnienia)
+  env.ts              # Typy zmiennych środowiskowych
+  telegram.ts         # Obsługa wiadomości z Telegrama
+  orchestrator.ts     # Mózg Bolka — AI + wybór narzędzi + pamięć
+  memory.ts           # Historia rozmów z D1
+  agent-mode.ts       # Tryb pracy: autonomous / confirm / manual
   tools/
-    index.ts        # Rejestr wszystkich narzędzi
-    tasks.ts        # Zadania: dodaj / lista / oznacz jako zrobione
-    notes.ts        # Notatki: zapisz / wyszukaj
+    index.ts          # Rejestr wszystkich narzędzi
+    tasks.ts          # Zadania
+    notes.ts          # Notatki
+    facts.ts          # Fakty o właścicielu (długoterminowa pamięć)
+    reminders.ts      # Przypomnienia z timerem
+    github.ts         # GitHub API
+    vercel.ts         # Vercel API
+    coding.ts         # Zlecanie zadań kodowania Claude AI
   db/migrations/
-    001_initial.sql # Schemat bazy danych
+    001_initial.sql   # Wiadomości, zadania, notatki
+    002_memory_reminders.sql  # Fakty, przypomnienia
 
-web/                # Interfejs webowy (Next.js)
-  app/page.tsx      # Strona z czatem
+web/                  # Interfejs webowy (Next.js)
+  app/page.tsx        # Czat w przeglądarce
 
-setup.sh            # Skrypt pierwszego uruchomienia
-wrangler.toml       # Konfiguracja Cloudflare
+setup.sh              # Skrypt pierwszego uruchomienia
+wrangler.toml         # Konfiguracja Cloudflare
 ```
 
 ---
 
 ## Jak rozwijać Bolka
 
-### Dodanie nowego narzędzia (nowej umiejętności)
+### Dodanie nowej umiejętności
 
 Przykład — moduł finansów:
 
@@ -127,7 +248,6 @@ export const financeTools: ToolDefinition[] = [
       properties: {
         amount:   { type: 'number', description: 'Kwota w PLN' },
         category: { type: 'string', description: 'Kategoria np. jedzenie, transport' },
-        note:     { type: 'string', description: 'Opcjonalny opis' },
       },
       required: ['amount'],
     },
@@ -135,10 +255,10 @@ export const financeTools: ToolDefinition[] = [
 ]
 
 export async function executeFinanceTool(name: string, args: unknown, db: D1Database) {
-  const a = args as { amount: number; category?: string; note?: string }
+  const a = args as { amount: number; category?: string }
   if (name === 'finance_add_expense') {
-    await db.prepare('INSERT INTO expenses (amount, category, note) VALUES (?, ?, ?)')
-      .bind(a.amount, a.category ?? null, a.note ?? null).run()
+    await db.prepare('INSERT INTO expenses (amount, category) VALUES (?, ?)')
+      .bind(a.amount, a.category ?? null).run()
     return { ok: true }
   }
 }
@@ -149,34 +269,33 @@ export async function executeFinanceTool(name: string, args: unknown, db: D1Data
 ```typescript
 import { financeTools, executeFinanceTool } from './finance'
 
-export const tools = [...taskTools, ...noteTools, ...financeTools]
+export const tools = [..., ...financeTools]
 
-export async function executeTool(name, args, db) {
+export async function executeTool(name, args, db, chatId, env) {
   if (name.startsWith('finance_')) return executeFinanceTool(name, args, db)
   // ...
 }
 ```
 
-**3. Dodaj migrację `src/db/migrations/002_finance.sql`:**
+**3. Dodaj migrację `src/db/migrations/003_finance.sql`:**
 
 ```sql
 CREATE TABLE IF NOT EXISTS expenses (
-  id       INTEGER PRIMARY KEY AUTOINCREMENT,
-  amount   REAL NOT NULL,
-  category TEXT,
-  note     TEXT,
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  amount     REAL NOT NULL,
+  category   TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
-**4. Wdróż:**
+**4. Uruchom migrację i deploy:**
 
 ```bash
 npm run db:migrate:remote
 npm run deploy
 ```
 
-Gotowe — Bolek od razu umie zapisywać wydatki.
+Gotowe — Bolek od razu umie nową rzecz.
 
 ---
 
@@ -189,47 +308,33 @@ W `wrangler.toml`:
 AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 ```
 
-Albo podepnij Claude lub GPT — wystarczy podmienić funkcję `runAI` w `src/orchestrator.ts`.
+Dostępne modele Workers AI: https://developers.cloudflare.com/workers-ai/models/
 
-### Proaktywne działania (np. poranny briefing)
+### Podłączenie zewnętrznego modelu (Claude, GPT)
 
-Odkomentuj w `wrangler.toml`:
-
-```toml
-[[triggers.crons]]
-crons = ["0 7 * * *"]
-```
-
-Dodaj handler w `src/index.ts`:
-
-```typescript
-export default {
-  fetch: app.fetch,
-  async scheduled(event: ScheduledEvent, env: Env) {
-    // Bolek sam wysyła poranne podsumowanie zadań, itp.
-  }
-}
-```
+Podmień funkcję `runAI` w `src/orchestrator.ts` — reszta systemu zostaje bez zmian.
 
 ---
 
-## Pomysły co można dodać
+## Zmienne środowiskowe — pełna lista
 
-| Moduł | Co robi |
-|---|---|
-| `reminders.ts` | Przypomnij mi o X za N godzin |
-| `finance.ts` | Budżet, wydatki, kategorie |
-| `habits.ts` | Śledzenie nawyków: siłownia, woda, sen |
-| `journal.ts` | Dziennik osobisty |
-| `contacts.ts` | Notatki o ludziach, historia kontaktu |
-| `goals.ts` | Długoterminowe cele z postępem |
-| `voice.ts` | Transkrypcja wiadomości głosowych z Telegrama |
-| `search.ts` | Bolek może googlować żeby odpowiedzieć |
+| Zmienna | Wymagana | Skąd | Do czego |
+|---|---|---|---|
+| `TELEGRAM_BOT_TOKEN` | TAK | @BotFather na Telegramie | Odbieranie i wysyłanie wiadomości |
+| `TELEGRAM_WEBHOOK_SECRET` | TAK | Generuje setup.sh | Zabezpieczenie webhooka |
+| `GITHUB_TOKEN` | nie | github.com → Settings → Developer settings → PAT (scope: repo) | Zarządzanie repozytoriami |
+| `VERCEL_TOKEN` | nie | vercel.com → Settings → Tokens | Monitoring projektów i deploymentów |
+| `ANTHROPIC_API_KEY` | nie | console.anthropic.com → API Keys | Zlecanie zadań kodowania Claude AI |
+
+Ustawianie po fakcie:
+```bash
+wrangler secret put NAZWA_ZMIENNEJ
+```
 
 ---
 
 ## Ten projekt nie ma końca
 
-Bolek to platforma, nie aplikacja. Każdy nowy obszar życia to nowy plik z narzędziami — bez przepisywania czegokolwiek, bez decyzji architektonicznych.
+Bolek to platforma, nie aplikacja. Każdy nowy obszar życia = nowy plik w `src/tools/`. Bez przepisywania architektury, bez limitów.
 
-Rozwijaj go razem z AI: opisz co chcesz dodać, AI napisze kod, Ty deploy'ujesz jedną komendą.
+Rozwijaj go razem z AI — opisz co chcesz dodać, AI napisze kod, Ty uruchamiasz dwie komendy.

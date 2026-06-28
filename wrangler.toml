@@ -18,6 +18,5 @@ id = "REPLACE_WITH_YOUR_KV_ID"
 [vars]
 AI_MODEL = "@cf/meta/llama-3.1-8b-instruct"
 
-# Proactive behaviors — cron jobs
-# [[triggers.crons]]
-# crons = ["0 7 * * *"]  # daily briefing at 7:00 UTC
+[triggers]
+crons = ["* * * * *"]

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User, Loader2 } from 'lucide-react'
+import { Send, Bot, User, Loader2, Users, Theater } from 'lucide-react'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 type Message = {
@@ -109,10 +110,18 @@ export default function Page() {
         <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
           <Bot size={16} />
         </div>
-        <div>
+        <div className="flex-1">
           <p className="font-semibold text-sm">Agent Bolek</p>
           <p className="text-xs text-[#666]">osobisty asystent AI</p>
         </div>
+        <Link href="/agents" className="flex items-center gap-1.5 text-xs text-[#666] hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-[#1a1a1a]">
+          <Users size={14} />
+          Agenci
+        </Link>
+        <Link href="/characters" className="flex items-center gap-1.5 text-xs text-[#666] hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-[#1a1a1a]">
+          <Theater size={14} />
+          Postacie
+        </Link>
       </header>
 
       {/* Messages */}

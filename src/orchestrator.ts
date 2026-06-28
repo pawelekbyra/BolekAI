@@ -1,12 +1,14 @@
 import type { Env } from './env'
 import { getHistory, saveMessage } from './memory'
 import { tools, executeTool } from './tools'
+import { getAllFacts } from './tools/facts'
 
-const SYSTEM_PROMPT = `Jesteś AGENT BOLEK — osobisty asystent AI swojego właściciela.
+const BASE_SYSTEM_PROMPT = `Jesteś AGENT BOLEK — osobisty asystent AI swojego właściciela.
 Rozmawiasz wyłącznie po polsku. Jesteś konkretny, bezpośredni i pomocny.
-Masz dostęp do narzędzi: możesz zapisywać zadania, notatki i przeszukiwać pamięć.
-Gdy użytkownik chce coś zapamiętać, zapisać lub sprawdzić — użyj odpowiedniego narzędzia.
-Nigdy nie zmyślaj informacji które powinny być w bazie — zawsze użyj narzędzia.`
+Masz dostęp do narzędzi: zadania, notatki, przypomnienia, pamięć o właścicielu.
+Gdy użytkownik chce coś zapamiętać, zapisać, przypomnieć lub sprawdzić — użyj narzędzia.
+Nigdy nie zmyślaj informacji które powinny być w bazie — zawsze użyj narzędzia.
+Gdy dowiadujesz się czegoś ważnego o właścicielu — zapisz to przez fact_save.`
 
 type AIMessage = {
   role: 'system' | 'user' | 'assistant' | 'tool'
@@ -31,13 +33,45 @@ async function runAI(env: Env, messages: AIMessage[]): Promise<AIResponse> {
   })) as AIResponse
 }
 
-async function buildMessages(userText: string, chatId: number, env: Env): Promise<AIMessage[]> {
-  const history = await getHistory(env.DB, chatId, 10)
+async function buildMessages(
+  userText: string,
+  chatId: number,
+  env: Env
+): Promise<AIMessage[]> {
+  const [history, facts] = await Promise.all([
+    getHistory(env.DB, chatId, 10),
+    getAllFacts(env.DB),
+  ])
+
+  const systemPrompt = BASE_SYSTEM_PROMPT + facts
+
   return [
-    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: systemPrompt },
     ...history.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
     { role: 'user', content: userText },
   ]
+}
+
+async function resolveToolCalls(
+  first: AIResponse,
+  messages: AIMessage[],
+  chatId: number,
+  env: Env
+): Promise<string> {
+  if (!first.tool_calls?.length) {
+    return first.response ?? 'Nie rozumiem, spróbuj inaczej.'
+  }
+
+  const call = first.tool_calls[0]
+  const result = await executeTool(call.name, call.arguments, env.DB, chatId, env)
+
+  const second = await runAI(env, [
+    ...messages,
+    { role: 'assistant', content: null, tool_calls: first.tool_calls },
+    { role: 'tool', content: JSON.stringify(result), tool_call_id: call.id },
+  ])
+
+  return second.response ?? 'Gotowe.'
 }
 
 export async function orchestrate(userText: string, chatId: number, env: Env): Promise<string> {
@@ -45,23 +79,8 @@ export async function orchestrate(userText: string, chatId: number, env: Env): P
 
   const messages = await buildMessages(userText, chatId, env)
   const first = await runAI(env, messages)
+  const reply = await resolveToolCalls(first, messages, chatId, env)
 
-  if (first.tool_calls?.length) {
-    const call = first.tool_calls[0]
-    const result = await executeTool(call.name, call.arguments, env.DB)
-
-    const second = await runAI(env, [
-      ...messages,
-      { role: 'assistant', content: null, tool_calls: first.tool_calls },
-      { role: 'tool', content: JSON.stringify(result), tool_call_id: call.id },
-    ])
-
-    const reply = second.response ?? 'Gotowe.'
-    await saveMessage(env.DB, chatId, 'assistant', reply)
-    return reply
-  }
-
-  const reply = first.response ?? 'Nie rozumiem, spróbuj inaczej.'
   await saveMessage(env.DB, chatId, 'assistant', reply)
   return reply
 }
@@ -75,32 +94,16 @@ export async function orchestrateStream(
 
   const messages = await buildMessages(userText, chatId, env)
   const first = await runAI(env, messages)
-
-  let reply = first.response ?? ''
-
-  if (first.tool_calls?.length) {
-    const call = first.tool_calls[0]
-    const result = await executeTool(call.name, call.arguments, env.DB)
-
-    const second = await runAI(env, [
-      ...messages,
-      { role: 'assistant', content: null, tool_calls: first.tool_calls },
-      { role: 'tool', content: JSON.stringify(result), tool_call_id: call.id },
-    ])
-
-    reply = second.response ?? 'Gotowe.'
-  }
+  const reply = await resolveToolCalls(first, messages, chatId, env)
 
   await saveMessage(env.DB, chatId, 'assistant', reply)
 
-  // Stream reply word by word via SSE
   const encoder = new TextEncoder()
   const stream = new ReadableStream({
     async start(controller) {
       const words = reply.split(' ')
       for (const word of words) {
-        const chunk = `data: ${JSON.stringify({ text: word + ' ' })}\n\n`
-        controller.enqueue(encoder.encode(chunk))
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: word + ' ' })}\n\n`))
         await new Promise((r) => setTimeout(r, 30))
       }
       controller.enqueue(encoder.encode('data: [DONE]\n\n'))
