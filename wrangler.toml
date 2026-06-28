@@ -16,7 +16,7 @@ binding = "KV"
 id = "8683744b08e3472ca144d7fb3b646a1c"
 
 [vars]
-AI_MODEL = "@cf/meta/llama-3-8b-instruct"
+AI_MODEL = "@cf/meta/llama-3.2-3b-instruct"
 
 [triggers]
 crons = ["* * * * *"]
