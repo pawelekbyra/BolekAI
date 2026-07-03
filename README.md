@@ -2,6 +2,8 @@
 
 Osobisty asystent AI. Działa przez Telegram i przeglądarkę. Pamięta wszystko. Zarządza kodem, projektami i życiem. Rośnie bez końca.
 
+Obsługuje też aplikację **[polutek.pl](https://polutek.pl)** — monitoring (Stripe, Clerk, Vercel, mail), dzienny raport i wybrane akcje operacyjne (np. refund) za bramką zgody. Pełna mapa budowy: **[`docs/POLUTEK-INTEGRATION.md`](docs/POLUTEK-INTEGRATION.md)**.
+
 ---
 
 ## Jak to działa

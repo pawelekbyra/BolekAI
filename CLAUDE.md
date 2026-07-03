@@ -8,6 +8,14 @@ The agent runs on Cloudflare Workers, speaks through Telegram (and eventually ot
 
 **This project has no finish line.**
 
+## Served Systems
+
+Beyond the owner's personal life, Bolek is also the **operational agent for the application [polutek.pl](https://polutek.pl)** — a single-channel VOD/patron platform. Bolek monitors it (Stripe revenue, payments, patrons, Clerk sign-ups, outages, deployments, email), reports to the owner (daily briefing + on-demand), and performs selected operational actions (e.g. refunds) — always behind the `agent-mode.ts` confirm gate.
+
+Bolek is **not** part of Polutek's codebase and never writes to its database directly for patron/payment matters; it holds scoped keys and talks to Polutek's internals only through a thin ops-API. Full build map, required keys, invariants to respect, and the rollout order:
+
+➡️ **[`docs/POLUTEK-INTEGRATION.md`](docs/POLUTEK-INTEGRATION.md)** — read this before any coding session that touches Polutek integration.
+
 ## Core Philosophy
 
 ### 1. Agent, not application
