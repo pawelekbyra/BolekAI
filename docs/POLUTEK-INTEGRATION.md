@@ -55,12 +55,12 @@ Bolek działa „z zewnątrz" i musi respektować reguły domeny Polutka. **Bole
         └─┬────┬────┬────┬────┬───────┘
    scoped │    │    │    │    │ scoped/OAuth
     key   │    │    │    │    │
-   ┌──────▼┐ ┌─▼───┐ ┌▼────┐ ┌▼─────┐ ┌▼──────────────┐
-   │Stripe │ │Clerk│ │Vercel│ │Gmail │ │  POLUTEK       │
-   │(read+ │ │(read│ │(depl.│ │Resend│ │  ops-API       │
-   │refund)│ │+ban)│ │+logi │ │      │ │ (na Vercelu)   │
-   │       │ │     │ │+błędy│ │      │ │                │
-   └───────┘ └─────┘ └──────┘ └──────┘ └──┬─────────────┘
+   ┌──────▼┐ ┌─▼───┐ ┌▼────┐ ┌▼──────────┐ ┌▼──────────────┐
+   │Stripe │ │Clerk│ │Vercel│ │home.pl    │ │  POLUTEK       │
+   │(read+ │ │(read│ │(depl.│ │(IMAP/SMTP)│ │  ops-API       │
+   │refund)│ │+ban)│ │+logi │ │Resend     │ │ (na Vercelu)   │
+   │       │ │     │ │+błędy│ │           │ │                │
+   └───────┘ └─────┘ └──────┘ └───────────┘ └──┬─────────────┘
                                           │ canoniczne operacje
                                     ┌─────▼──────────────┐
                                     │ fulfillPayment /   │
@@ -69,9 +69,11 @@ Bolek działa „z zewnątrz" i musi respektować reguły domeny Polutka. **Bole
                                     └────────────────────┘
 ```
 
-Zasada: **do systemów zewnętrznych (Stripe/Clerk/Vercel/Gmail) bolek chodzi bezpośrednio zawężonym kluczem; do wnętrza Polutka (patroni, granty, refund+revoke) — wyłącznie przez ops-API Polutka.**
+Zasada: **do systemów zewnętrznych (Stripe/Clerk/Vercel/home.pl) bolek chodzi bezpośrednio zawężonym kluczem; do wnętrza Polutka (patroni, granty, refund+revoke) — wyłącznie przez ops-API Polutka.**
 
 **Vercel jest kluczowym źródłem monitoringu Polutka** — z jego logów bolek bierze wykrycie awarii, błędy runtime i korelację „deploy → wzrost 500-tek". To z Vercela pochodzi „okno awarii" w dziennym raporcie. Narzędzie `src/tools/vercel.ts` **już istnieje** i `VERCEL_TOKEN` działa od zaraz — więc monitoring deploymentów/awarii Polutka jest dostępny bez pisania nowego kodu.
+
+**home.pl (IMAP/SMTP) obsługuje pocztu `kontakt@polutek.pl`** — mail przychodzący od użytkowników. Bolek łączy się do home.pl przez IMAP (czytanie), SMTP (wysyłanie). Resend obsługuje osobno maile systemowe wychodzące z aplikacji Polutka (potwierdzenia patronatu, broadcasty).
 
 ---
 
@@ -84,7 +86,7 @@ Każde narzędzie to ten sam wzorzec co istniejący `src/tools/vercel.ts`: jeden
 | `src/tools/vercel.ts` ✅ **już istnieje** | `vercel_` | monitoring Polutka: deploymenty, logi, błędy runtime, redeploy. Fundament wykrywania awarii w raporcie. Działa z `VERCEL_TOKEN` od zaraz — do dopracowania: filtr pod projekt `polutek-pl` w briefingu |
 | `src/tools/stripe.ts` | `stripe_` | odczyt: przychód, nieudane płatności, `PENDING`, disputes. Akcja: `stripe_refund` (przez `runAction` + ops-API Polutka) |
 | `src/tools/clerk.ts` | `clerk_` | odczyt: nowi userzy, skoki rejestracji, nieudane logowania. Akcja: `clerk_ban_user` (przez `runAction`) |
-| `src/tools/email.ts` | `email_` | Resend: deliverability/bounce wychodzących. Gmail: triage przychodzących, labelki, drafty (wysyłka przez `runAction`) |
+| `src/tools/email-imap-smtp.ts` | `email_` | Resend: deliverability wychodzących maili systemowych. IMAP/SMTP (home.pl): czytanie przychodzących na `kontakt@polutek.pl`, triage, przygotowanie odpowiedzi (wysyłka przez `runAction` ze statusu `kontakt@polutek.pl`) |
 | `src/tools/polutek.ts` | `polutek_` | wołanie ops-API Polutka: podsumowanie dnia, stan patronów, korelacja płatność→dostęp, zlecenie refund+revoke |
 | `src/tools/briefing.ts` (lub w cron handlerze w `index.ts`) | — | składa dzienny raport z powyższych i wysyła na Telegram/mail przez Cron Trigger |
 
@@ -114,8 +116,15 @@ Wszystkie ustawiane w **Cloudflare → kulfon → Settings → Variables and Sec
 |---|---|---|---|
 | `STRIPE_KEY` | Stripe | **Restricted key**, na start tylko *read* (Payments, Charges, Disputes). Prawo do refundów dołożyć osobno, świadomie. | Stripe → Developers → API keys → Create restricted key |
 | `CLERK_SECRET_KEY` | Clerk | Osobny secret key (nie ten produkcyjny Polutka). | Clerk Dashboard → API Keys |
-| `RESEND_API_KEY` | Resend | Read (analytics/emails). | Resend → API Keys |
-| `GMAIL_*` (OAuth) | Gmail | OAuth ze scope `gmail.readonly` → później `gmail.modify` (labelki/drafty). **Nie** pełny dostęp. | Google Cloud Console → OAuth client |
+| `RESEND_API_KEY` | Resend | Read (analytics/emails systemowych). | Resend → API Keys |
+| `EMAIL_IMAP_HOST` | home.pl | Host IMAP poczty home.pl (np. `poczta.home.pl` lub `mail.polutek.pl`) | home.pl panel → Poczta → szczegóły konta |
+| `EMAIL_IMAP_PORT` | home.pl | Port IMAP (zazwyczaj `993` dla SSL) | home.pl panel |
+| `EMAIL_IMAP_USER` | home.pl | Pełny login pocztowy (np. `kontakt@polutek.pl`) | home.pl panel |
+| `EMAIL_IMAP_PASSWORD` | home.pl | Hasło do poczty lub app-specific token | home.pl panel |
+| `EMAIL_SMTP_HOST` | home.pl | Host SMTP poczty home.pl (zazwyczaj jak IMAP) | home.pl panel → Poczta |
+| `EMAIL_SMTP_PORT` | home.pl | Port SMTP (zazwyczaj `465` dla SSL lub `587` dla TLS) | home.pl panel |
+| `EMAIL_SMTP_USER` | home.pl | Pełny login pocztowy (jak IMAP) | home.pl panel |
+| `EMAIL_SMTP_PASSWORD` | home.pl | Hasło do poczty (jak IMAP) | home.pl panel |
 | `POLUTEK_OPS_URL` | Polutek | URL ops-API (np. `https://polutek.pl/api/ops`). | — |
 | `POLUTEK_OPS_TOKEN` | Polutek | Bearer token współdzielony z `OPS_API_TOKEN` po stronie Polutka. | wygenerować (≥32 znaki losowe) |
 
@@ -138,7 +147,7 @@ Dla `vercel_redeploy` to nieszkodliwe. Dla `stripe_refund` to znaczy, że potwie
 1. **`stripe.ts` + `clerk.ts` — tylko odczyt.** Bolek odpowiada „ile dziś zarobiłem / ilu nowych userów / czy coś utknęło w PENDING". Zero ryzyka.
 2. **`polutek.ts` (read) + `/api/ops/summary`.** Bolek pyta Polutka o stan dnia jednym wywołaniem.
 3. **Dzienny briefing na Cron Trigger.** Raport rano na Telegram: przychód, nowi patroni, nowi userzy (+ flaga anomalii), okno awarii z oceną „ile płatności zawiodło", lista rzeczy do decyzji.
-4. **`email.ts` — Gmail read + drafty, Resend deliverability.** Bolek czyta przychodzące, kategoryzuje, szykuje szkic; Ty klikasz wyślij.
+4. **`email-imap-smtp.ts` — IMAP/SMTP home.pl, Resend deliverability.** Bolek czyta przychodzące na `kontakt@polutek.pl`, kategoryzuje, przygotowuje odpowiedzi; Ty zatwierdzasz wysyłkę.
 5. **Napraw bramkę `confirm`** (§7).
 6. **Akcje finansowe:** `stripe_refund` + `/api/ops/refund` (refund + revoke atomowo po stronie Polutka), zawsze przez `runAction` w trybie `confirm`.
 
@@ -151,7 +160,7 @@ Dla `vercel_redeploy` to nieszkodliwe. Dla `stripe_refund` to znaczy, że potwie
 - [ ] `src/tools/polutek.ts` (woła ops-API) + rejestracja
 - [ ] Polutek: `app/api/ops/summary` (GET, bearer `OPS_API_TOKEN`)
 - [ ] Cron briefing (Telegram) w `src/index.ts` / `briefing.ts`
-- [ ] `src/tools/email.ts` (Gmail read + drafty, Resend)
+- [ ] `src/tools/email-imap-smtp.ts` (IMAP/SMTP home.pl czytanie, SMTP wysyłanie, Resend monitoring)
 - [ ] Refaktor `agent-mode.ts` — wykonywalna kolejka `pending_actions` (§7)
 - [ ] Polutek: `app/api/ops/refund` (POST, refund + revoke przez canoniczne use-case'y)
 - [ ] `stripe_refund` przez `runAction`
