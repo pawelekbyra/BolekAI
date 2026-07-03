@@ -52,23 +52,26 @@ Bolek działa „z zewnątrz" i musi respektować reguły domeny Polutka. **Bole
         │   BOLEK (Cloudflare Worker)│
         │   orchestrator + D1 pamięć │
         │   agent-mode: confirm gate │
-        └──┬─────┬─────┬─────┬───────┘
-   scoped │     │     │     │ scoped/OAuth
-    key   │     │     │     │
-   ┌──────▼┐ ┌──▼───┐ ┌▼─────┐ ┌▼──────────────┐
-   │Stripe │ │Clerk │ │Gmail │ │  POLUTEK       │
-   │(read+ │ │(read+│ │Resend│ │  ops-API       │
-   │refund)│ │ ban) │ │      │ │ (Vercel)       │
-   └───────┘ └──────┘ └──────┘ └──┬─────────────┘
-                                  │ canoniczne operacje
-                            ┌─────▼──────────────┐
-                            │ fulfillPayment /   │
-                            │ revoke-patron /    │
-                            │ PatronGrant (Neon) │
-                            └────────────────────┘
+        └─┬────┬────┬────┬────┬───────┘
+   scoped │    │    │    │    │ scoped/OAuth
+    key   │    │    │    │    │
+   ┌──────▼┐ ┌─▼───┐ ┌▼────┐ ┌▼─────┐ ┌▼──────────────┐
+   │Stripe │ │Clerk│ │Vercel│ │Gmail │ │  POLUTEK       │
+   │(read+ │ │(read│ │(depl.│ │Resend│ │  ops-API       │
+   │refund)│ │+ban)│ │+logi │ │      │ │ (na Vercelu)   │
+   │       │ │     │ │+błędy│ │      │ │                │
+   └───────┘ └─────┘ └──────┘ └──────┘ └──┬─────────────┘
+                                          │ canoniczne operacje
+                                    ┌─────▼──────────────┐
+                                    │ fulfillPayment /   │
+                                    │ revoke-patron /    │
+                                    │ PatronGrant (Neon) │
+                                    └────────────────────┘
 ```
 
-Zasada: **do systemów zewnętrznych (Stripe/Clerk/Gmail) bolek chodzi bezpośrednio zawężonym kluczem; do wnętrza Polutka (patroni, granty, refund+revoke) — wyłącznie przez ops-API Polutka.**
+Zasada: **do systemów zewnętrznych (Stripe/Clerk/Vercel/Gmail) bolek chodzi bezpośrednio zawężonym kluczem; do wnętrza Polutka (patroni, granty, refund+revoke) — wyłącznie przez ops-API Polutka.**
+
+**Vercel jest kluczowym źródłem monitoringu Polutka** — z jego logów bolek bierze wykrycie awarii, błędy runtime i korelację „deploy → wzrost 500-tek". To z Vercela pochodzi „okno awarii" w dziennym raporcie. Narzędzie `src/tools/vercel.ts` **już istnieje** i `VERCEL_TOKEN` działa od zaraz — więc monitoring deploymentów/awarii Polutka jest dostępny bez pisania nowego kodu.
 
 ---
 
@@ -78,6 +81,7 @@ Każde narzędzie to ten sam wzorzec co istniejący `src/tools/vercel.ts`: jeden
 
 | Plik | Prefiks narzędzi | Zakres |
 |---|---|---|
+| `src/tools/vercel.ts` ✅ **już istnieje** | `vercel_` | monitoring Polutka: deploymenty, logi, błędy runtime, redeploy. Fundament wykrywania awarii w raporcie. Działa z `VERCEL_TOKEN` od zaraz — do dopracowania: filtr pod projekt `polutek-pl` w briefingu |
 | `src/tools/stripe.ts` | `stripe_` | odczyt: przychód, nieudane płatności, `PENDING`, disputes. Akcja: `stripe_refund` (przez `runAction` + ops-API Polutka) |
 | `src/tools/clerk.ts` | `clerk_` | odczyt: nowi userzy, skoki rejestracji, nieudane logowania. Akcja: `clerk_ban_user` (przez `runAction`) |
 | `src/tools/email.ts` | `email_` | Resend: deliverability/bounce wychodzących. Gmail: triage przychodzących, labelki, drafty (wysyłka przez `runAction`) |
