@@ -112,6 +112,10 @@ Cienka, uwierzytelniona warstwa w Polutku (`app/api/ops/*`), chroniona tokenem t
 
 Wszystkie ustawiane w **Cloudflare → kulfon → Settings → Variables and Secrets**. Zasada: **najmniejsze uprawnienia, na start wszędzie read-only.**
 
+### Status tej tury: sam kod, bez podłączania produkcji
+
+Na tym etapie Bolek ma kod narzędzi read-only, ale **nie podłączamy jeszcze Polutka ani sekretów produkcyjnych**. Właściciel musi później ręcznie dodać sekrety w Cloudflare (`STRIPE_KEY`, `CLERK_SECRET_KEY`, później `POLUTEK_OPS_URL` i `POLUTEK_OPS_TOKEN`) oraz osobno wdrożyć endpointy ops-API po stronie Polutka. Dopóki tego nie zrobi, narzędzia mają zwracać czytelny komunikat o brakującej konfiguracji zamiast udawać połączenie.
+
 | Sekret | System | Zakres (ważne!) | Gdzie zdobyć |
 |---|---|---|---|
 | `STRIPE_KEY` | Stripe | **Restricted key**, na start tylko *read* (Payments, Charges, Disputes). Prawo do refundów dołożyć osobno, świadomie. | Stripe → Developers → API keys → Create restricted key |
@@ -134,11 +138,11 @@ Po stronie Polutka (Vercel env): `OPS_API_TOKEN` — ta sama wartość co `POLUT
 
 ---
 
-## 7. ⚠️ Dług do spłacenia PRZED podpięciem akcji finansowych
+## 7. ✅ Bramkę `confirm` już przerobiono przed akcjami finansowymi
 
-W `src/agent-mode.ts`, tryb `confirm` zapisuje do D1 **tylko tekstowy opis** akcji (`pending_action = description`), a nie samej wykonywalnej akcji (domknięcie `action: () => Promise<string>` nie da się zserializować). Skutek: po odpowiedzi „tak" **nie ma jak odtworzyć i wykonać oryginalnej akcji.**
+`src/agent-mode.ts` zapisuje teraz wykonywalną intencję akcji w tabeli `pending_actions`: nazwę narzędzia oraz serializowalne argumenty. Odpowiedź „tak" podnosi najnowszą oczekującą akcję z kolejki i odpala ją przez `executeTool` jako zatwierdzoną, a odpowiedź „nie" anuluje akcję.
 
-Dla `vercel_redeploy` to nieszkodliwe. Dla `stripe_refund` to znaczy, że potwierdzenie donikąd nie prowadzi. **Zanim bolek dostanie prawo do refundów, trzeba przerobić `confirm` tak, żeby zapisywał wykonywalną intencję** (np. `{ tool: 'stripe_refund', args: {...} }` w tabeli `pending_actions`), a odpowiedź „tak" podnosiła ją z kolejki i odpalała przez `executeTool`.
+To odblokowuje bezpieczne dopisywanie przyszłych akcji typu `stripe_refund`, ale same refundy nadal nie są dodane — najpierw trzeba podłączyć read-only monitoring i ops-API Polutka.
 
 ---
 
@@ -148,20 +152,20 @@ Dla `vercel_redeploy` to nieszkodliwe. Dla `stripe_refund` to znaczy, że potwie
 2. **`polutek.ts` (read) + `/api/ops/summary`.** Bolek pyta Polutka o stan dnia jednym wywołaniem.
 3. **Dzienny briefing na Cron Trigger.** Raport rano na Telegram: przychód, nowi patroni, nowi userzy (+ flaga anomalii), okno awarii z oceną „ile płatności zawiodło", lista rzeczy do decyzji.
 4. **`email-imap-smtp.ts` — IMAP/SMTP home.pl, Resend deliverability.** Bolek czyta przychodzące na `kontakt@polutek.pl`, kategoryzuje, przygotowuje odpowiedzi; Ty zatwierdzasz wysyłkę.
-5. **Napraw bramkę `confirm`** (§7).
+5. **Bramka `confirm` wykonana** (§7).
 6. **Akcje finansowe:** `stripe_refund` + `/api/ops/refund` (refund + revoke atomowo po stronie Polutka), zawsze przez `runAction` w trybie `confirm`.
 
 ---
 
 ## 9. Checklista na sesję kodowania bolka
 
-- [ ] `src/tools/stripe.ts` (read) + rejestracja w `index.ts` + prefiks `stripe_`
-- [ ] `src/tools/clerk.ts` (read) + rejestracja
+- [x] `src/tools/stripe.ts` (read) + rejestracja w `index.ts` + prefiks `stripe_`
+- [x] `src/tools/clerk.ts` (read) + rejestracja
 - [ ] `src/tools/polutek.ts` (woła ops-API) + rejestracja
 - [ ] Polutek: `app/api/ops/summary` (GET, bearer `OPS_API_TOKEN`)
 - [ ] Cron briefing (Telegram) w `src/index.ts` / `briefing.ts`
 - [ ] `src/tools/email-imap-smtp.ts` (IMAP/SMTP home.pl czytanie, SMTP wysyłanie, Resend monitoring)
-- [ ] Refaktor `agent-mode.ts` — wykonywalna kolejka `pending_actions` (§7)
+- [x] Refaktor `agent-mode.ts` — wykonywalna kolejka `pending_actions` (§7)
 - [ ] Polutek: `app/api/ops/refund` (POST, refund + revoke przez canoniczne use-case'y)
 - [ ] `stripe_refund` przez `runAction`
 - [ ] Sekrety w Cloudflare (Stripe restricted, Clerk, Gmail OAuth, Resend, POLUTEK_OPS_*)

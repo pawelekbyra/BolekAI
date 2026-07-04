@@ -1,6 +1,7 @@
 import type { ToolDefinition } from './index'
 import type { Env } from '../env'
 import { runAction } from '../agent-mode'
+import type { ActionExecutionOptions } from '../agent-mode'
 
 export const codingTools: ToolDefinition[] = [
   {
@@ -60,7 +61,8 @@ export async function executeCodingTool(
   name: string,
   args: unknown,
   env: Env,
-  chatId: number
+  chatId: number,
+  options: ActionExecutionOptions = {}
 ): Promise<unknown> {
   switch (name) {
     case 'coding_task': {
@@ -69,6 +71,8 @@ export async function executeCodingTool(
         env,
         chatId,
         description: `Zadanie kodowania: ${a.task?.slice(0, 60)}...`,
+        intent: { tool: name, args: a },
+        approved: options.approved,
         action: async () => {
           const system = `Jesteś ekspertem programistą. Piszesz czysty, produkcyjny kod.
 Odpowiadasz TYLKO kodem — bez wyjaśnień, bez markdown fences chyba że to część kodu.

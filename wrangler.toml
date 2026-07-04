@@ -10,6 +10,7 @@ binding = "AI"
 binding = "DB"
 database_name = "bolek-memory"
 database_id = "1f8cdeb5-6f31-4027-8dda-d1a4d6ab5a26"
+migrations_dir = "src/db/migrations"
 
 [[kv_namespaces]]
 binding = "KV"
