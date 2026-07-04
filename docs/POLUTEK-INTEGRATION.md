@@ -161,7 +161,7 @@ Dla `vercel_redeploy` to nieszkodliwe. Dla `stripe_refund` to znaczy, że potwie
 - [ ] Polutek: `app/api/ops/summary` (GET, bearer `OPS_API_TOKEN`)
 - [ ] Cron briefing (Telegram) w `src/index.ts` / `briefing.ts`
 - [ ] `src/tools/email-imap-smtp.ts` (IMAP/SMTP home.pl czytanie, SMTP wysyłanie, Resend monitoring)
-- [ ] Refaktor `agent-mode.ts` — wykonywalna kolejka `pending_actions` (§7)
+- [x] Refaktor `agent-mode.ts` — wykonywalna kolejka `pending_actions` (§7)
 - [ ] Polutek: `app/api/ops/refund` (POST, refund + revoke przez canoniczne use-case'y)
 - [ ] `stripe_refund` przez `runAction`
 - [ ] Sekrety w Cloudflare (Stripe restricted, Clerk, Gmail OAuth, Resend, POLUTEK_OPS_*)

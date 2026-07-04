@@ -1,5 +1,6 @@
 import type { Env } from './env'
 import { orchestrate } from './orchestrator'
+import { handleActionConfirmation } from './agent-mode'
 
 type TelegramMessage = {
   chat: { id: number }
@@ -27,7 +28,8 @@ export async function handleUpdate(update: TelegramUpdate, env: Env): Promise<vo
   const chatId = msg.chat.id
 
   try {
-    const reply = await orchestrate(msg.text, chatId, env)
+    const confirmed = await handleActionConfirmation(msg.text, chatId, env)
+    const reply = confirmed ?? await orchestrate(msg.text, chatId, env)
     await send(env.TELEGRAM_BOT_TOKEN, chatId, reply)
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
