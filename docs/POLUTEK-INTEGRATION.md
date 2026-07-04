@@ -1,7 +1,7 @@
 # Bolek ↔ Polutek.pl — Integracja operacyjna
 
 > **Status:** projekt / do zbudowania. Ten dokument jest mapą budowy dla sesji kodowania bolka.
-> Nic z opisanych tu narzędzi (`stripe.ts`, `clerk.ts`, `email.ts`, `polutek.ts`, briefing) jeszcze nie istnieje — to lista tego, co trzeba dodać.
+> Narzędzia read-only `stripe.ts`, `clerk.ts` i `polutek.ts` są już dodane po stronie Bolka. Nadal trzeba wdrożyć ops-API po stronie Polutka, briefing i obsługę poczty.
 
 ---
 
@@ -87,7 +87,7 @@ Każde narzędzie to ten sam wzorzec co istniejący `src/tools/vercel.ts`: jeden
 | `src/tools/stripe.ts` | `stripe_` | odczyt: przychód, nieudane płatności, `PENDING`, disputes. Akcja: `stripe_refund` (przez `runAction` + ops-API Polutka) |
 | `src/tools/clerk.ts` | `clerk_` | odczyt: nowi userzy, skoki rejestracji, nieudane logowania. Akcja: `clerk_ban_user` (przez `runAction`) |
 | `src/tools/email-imap-smtp.ts` | `email_` | Resend: deliverability wychodzących maili systemowych. IMAP/SMTP (home.pl): czytanie przychodzących na `kontakt@polutek.pl`, triage, przygotowanie odpowiedzi (wysyłka przez `runAction` ze statusu `kontakt@polutek.pl`) |
-| `src/tools/polutek.ts` | `polutek_` | wołanie ops-API Polutka: podsumowanie dnia, stan patronów, korelacja płatność→dostęp, zlecenie refund+revoke |
+| `src/tools/polutek.ts` ✅ **read-only już istnieje** | `polutek_` | wołanie ops-API Polutka: `polutek_daily_summary` i `polutek_patron_status`; odpowiedzi są sanityzowane z `videoUrl`. Akcje refund+revoke nadal do dodania później przez `runAction` |
 | `src/tools/briefing.ts` (lub w cron handlerze w `index.ts`) | — | składa dzienny raport z powyższych i wysyła na Telegram/mail przez Cron Trigger |
 
 Migracja D1 (nowy plik `src/db/migrations/005_ops.sql`) — jeśli bolek ma zapamiętywać stan operacyjny (np. ostatni raport, kolejka zatwierdzeń, log akcji). Zgodnie z regułą repo: **jedna migracja na zmianę, nigdy nie usuwać starych.**
@@ -149,7 +149,7 @@ To odblokowuje bezpieczne dopisywanie przyszłych akcji typu `stripe_refund`, al
 ## 8. Kolejność wdrożenia (od zera ryzyka do akcji)
 
 1. **`stripe.ts` + `clerk.ts` — tylko odczyt.** Bolek odpowiada „ile dziś zarobiłem / ilu nowych userów / czy coś utknęło w PENDING". Zero ryzyka.
-2. **`polutek.ts` (read) + `/api/ops/summary`.** Bolek pyta Polutka o stan dnia jednym wywołaniem.
+2. ✅ **`polutek.ts` (read) po stronie Bolka.** Bolek ma narzędzia do `/api/ops/summary` i `/api/ops/patron/[userId]`; do uruchomienia w produkcji nadal trzeba wdrożyć endpointy ops-API po stronie Polutka i dodać sekrety.
 3. **Dzienny briefing na Cron Trigger.** Raport rano na Telegram: przychód, nowi patroni, nowi userzy (+ flaga anomalii), okno awarii z oceną „ile płatności zawiodło", lista rzeczy do decyzji.
 4. **`email-imap-smtp.ts` — IMAP/SMTP home.pl, Resend deliverability.** Bolek czyta przychodzące na `kontakt@polutek.pl`, kategoryzuje, przygotowuje odpowiedzi; Ty zatwierdzasz wysyłkę.
 5. **Bramka `confirm` wykonana** (§7).
@@ -161,14 +161,14 @@ To odblokowuje bezpieczne dopisywanie przyszłych akcji typu `stripe_refund`, al
 
 - [x] `src/tools/stripe.ts` (read) + rejestracja w `index.ts` + prefiks `stripe_`
 - [x] `src/tools/clerk.ts` (read) + rejestracja
-- [ ] `src/tools/polutek.ts` (woła ops-API) + rejestracja
-- [ ] Polutek: `app/api/ops/summary` (GET, bearer `OPS_API_TOKEN`)
+- [x] `src/tools/polutek.ts` (read-only: summary + patron status) + rejestracja
+- [ ] Polutek: `app/api/ops/summary` (GET, bearer `OPS_API_TOKEN`) — wymagane do działania `polutek_daily_summary`
 - [ ] Cron briefing (Telegram) w `src/index.ts` / `briefing.ts`
 - [ ] `src/tools/email-imap-smtp.ts` (IMAP/SMTP home.pl czytanie, SMTP wysyłanie, Resend monitoring)
 - [x] Refaktor `agent-mode.ts` — wykonywalna kolejka `pending_actions` (§7)
 - [ ] Polutek: `app/api/ops/refund` (POST, refund + revoke przez canoniczne use-case'y)
 - [ ] `stripe_refund` przez `runAction`
-- [ ] Sekrety w Cloudflare (Stripe restricted, Clerk, Gmail OAuth, Resend, POLUTEK_OPS_*)
+- [ ] Sekrety w Cloudflare (Stripe restricted, Clerk, Gmail/home.pl OAuth lub hasła aplikacji, Resend, POLUTEK_OPS_*)
 - [ ] `OPS_API_TOKEN` w env Polutka na Vercelu
 
 ---
