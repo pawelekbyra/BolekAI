@@ -1,6 +1,7 @@
 import type { ToolDefinition } from './index'
 import type { Env } from '../env'
 import { runAction } from '../agent-mode'
+import type { ActionExecutionOptions } from '../agent-mode'
 
 const GH = 'https://api.github.com'
 
@@ -104,7 +105,8 @@ export async function executeGithubTool(
   name: string,
   args: unknown,
   env: Env,
-  chatId: number
+  chatId: number,
+  options: ActionExecutionOptions = {}
 ): Promise<unknown> {
   const a = args as Args
   const token = env.GITHUB_TOKEN
@@ -125,6 +127,8 @@ export async function executeGithubTool(
         env,
         chatId,
         description: `Utwórz issue "${a.title}" w ${a.repo}`,
+        intent: { tool: name, args: a },
+        approved: options.approved,
         action: async () => {
           const data = await ghFetch(token, `/repos/${a.repo}/issues`, {
             method: 'POST',
@@ -149,6 +153,8 @@ export async function executeGithubTool(
         env,
         chatId,
         description: `Zapisz ${a.path} w ${a.repo}`,
+        intent: { tool: name, args: a },
+        approved: options.approved,
         action: async () => {
           const branch = a.branch ?? 'main'
 

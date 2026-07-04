@@ -1,6 +1,7 @@
 import type { ToolDefinition } from './index'
 import type { Env } from '../env'
 import { runAction } from '../agent-mode'
+import type { ActionExecutionOptions } from '../agent-mode'
 
 const VERCEL = 'https://api.vercel.com'
 
@@ -72,7 +73,8 @@ export async function executeVercelTool(
   name: string,
   args: unknown,
   env: Env,
-  chatId: number
+  chatId: number,
+  options: ActionExecutionOptions = {}
 ): Promise<unknown> {
   const a = args as Args
   const token = env.VERCEL_TOKEN
@@ -110,6 +112,8 @@ export async function executeVercelTool(
         env,
         chatId,
         description: `Redeploy deploymentu ${a.deployment_id}`,
+        intent: { tool: name, args: a },
+        approved: options.approved,
         action: async () => {
           const data = await vFetch(token, `/v13/deployments/${a.deployment_id}/redeploy`, {
             method: 'POST',
