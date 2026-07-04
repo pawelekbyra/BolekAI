@@ -9,6 +9,7 @@ import { agentTools, executeAgentTool } from './agents'
 import { characterTools, executeCharacterTool } from './characters'
 import { stripeTools, executeStripeTool } from './stripe'
 import { clerkTools, executeClerkTool } from './clerk'
+import { polutekTools, executePolutekTool } from './polutek'
 import type { Env } from '../env'
 import type { ActionExecutionOptions } from '../agent-mode'
 
@@ -34,6 +35,7 @@ export const tools: ToolDefinition[] = [
   ...characterTools,
   ...stripeTools,
   ...clerkTools,
+  ...polutekTools,
 ]
 
 export async function executeTool(
@@ -55,5 +57,6 @@ export async function executeTool(
   if (name.startsWith('character_')) return executeCharacterTool(name, args, env!, chatId)
   if (name.startsWith('stripe_'))    return executeStripeTool(name, args, env!)
   if (name.startsWith('clerk_'))     return executeClerkTool(name, args, env!)
+  if (name.startsWith('polutek_'))   return executePolutekTool(name, args, env!)
   throw new Error(`Unknown tool: ${name}`)
 }

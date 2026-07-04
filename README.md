@@ -110,6 +110,14 @@ Bolek sam napisze do Ciebie o wyznaczonej godzinie przez Telegram.
 "dodaj obsługę błędów do funkcji fetchUser i commituj do repo"
 ```
 
+
+### Polutek ops-API (read-only)
+```
+"podsumuj dzisiaj Polutka"
+"sprawdź status patrona user_123"
+```
+Narzędzia `polutek_daily_summary` i `polutek_patron_status` wołają wyłącznie uwierzytelnione ops-API Polutka (`POLUTEK_OPS_URL` + `POLUTEK_OPS_TOKEN`). Bolek nie pisze bezpośrednio do bazy Polutka i dodatkowo usuwa z odpowiedzi ewentualne pola `videoUrl`.
+
 ### Tryb pracy agenta
 ```
 "działaj autonomicznie"     → sam wykonuje akcje, tylko raportuje wynik
@@ -217,6 +225,10 @@ Wszystkie ustawiane w Cloudflare → kulfon → Settings → Variables and Secre
 | `ANTHROPIC_API_KEY` | zalecane | Claude jako mózg Bolka (niezawodny) |
 | `GITHUB_TOKEN` | nie | Zarządzanie repozytoriami |
 | `VERCEL_TOKEN` | nie | Monitoring projektów i deploymentów |
+| `STRIPE_KEY` | nie | Read-only monitoring płatności Stripe dla Polutka |
+| `CLERK_SECRET_KEY` | nie | Read-only monitoring użytkowników Clerk dla Polutka |
+| `POLUTEK_OPS_URL` | nie | Bazowy URL ops-API Polutka, np. `https://polutek.pl/api/ops` |
+| `POLUTEK_OPS_TOKEN` | nie | Bearer token do ops-API Polutka |
 
 ---
 
@@ -238,6 +250,9 @@ src/
     github.ts         # GitHub API
     vercel.ts         # Vercel API
     coding.ts         # Zlecanie zadań kodowania Claude AI
+    stripe.ts         # Read-only monitoring płatności Stripe dla Polutka
+    clerk.ts          # Read-only monitoring użytkowników Clerk dla Polutka
+    polutek.ts        # Read-only klient ops-API Polutka
     agents.ts         # Multi-agent system
     characters.ts     # Postacie z osobowościami
   agents/
