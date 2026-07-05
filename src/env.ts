@@ -15,4 +15,14 @@ export type Env = {
   POLUTEK_BRIEFING_CHAT_ID?: string
   POLUTEK_BRIEFING_HOUR_UTC?: string
   POLUTEK_VERCEL_PROJECT?: string
+  RESEND_API_KEY?: string
+  EMAIL_SUPPORT_FROM?: string
+  EMAIL_IMAP_HOST?: string
+  EMAIL_IMAP_PORT?: string
+  EMAIL_IMAP_USER?: string
+  EMAIL_IMAP_PASSWORD?: string
+  EMAIL_SMTP_HOST?: string
+  EMAIL_SMTP_PORT?: string
+  EMAIL_SMTP_USER?: string
+  EMAIL_SMTP_PASSWORD?: string
 }
