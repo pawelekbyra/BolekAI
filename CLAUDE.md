@@ -8,6 +8,31 @@ The agent runs on Cloudflare Workers, speaks through Telegram (and eventually ot
 
 **This project has no finish line.**
 
+## Architecture: Multi-Agent System
+
+Bolek is **not a monolith**. It's a **network of specialized services**, each with clear responsibility.
+
+**Core principle:** BolekAI (orchestrator) + pluggable external services (chat, workflows, knowledge, etc.)
+
+```
+BolekAI (Cloudflare Worker) — Decision maker, orchestrator, memory
+├── Knows: intent parsing, policy, approvals, tools dispatch
+├── Owns: Telegram interface, D1 memory, KV config
+└── Calls: BolekCzat, BolekFlow, BolekKB via HTTP (treated as tools)
+```
+
+Each external service:
+- **Independently deployed** (can scale, update, fail without taking agent down)
+- **Has own database** (no shared data layer)
+- **Communicates via HTTP API** (standardized contracts)
+- **Receives scoped access** (only what it needs)
+
+**Full architecture & rollout plan:**
+
+➡️ **[`docs/MULTI-AGENT-ARCHITECTURE.md`](docs/MULTI-AGENT-ARCHITECTURE.md)** — read this first for implementation details.
+
+---
+
 ## Served Systems
 
 Beyond the owner's personal life, Bolek is also the **operational agent for the application [polutek.pl](https://polutek.pl)** — a single-channel VOD/patron platform. Bolek monitors it (Stripe revenue, payments, patrons, Clerk sign-ups, outages, deployments, email), reports to the owner (daily briefing + on-demand), and performs selected operational actions (e.g. refunds) — always behind the `agent-mode.ts` confirm gate.
