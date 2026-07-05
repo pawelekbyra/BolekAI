@@ -1,6 +1,7 @@
 import type { Env } from '../../env'
+import type { ToolDefinition } from '../index'
 
-export const knowledgeServiceTools = [
+export const knowledgeServiceTools: ToolDefinition[] = [
   {
     name: 'kb_query',
     description: 'Search the knowledge base for relevant documents',

@@ -1,6 +1,7 @@
 import type { Env } from '../../env'
+import type { ToolDefinition } from '../index'
 
-export const chatServiceTools = [
+export const chatServiceTools: ToolDefinition[] = [
   {
     name: 'chat_send_message',
     description: 'Send a message through BolekCzat web interface',
