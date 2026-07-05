@@ -47,6 +47,28 @@ export function getToolSafetyMetadata(tool: ToolDefinition): ToolSafetyMetadata 
   }
 }
 
+export function isReadOnlyModeEnabled(env?: Pick<Env, 'READ_ONLY_MODE'>): boolean {
+  return env?.READ_ONLY_MODE?.trim().toLowerCase() === 'true'
+}
+
+export type ToolBlockedResult = {
+  ok: false
+  blocked: true
+  reason: 'read_only_mode'
+  tool: string
+  message: string
+}
+
+function readOnlyBlockedResult(tool: ToolDefinition): ToolBlockedResult {
+  return {
+    ok: false,
+    blocked: true,
+    reason: 'read_only_mode',
+    tool: tool.name,
+    message: `READ_ONLY_MODE=true — nie wykonuję narzędzia ${tool.name}, bo ma sideEffect: true. Wyłącz READ_ONLY_MODE tylko świadomie, jeśli chcesz pozwolić na akcje zmieniające stan.`,
+  }
+}
+
 export const tools: ToolDefinition[] = [
   ...taskTools,
   ...noteTools,
@@ -76,6 +98,11 @@ export async function executeTool(
   env?: Env,
   options: ActionExecutionOptions = {}
 ): Promise<unknown> {
+  const tool = tools.find((candidate) => candidate.name === name)
+  if (tool && isReadOnlyModeEnabled(env) && getToolSafetyMetadata(tool).sideEffect) {
+    return readOnlyBlockedResult(tool)
+  }
+
   if (name.startsWith('task_'))     return executeTaskTool(name, args, db)
   if (name.startsWith('note_'))     return executeNoteTool(name, args, db)
   if (name.startsWith('fact_'))     return executeFactTool(name, args, db)

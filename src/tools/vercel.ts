@@ -18,11 +18,15 @@ async function vFetch(token: string, path: string, options?: RequestInit) {
 export const vercelTools: ToolDefinition[] = [
   {
     name: 'vercel_list_projects',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Wylistuj projekty na Vercel',
     parameters: { type: 'object', properties: {} },
   },
   {
     name: 'vercel_get_deployments',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Pobierz ostatnie deploymenty projektu na Vercel',
     parameters: {
       type: 'object',
@@ -34,6 +38,8 @@ export const vercelTools: ToolDefinition[] = [
   },
   {
     name: 'vercel_get_logs',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Pobierz logi z ostatniego deploymentu projektu',
     parameters: {
       type: 'object',
@@ -45,6 +51,9 @@ export const vercelTools: ToolDefinition[] = [
   },
   {
     name: 'vercel_redeploy',
+    riskLevel: 'high',
+    sideEffect: true,
+    requiresApproval: true,
     description: 'Zrób redeploy projektu na Vercel',
     parameters: {
       type: 'object',
@@ -56,6 +65,8 @@ export const vercelTools: ToolDefinition[] = [
   },
   {
     name: 'vercel_get_runtime_errors',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Pobierz błędy runtime z projektu Vercel (ostatnie 24h)',
     parameters: {
       type: 'object',

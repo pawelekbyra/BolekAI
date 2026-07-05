@@ -4,6 +4,9 @@ import type { ToolDefinition } from '../index'
 export const workflowServiceTools: ToolDefinition[] = [
   {
     name: 'flow_execute_workflow',
+    riskLevel: 'high',
+    sideEffect: true,
+    requiresApproval: true,
     description: 'Execute a workflow in BolekFlow',
     parameters: {
       type: 'object',
@@ -26,6 +29,8 @@ export const workflowServiceTools: ToolDefinition[] = [
   },
   {
     name: 'flow_get_status',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Get the status of a workflow execution',
     parameters: {
       type: 'object',
@@ -44,6 +49,8 @@ export const workflowServiceTools: ToolDefinition[] = [
   },
   {
     name: 'flow_list_workflows',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'List all available workflows',
     parameters: {
       type: 'object',

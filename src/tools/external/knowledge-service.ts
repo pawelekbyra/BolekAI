@@ -4,6 +4,8 @@ import type { ToolDefinition } from '../index'
 export const knowledgeServiceTools: ToolDefinition[] = [
   {
     name: 'kb_query',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Search the knowledge base for relevant documents',
     parameters: {
       type: 'object',
@@ -34,6 +36,8 @@ export const knowledgeServiceTools: ToolDefinition[] = [
   },
   {
     name: 'kb_store',
+    riskLevel: 'medium',
+    sideEffect: true,
     description: 'Store a document in the knowledge base',
     parameters: {
       type: 'object',
@@ -68,6 +72,8 @@ export const knowledgeServiceTools: ToolDefinition[] = [
   },
   {
     name: 'kb_list_collections',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'List all knowledge base collections',
     parameters: {
       type: 'object',

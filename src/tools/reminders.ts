@@ -3,6 +3,8 @@ import type { ToolDefinition } from './index'
 export const reminderTools: ToolDefinition[] = [
   {
     name: 'reminder_set',
+    riskLevel: 'medium',
+    sideEffect: true,
     description: 'Ustaw przypomnienie na konkretną datę i godzinę. Użyj gdy użytkownik mówi "przypomnij mi", "za X godzin", "jutro o Y", itp.',
     parameters: {
       type: 'object',
@@ -15,6 +17,8 @@ export const reminderTools: ToolDefinition[] = [
   },
   {
     name: 'reminder_list',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Pokaż listę nadchodzących przypomnień',
     parameters: {
       type: 'object',
@@ -23,6 +27,8 @@ export const reminderTools: ToolDefinition[] = [
   },
   {
     name: 'reminder_cancel',
+    riskLevel: 'medium',
+    sideEffect: true,
     description: 'Anuluj przypomnienie',
     parameters: {
       type: 'object',

@@ -5,6 +5,9 @@ import { listAgents } from '../agents/registry'
 export const agentTools: ToolDefinition[] = [
   {
     name: 'agent_assign',
+    riskLevel: 'high',
+    sideEffect: true,
+    requiresApproval: true,
     description: 'Przydziel zadanie jednemu z agentów — Mailer, Researcher, Coder lub Analyst. Agent wykona zadanie autonomicznie i wyśle wynik przez Telegram.',
     parameters: {
       type: 'object',
@@ -17,6 +20,8 @@ export const agentTools: ToolDefinition[] = [
   },
   {
     name: 'agent_status',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Sprawdź status wszystkich agentów — kto pracuje, kto czeka, ostatnie zadania',
     parameters: {
       type: 'object',
@@ -25,6 +30,8 @@ export const agentTools: ToolDefinition[] = [
   },
   {
     name: 'agent_history',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Pobierz historię zadań wybranego agenta lub wszystkich agentów',
     parameters: {
       type: 'object',
@@ -36,6 +43,8 @@ export const agentTools: ToolDefinition[] = [
   },
   {
     name: 'agent_list',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Wylistuj dostępnych agentów i ich role',
     parameters: {
       type: 'object',

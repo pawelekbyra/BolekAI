@@ -23,11 +23,15 @@ async function ghFetch(token: string, path: string, options?: RequestInit) {
 export const githubTools: ToolDefinition[] = [
   {
     name: 'github_list_repos',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Wylistuj repozytoria właściciela na GitHubie',
     parameters: { type: 'object', properties: {} },
   },
   {
     name: 'github_get_issues',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Pobierz otwarte issues z repozytorium',
     parameters: {
       type: 'object',
@@ -39,6 +43,9 @@ export const githubTools: ToolDefinition[] = [
   },
   {
     name: 'github_create_issue',
+    riskLevel: 'high',
+    sideEffect: true,
+    requiresApproval: true,
     description: 'Utwórz nowe issue w repozytorium',
     parameters: {
       type: 'object',
@@ -52,6 +59,8 @@ export const githubTools: ToolDefinition[] = [
   },
   {
     name: 'github_get_file',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Pobierz zawartość pliku z repozytorium',
     parameters: {
       type: 'object',
@@ -65,6 +74,9 @@ export const githubTools: ToolDefinition[] = [
   },
   {
     name: 'github_push_file',
+    riskLevel: 'high',
+    sideEffect: true,
+    requiresApproval: true,
     description: 'Zapisz lub zaktualizuj plik w repozytorium (commit)',
     parameters: {
       type: 'object',
@@ -80,6 +92,8 @@ export const githubTools: ToolDefinition[] = [
   },
   {
     name: 'github_list_prs',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Pobierz otwarte pull requesty z repozytorium',
     parameters: {
       type: 'object',

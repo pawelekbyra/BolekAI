@@ -11,6 +11,8 @@ const WEB_CACHE_PREFIX = 'web:'
 export const webTools: ToolDefinition[] = [
   {
     name: 'web_search',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Wyszukaj aktualne informacje w internecie. Zwraca tytuł, URL i snippet. W odpowiedzi końcowej zawsze cytuj użyte linki.',
     parameters: {
       type: 'object',
@@ -24,6 +26,8 @@ export const webTools: ToolDefinition[] = [
   },
   {
     name: 'web_fetch',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Pobierz i streść zawartość konkretnej strony WWW pod podanym adresem URL. W odpowiedzi końcowej cytuj URL strony.',
     parameters: {
       type: 'object',
@@ -36,6 +40,8 @@ export const webTools: ToolDefinition[] = [
   },
   {
     name: 'web_research',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Tryb głębokiego researchu: wyszukuje temat, wybiera 3–5 źródeł, pobiera je, porównuje i zwraca wnioski, linki oraz ocenę pewności. Używaj do pytań wymagających porównania kilku źródeł.',
     parameters: {
       type: 'object',

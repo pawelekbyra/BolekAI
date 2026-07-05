@@ -67,6 +67,11 @@ Bolek automatycznie przełącza się na Claude gdy klucz jest dostępny.
 
 Przykład konfiguracji LibreChat: Base URL `https://kulfon.pawel-perfect.workers.dev/v1`, endpoint `/chat/completions`, model `bolek`, API key ustawiony na wartość `BOLEK_OPENAI_ADAPTER_KEY`. Szczegóły: [`docs/LIBRECHAT-INTEGRATION.md`](docs/LIBRECHAT-INTEGRATION.md).
 
+### 7. Tryb read-only bezpieczeństwa
+- `READ_ONLY_MODE=true` — blokuje wykonanie każdego narzędzia oznaczonego jako `sideEffect: true` w registry tooli.
+- Narzędzia read-only (`sideEffect: false`) nadal mogą działać, więc Bolek może czytać, wyszukiwać i raportować bez wykonywania akcji zmieniających stan.
+- Blokada zwraca czytelny komunikat zamiast wykonywać akcję. Używaj tego trybu, gdy chcesz bezpiecznie monitorować system bez maili, commitów, refundów, redeployów i zapisów.
+
 ---
 
 ## Obecna konfiguracja

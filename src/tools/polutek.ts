@@ -17,11 +17,15 @@ type PolutekPatronArgs = {
 export const polutekTools: ToolDefinition[] = [
   {
     name: 'polutek_config_status',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Read-only: pokaż status konfiguracji integracji Polutka bez ujawniania wartości sekretów.',
     parameters: { type: 'object', properties: {} },
   },
   {
     name: 'polutek_daily_summary',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Read-only: pobierz dzienne podsumowanie Polutka z ops-API (przychód, patroni, pending, userzy, awarie). Wymaga POLUTEK_OPS_URL i POLUTEK_OPS_TOKEN.',
     parameters: {
       type: 'object',
@@ -32,6 +36,8 @@ export const polutekTools: ToolDefinition[] = [
   },
   {
     name: 'polutek_patron_status',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Read-only: sprawdź status patrona w Polutku przez ops-API. Nie zwraca videoUrl. Wymaga POLUTEK_OPS_URL i POLUTEK_OPS_TOKEN.',
     parameters: {
       type: 'object',
