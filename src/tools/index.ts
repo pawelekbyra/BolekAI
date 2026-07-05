@@ -17,6 +17,7 @@ import { workflowServiceTools, executeWorkflowServiceTool } from './external/wor
 import { knowledgeServiceTools, executeKnowledgeServiceTool } from './external/knowledge-service'
 import type { Env } from '../env'
 import type { ActionExecutionOptions } from '../agent-mode'
+export type { RiskLevel } from '../security/types'
 
 export type ToolDefinition = {
   name: string

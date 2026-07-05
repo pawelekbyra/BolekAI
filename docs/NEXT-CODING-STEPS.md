@@ -40,12 +40,12 @@ Cel: zatrzymać ryzyko zanim dojdą kolejne mocne narzędzia.
 
 ## 1.1. Dodać klasyfikację ryzyka do istniejących tooli
 
-- [ ] Dodać typ `RiskLevel`.
+- [x] Dodać typ `RiskLevel`.
 
   Definition of Done:
-  - [ ] Istnieje typ `RiskLevel = 'low' | 'medium' | 'high' | 'critical'`.
-  - [ ] Typ jest eksportowany z miejsca dostępnego dla tool registry i policy.
-  - [ ] TypeScript widzi go bez cyklicznych importów.
+  - [x] Istnieje typ `RiskLevel = 'low' | 'medium' | 'high' | 'critical'`.
+  - [x] Typ jest eksportowany z miejsca dostępnego dla tool registry i policy.
+  - [x] TypeScript widzi go bez cyklicznych importów.
 
 - [ ] Rozszerzyć `ToolDefinition` o podstawowe metadane bezpieczeństwa.
 
