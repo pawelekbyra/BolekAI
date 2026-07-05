@@ -86,6 +86,8 @@ function validateRequestBody(value: unknown): OpenAIChatCompletionRequest | Resp
     return openAIError('`messages` must be a non-empty array.', 400, 'invalid_messages')
   }
 
+  let hasUserMessage = false
+
   for (const [index, message] of body.messages.entries()) {
     if (!message || typeof message !== 'object') {
       return openAIError(`messages[${index}] must be an object.`, 400, 'invalid_message')
@@ -93,10 +95,17 @@ function validateRequestBody(value: unknown): OpenAIChatCompletionRequest | Resp
     if (!['system', 'user', 'assistant', 'tool'].includes((message as OpenAIChatMessage).role)) {
       return openAIError(`messages[${index}].role is not supported.`, 400, 'invalid_role')
     }
+    if ((message as OpenAIChatMessage).role === 'user') {
+      hasUserMessage = true
+    }
     const content = (message as OpenAIChatMessage).content
     if (content !== null && typeof content !== 'string' && !Array.isArray(content)) {
       return openAIError(`messages[${index}].content must be a string, array, or null.`, 400, 'invalid_content')
     }
+  }
+
+  if (!hasUserMessage) {
+    return openAIError('`messages` must include at least one user message.', 400, 'missing_user_message')
   }
 
   return body as OpenAIChatCompletionRequest

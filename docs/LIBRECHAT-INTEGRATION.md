@@ -163,13 +163,16 @@ Content-Type: application/json
 Zachowanie:
 
 - `stream: false` albo brak `stream` zwraca obiekt `chat.completion` zgodny z OpenAI.
+- `messages` musi być niepustą tablicą i zawierać co najmniej jedną wiadomość `user`; błędy walidacji zwracają OpenAI-style JSON z kodem HTTP 400.
 - `stream: true` zwraca SSE z chunkami `chat.completion.chunk` oraz końcowym `data: [DONE]`.
 - `system` i `tool` z requestu są zamieniane na bezpieczny, niezaufany kontekst tekstowy; klient nie może w ten sposób wykonać narzędzia ani ominąć approvali Bolka.
 - Brak lub błędny bearer token zwraca OpenAI-style `401`.
 - Brak `BOLEK_OPENAI_ADAPTER_KEY` w deploymentcie zwraca `503 missing_configuration`; klucz nie jest logowany ani zwracany.
 - CORS jest dodawany tylko dla originu równego `BOLEK_CORS_ORIGIN`.
 
-### 5.2. Przykładowy curl
+### 5.2. Przykładowe curl
+
+#### Non-stream
 
 ```bash
 curl https://kulfon.pawel-perfect.workers.dev/v1/chat/completions \
@@ -183,6 +186,30 @@ curl https://kulfon.pawel-perfect.workers.dev/v1/chat/completions \
   }'
 ```
 
+#### Stream
+
+```bash
+curl -N https://kulfon.pawel-perfect.workers.dev/v1/chat/completions \
+  -H "Authorization: Bearer $BOLEK_OPENAI_ADAPTER_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "bolek",
+    "stream": true,
+    "messages": [
+      { "role": "user", "content": "Cześć Bolek, odpowiedz jednym zdaniem." }
+    ]
+  }'
+```
+
+#### Walidacja błędu 400
+
+```bash
+curl -i https://kulfon.pawel-perfect.workers.dev/v1/chat/completions \
+  -H "Authorization: Bearer $BOLEK_OPENAI_ADAPTER_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "messages": [] }'
+```
+
 ### 5.3. Lokalne testowanie
 
 ```bash
@@ -193,6 +220,15 @@ Następnie wyślij request na:
 
 ```txt
 http://localhost:8787/v1/chat/completions
+```
+
+Przykład lokalny non-stream:
+
+```bash
+curl http://localhost:8787/v1/chat/completions \
+  -H "Authorization: Bearer local-dev-key" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"bolek","messages":[{"role":"user","content":"ping"}]}'
 ```
 
 ### 5.4. Notatki produkcyjne
