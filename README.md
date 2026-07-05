@@ -4,12 +4,20 @@ Osobisty asystent AI. Działa przez Telegram i przeglądarkę. Pamięta wszystko
 
 Obsługuje też aplikację **[polutek.pl](https://polutek.pl)** — monitoring (Stripe, Clerk, Vercel, mail), dzienny raport i wybrane akcje operacyjne (np. refund) za bramką zgody. Pełna mapa budowy: **[`docs/POLUTEK-INTEGRATION.md`](docs/POLUTEK-INTEGRATION.md)**.
 
+Docelowy nowy web UI Bolka powstaje jako osobny fork LibreChat: **[`pawelekbyra/BolekCzat`](https://github.com/pawelekbyra/BolekCzat)**. `kulfon` zostaje mózgiem Bolka, a LibreChat/BolekCzat będzie tylko produkcyjnym interfejsem webowym podłączonym przez OpenAI-compatible adapter. Plan integracji: **[`docs/LIBRECHAT-INTEGRATION.md`](docs/LIBRECHAT-INTEGRATION.md)**.
+
 ---
 
 ## Jak to działa
 
 ```
 Ty (Telegram lub web) → Cloudflare Worker (kulfon) → AI (Claude lub llama) → Narzędzia → Baza D1
+```
+
+Docelowo web może działać też tak:
+
+```
+Ty → BolekCzat / LibreChat → /v1/chat/completions w kulfonie → Bolek → Narzędzia → Baza D1
 ```
 
 Piszesz do Bolka normalnym językiem. On rozumie o co chodzi, wybiera narzędzie i odpowiada. Historia rozmów jest zapisywana — Bolek pamięta poprzednie rozmowy i fakty o Tobie.
@@ -41,6 +49,10 @@ Bolek automatycznie przełącza się na Claude gdy klucz jest dostępny.
 - vercel.com → Settings → Tokens → Create
 - Cloudflare → kulfon → Settings → Variables and Secrets → dodaj `VERCEL_TOKEN`
 
+### 6. LibreChat / BolekCzat adapter (planowane)
+- `BOLEK_OPENAI_ADAPTER_KEY` — bearer token dla przyszłego endpointu `/v1/chat/completions`
+- `BOLEK_CORS_ORIGIN` — dozwolony origin dla BolekCzat/LibreChat
+
 ---
 
 ## Obecna konfiguracja
@@ -53,6 +65,7 @@ Bolek automatycznie przełącza się na Claude gdy klucz jest dostępny.
 | KV | `bolek-kv` |
 | Model AI | Claude Haiku (gdy klucz) / llama-3.2-3b (fallback) |
 | Webhook | `/webhook/zajebiscie` |
+| Planowany web UI | `pawelekbyra/BolekCzat` przez OpenAI-compatible adapter |
 
 ---
 
@@ -133,6 +146,12 @@ Bolek potrafi monitorować wiadomości przez Resend Receiving, kategoryzować su
 "sprawdź status patrona user_123"
 ```
 Narzędzia `polutek_daily_summary` i `polutek_patron_status` wołają wyłącznie uwierzytelnione ops-API Polutka (`POLUTEK_OPS_URL` + `POLUTEK_OPS_TOKEN`). Bolek nie pisze bezpośrednio do bazy Polutka i dodatkowo usuwa z odpowiedzi ewentualne pola `videoUrl`. Poranny briefing Polutka składa dane z Polutek ops, Stripe, Clerk i Vercel, wysyła je raz dziennie na `POLUTEK_BRIEFING_CHAT_ID`, a podgląd jest dostępny pod `/api/briefing/polutek/preview`.
+
+### LibreChat / BolekCzat web UI (planowane)
+```
+BolekCzat / LibreChat → kulfon /v1/chat/completions → Bolek
+```
+Obecny prosty web chat zostaje na razie kompatybilnym klientem `/api/chat`, ale docelowy produktowy interfejs webowy ma żyć w osobnym repo `pawelekbyra/BolekCzat`. `kulfon` wystawi OpenAI-compatible adapter, aby LibreChat mógł używać Bolka jako custom endpointu bez dostępu do sekretów narzędziowych.
 
 ### Tryb pracy agenta
 ```
@@ -217,116 +236,3 @@ Gotowe — Bolek od razu umie nową rzecz.
 ---
 
 ## Migracje bazy danych
-
-Migracje są numerowane i stosowane po kolei. Nigdy nie usuwaj starych plików.
-
-**Lista migracji:**
-- `001_initial.sql` — wiadomości, zadania, notatki
-- `002_memory_reminders.sql` — fakty o właścicielu, przypomnienia
-- `003_agents.sql` — agenci (Mailer, Researcher, Coder, Analyst) i kolejka zadań
-- `004_characters.sql` — postacie (Marek, Asia, Stary, Zofia), debaty
-- `005_pending_actions.sql` — kolejka akcji czekających na potwierdzenie
-- `006_ops_events.sql` — audyt briefingów i operacji Polutka
-
-Nową migrację uruchamiasz przez Cloudflare dashboard → D1 → bolek-memory → Query.
-
----
-
-## Zmienne środowiskowe
-
-Wszystkie ustawiane w Cloudflare → kulfon → Settings → Variables and Secrets.
-
-| Zmienna | Wymagana | Do czego |
-|---|---|---|
-| `TELEGRAM_BOT_TOKEN` | TAK | Odbieranie i wysyłanie wiadomości |
-| `TELEGRAM_WEBHOOK_SECRET` | TAK | Zabezpieczenie webhooka |
-| `ANTHROPIC_API_KEY` | zalecane | Claude jako mózg Bolka (niezawodny) |
-| `GITHUB_TOKEN` | nie | Zarządzanie repozytoriami |
-| `VERCEL_TOKEN` | nie | Monitoring projektów i deploymentów |
-| `STRIPE_KEY` | nie | Read-only monitoring płatności Stripe dla Polutka |
-| `CLERK_SECRET_KEY` | nie | Read-only monitoring użytkowników Clerk dla Polutka |
-| `POLUTEK_OPS_URL` | nie | Bazowy URL ops-API Polutka, np. `https://polutek.pl/api/ops` |
-| `POLUTEK_OPS_TOKEN` | nie | Bearer token do ops-API Polutka |
-| `POLUTEK_BRIEFING_CHAT_ID` | nie | Chat ID do porannego briefingu Polutka |
-| `POLUTEK_BRIEFING_HOUR_UTC` | nie | Godzina UTC wysyłki briefingu, domyślnie `7` |
-| `POLUTEK_VERCEL_PROJECT` | nie | Nazwa projektu Vercel używana w briefingu Polutka |
-| `RESEND_API_KEY` | nie | Monitoring maili Resend i wysyłka odpowiedzi supportowych |
-| `EMAIL_SUPPORT_FROM` | nie | Adres nadawcy odpowiedzi supportowych, np. `kontakt@polutek.pl` |
-| `EMAIL_IMAP_HOST` / `EMAIL_IMAP_PORT` | nie | Opcjonalna konfiguracja IMAP skrzynki supportowej |
-| `EMAIL_IMAP_USER` / `EMAIL_IMAP_PASSWORD` | nie | Opcjonalne dane logowania IMAP |
-| `EMAIL_SMTP_HOST` / `EMAIL_SMTP_PORT` | nie | Opcjonalna konfiguracja SMTP skrzynki supportowej |
-| `EMAIL_SMTP_USER` / `EMAIL_SMTP_PASSWORD` | nie | Opcjonalne dane logowania SMTP |
-
----
-
-## Struktura projektu
-
-```
-src/
-  index.ts            # Worker — routes + cron handler (przypomnienia)
-  env.ts              # Typy zmiennych środowiskowych
-  telegram.ts         # Obsługa wiadomości z Telegrama
-  orchestrator.ts     # Mózg Bolka — AI + wybór narzędzi + pamięć
-  memory.ts           # Historia rozmów z D1
-  tools/
-    index.ts          # Rejestr wszystkich narzędzi
-    tasks.ts          # Zadania
-    notes.ts          # Notatki
-    facts.ts          # Fakty o właścicielu (długoterminowa pamięć)
-    reminders.ts      # Przypomnienia z timerem
-    github.ts         # GitHub API
-    vercel.ts         # Vercel API
-    coding.ts         # Zlecanie zadań kodowania Claude AI
-    web.ts            # Wyszukiwanie w internecie i pobieranie stron WWW
-    stripe.ts         # Read-only monitoring płatności Stripe dla Polutka
-    clerk.ts          # Read-only monitoring użytkowników Clerk dla Polutka
-    polutek.ts        # Read-only klient ops-API Polutka
-    email-imap-smtp.ts # Poczta supportowa: Resend, IMAP/SMTP
-    agents.ts         # Multi-agent system
-    characters.ts     # Postacie z osobowościami
-  agents/
-    characters.ts     # Definicje postaci (Marek, Asia, Stary, Zofia)
-    debate.ts         # System debat między postaciami
-    runner.ts         # Egzekutor zadań agentów
-  db/migrations/
-    001_initial.sql
-    002_memory_reminders.sql
-    003_agents.sql
-    004_characters.sql
-    005_pending_actions.sql
-    006_ops_events.sql
-
-web/                  # Interfejs webowy (Next.js)
-  app/
-    page.tsx          # Czat w przeglądarce
-    agents/page.tsx   # Dashboard agentów
-    characters/page.tsx # Feed postaci
-
-wrangler.toml         # Konfiguracja Cloudflare
-```
-
----
-
-## Architektura AI
-
-Bolek obsługuje dwa silniki AI wymienialnie:
-
-**Claude API** (zalecany) — gdy ustawiony `ANTHROPIC_API_KEY`:
-- Model: Claude Haiku (szybki i tani)
-- Niezawodne tool calling
-- Lepsza polszczyzna i rozumienie kontekstu
-
-**Workers AI** (fallback, darmowy) — gdy brak klucza:
-- Model: llama-3.2-3b-instruct
-- Bez gwarancji dostępności
-- Wystarczy do testów
-
-Zmiana silnika = jedna zmienna w Cloudflare, zero zmian w kodzie.
-
----
-
-## Ten projekt nie ma końca
-
-Bolek to platforma, nie aplikacja. Każdy nowy obszar życia = nowy plik w `src/tools/`. Bez przepisywania architektury, bez limitów.
-
-Rozwijaj go razem z AI — opisz co chcesz dodać, AI napisze kod, nowa wersja deployuje się automatycznie przy każdym pushu do `main`.
