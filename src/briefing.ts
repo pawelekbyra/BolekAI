@@ -2,8 +2,9 @@ import type { Env } from './env'
 import { send } from './telegram'
 import { executeStripeTool } from './tools/stripe'
 import { executeClerkTool } from './tools/clerk'
-import { executePolutekTool } from './tools/polutek'
+import { buildPolutekConfigStatus, executePolutekTool } from './tools/polutek'
 import { executeVercelTool } from './tools/vercel'
+import { executeEmailTool } from './tools/email-imap-smtp'
 
 const BRIEFING_KV_PREFIX = 'briefing:polutek:'
 const DEFAULT_HOUR_UTC = 7
@@ -133,7 +134,7 @@ async function logBriefing(env: Env, status: BriefingStatus, message: string, me
 
 export async function buildPolutekBriefing(env: Env, now = new Date()): Promise<string> {
   const vercelProject = env.POLUTEK_VERCEL_PROJECT ?? 'polutek-pl'
-  const [polutek, stripe, pending, disputes, clerk, deployments, runtimeErrors] = await Promise.all([
+  const [polutek, stripe, pending, disputes, clerk, deployments, runtimeErrors, emailTriage] = await Promise.all([
     safeLoad(() => executePolutekTool('polutek_daily_summary', { days: 1 }, env)),
     safeLoad(() => executeStripeTool('stripe_daily_summary', { days: 1 }, env)),
     safeLoad(() => executeStripeTool('stripe_pending_payments', { limit: 10 }, env)),
@@ -141,9 +142,16 @@ export async function buildPolutekBriefing(env: Env, now = new Date()): Promise<
     safeLoad(() => executeClerkTool('clerk_user_summary', { days: 1 }, env)),
     safeLoad(() => executeVercelTool('vercel_get_deployments', { project: vercelProject }, env, 0)),
     safeLoad(() => executeVercelTool('vercel_get_runtime_errors', { project: vercelProject }, env, 0)),
+    safeLoad(() => executeEmailTool('email_triage_latest', { limit: 10 }, env, 0)),
   ])
 
+  const configStatus = buildPolutekConfigStatus(env)
+
   const sections = [
+    sectionFromValue('Konfiguracja integracji', '🔐', configStatus, (value) => {
+      const record = value as Record<string, unknown>
+      return `gotowe: ${compactValue(record.configured_required)}/${compactValue(record.total_required)} · brakuje: ${compactList(record.missing_required, 'brak')}`
+    }),
     sectionFromValue('Polutek ops', '📊', polutek),
     sectionFromValue('Stripe przychód', '💳', stripe, (value) => moneyLine(value as Record<string, unknown>)),
     sectionFromValue('Płatności do uwagi', '⏳', pending, (value) => compactList(value, 'brak płatności wymagających uwagi')),
@@ -154,6 +162,7 @@ export async function buildPolutekBriefing(env: Env, now = new Date()): Promise<
     }),
     sectionFromValue(`Vercel deploye (${vercelProject})`, '▲', deployments, (value) => compactList(value, 'brak deploymentów')),
     sectionFromValue(`Vercel runtime errors (${vercelProject})`, '🧯', runtimeErrors, (value) => compactList(value, 'brak błędów runtime w ostatniej próbce')),
+    sectionFromValue('Poczta / triage', '📬', emailTriage, (value) => compactList(value, 'brak nowych maili supportowych')),
   ]
 
   const warnings = sections.filter((section) => section.status !== 'ok').length

@@ -84,10 +84,10 @@ Każde narzędzie to ten sam wzorzec co istniejący `src/tools/vercel.ts`: jeden
 | Plik | Prefiks narzędzi | Zakres |
 |---|---|---|
 | `src/tools/vercel.ts` ✅ **już istnieje** | `vercel_` | monitoring Polutka: deploymenty, logi, błędy runtime, redeploy. Fundament wykrywania awarii w raporcie. Działa z `VERCEL_TOKEN` od zaraz — do dopracowania: filtr pod projekt `polutek-pl` w briefingu |
-| `src/tools/stripe.ts` | `stripe_` | odczyt: przychód, nieudane płatności, `PENDING`, disputes. Akcja: `stripe_refund` (przez `runAction` + ops-API Polutka) |
+| `src/tools/stripe.ts` | `stripe_` | odczyt: przychód, nieudane płatności, `PENDING`, disputes. Akcja: `stripe_refund` (przez `runAction` + ops-API Polutka) ✅ po stronie Bolka; wymaga jeszcze `/api/ops/refund` po stronie Polutka |
 | `src/tools/clerk.ts` | `clerk_` | odczyt: nowi userzy, skoki rejestracji, nieudane logowania. Akcja: `clerk_ban_user` (przez `runAction`) |
-| `src/tools/email-imap-smtp.ts` | `email_` | Resend: deliverability wychodzących maili systemowych. IMAP/SMTP (home.pl): czytanie przychodzących na `kontakt@polutek.pl`, triage, przygotowanie odpowiedzi (wysyłka przez `runAction` ze statusu `kontakt@polutek.pl`) |
-| `src/tools/polutek.ts` ✅ **read-only już istnieje** | `polutek_` | wołanie ops-API Polutka: `polutek_daily_summary` i `polutek_patron_status`; odpowiedzi są sanityzowane z `videoUrl`. Akcje refund+revoke nadal do dodania później przez `runAction` |
+| `src/tools/email-imap-smtp.ts` | `email_` | Resend: monitoring maili wysłanych/odebranych, triage przychodzących i wysyłka odpowiedzi przez `runAction`. Sekrety IMAP/SMTP są opisane pod home.pl, ale w Workerze używamy HTTP API Resend jako pierwszej działającej integracji. |
+| `src/tools/polutek.ts` ✅ **read-only już istnieje** | `polutek_` | wołanie ops-API Polutka: `polutek_daily_summary`, `polutek_patron_status` i `polutek_config_status`; odpowiedzi są sanityzowane z `videoUrl`. Akcje refund+revoke idą przez `stripe_refund` + ops-API |
 | `src/tools/briefing.ts` (lub w cron handlerze w `index.ts`) | — | składa dzienny raport z powyższych i wysyła na Telegram/mail przez Cron Trigger |
 
 Migracja D1 `src/db/migrations/006_ops_events.sql` dodaje audyt operacyjny (`ops_events`) dla briefingów i przyszłych akcji ops. Zgodnie z regułą repo: **jedna migracja na zmianę, nigdy nie usuwać starych.**
@@ -167,11 +167,12 @@ To odblokowuje bezpieczne dopisywanie przyszłych akcji typu `stripe_refund`, al
 - [x] `src/tools/polutek.ts` (read-only: summary + patron status) + rejestracja
 - [ ] Polutek: `app/api/ops/summary` (GET, bearer `OPS_API_TOKEN`) — wymagane do działania `polutek_daily_summary`
 - [x] Cron briefing (Telegram) w `src/index.ts` / `briefing.ts` — wysyłka raz dziennie przez KV, preview pod `/api/briefing/polutek/preview`, audyt w `ops_events`
-- [ ] `src/tools/email-imap-smtp.ts` (IMAP/SMTP home.pl czytanie, SMTP wysyłanie, Resend monitoring)
+- [x] `src/tools/email-imap-smtp.ts` (Resend: sent/received, triage, wysyłka przez confirm; IMAP/SMTP home.pl pozostaje etapem wdrożeniowym jeśli ma być użyty zamiast Resend Receiving)
 - [x] Refaktor `agent-mode.ts` — wykonywalna kolejka `pending_actions` (§7)
 - [ ] Polutek: `app/api/ops/refund` (POST, refund + revoke przez canoniczne use-case'y)
-- [ ] `stripe_refund` przez `runAction`
-- [ ] Sekrety w Cloudflare (Stripe restricted, Clerk, Gmail/home.pl OAuth lub hasła aplikacji, Resend, POLUTEK_OPS_*)
+- [x] `stripe_refund` przez `runAction` po stronie Bolka — zleca kanoniczne `/api/ops/refund`, więc nadal wymaga wdrożenia endpointu w Polutku
+- [x] Status sekretów w Bolku: `polutek_config_status` i `/api/config/polutek/status` pokazują gotowość bez ujawniania wartości
+- [ ] Sekrety w Cloudflare/Vercel faktycznie ustawione produkcyjnie (Stripe restricted, Clerk, home.pl/Resend, POLUTEK_OPS_*, OPS_API_TOKEN)
 - [ ] `OPS_API_TOKEN` w env Polutka na Vercelu
 
 ---

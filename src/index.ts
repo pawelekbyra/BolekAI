@@ -5,6 +5,7 @@ import { handleUpdate, send } from './telegram'
 import { orchestrateStream } from './orchestrator'
 import { runPendingTasks } from './agents/runner'
 import { buildPolutekBriefing, sendDailyPolutekBriefing } from './briefing'
+import { buildPolutekConfigStatus } from './tools/polutek'
 
 const app = new Hono<{ Bindings: Env }>()
 
@@ -64,6 +65,10 @@ app.get('/api/characters/messages', async (c) => {
 app.get('/api/briefing/polutek/preview', async (c) => {
   const briefing = await buildPolutekBriefing(c.env)
   return c.text(briefing)
+})
+
+app.get('/api/config/polutek/status', (c) => {
+  return c.json(buildPolutekConfigStatus(c.env))
 })
 
 app.get('/api/ops/events', async (c) => {

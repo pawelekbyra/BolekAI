@@ -1,5 +1,6 @@
 import type { Env } from '../env'
 import type { ToolDefinition } from './index'
+import { runAction, type ActionExecutionOptions } from '../agent-mode'
 
 const STRIPE = 'https://api.stripe.com/v1'
 const DAY_SECONDS = 24 * 60 * 60
@@ -47,6 +48,12 @@ type Args = {
   limit?: number
 }
 
+type StripeRefundArgs = {
+  paymentId?: string
+  revokePatron?: boolean
+  reason?: string
+}
+
 export const stripeTools: ToolDefinition[] = [
   {
     name: 'stripe_daily_summary',
@@ -79,6 +86,19 @@ export const stripeTools: ToolDefinition[] = [
     },
   },
   {
+    name: 'stripe_refund',
+    description: 'Akcja finansowa: zleć refund w Stripe oraz opcjonalne cofnięcie patronatu przez kanoniczne ops-API Polutka. Zawsze wymaga confirm gate.',
+    parameters: {
+      type: 'object',
+      properties: {
+        paymentId: { type: 'string', description: 'Identyfikator płatności w Polutku/Stripe do refundu' },
+        revokePatron: { type: 'boolean', description: 'Czy ops-API Polutka ma cofnąć patronat razem z refundem; domyślnie true' },
+        reason: { type: 'string', description: 'Powód refundu do audytu operacyjnego' },
+      },
+      required: ['paymentId', 'reason'],
+    },
+  },
+  {
     name: 'stripe_disputes',
     description: 'Read-only: pokaż ostatnie spory/chargebacki Stripe. Wymaga STRIPE_KEY.',
     parameters: {
@@ -89,6 +109,39 @@ export const stripeTools: ToolDefinition[] = [
     },
   },
 ]
+
+
+function requirePolutekOpsConfig(env: Env): { baseUrl: string; token: string } | { error: string } {
+  if (!env.POLUTEK_OPS_URL || !env.POLUTEK_OPS_TOKEN) {
+    return {
+      error: 'Brak POLUTEK_OPS_URL lub POLUTEK_OPS_TOKEN. Refund musi przejść przez kanoniczne ops-API Polutka, więc najpierw wdroż endpoint /api/ops/refund i dodaj sekrety.',
+    }
+  }
+
+  return {
+    baseUrl: env.POLUTEK_OPS_URL.replace(/\/+$/, ''),
+    token: env.POLUTEK_OPS_TOKEN,
+  }
+}
+
+async function polutekRefund(env: Env, args: Required<StripeRefundArgs>): Promise<string> {
+  const config = requirePolutekOpsConfig(env)
+  if ('error' in config) return config.error
+
+  const res = await fetch(`${config.baseUrl}/refund`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${config.token}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(args),
+  })
+
+  const body = await res.text()
+  if (!res.ok) throw new Error(`Polutek ops-API refund ${res.status}: ${body}`)
+  return body || 'Refund został zlecony przez ops-API Polutka.'
+}
 
 function requireStripeKey(env: Env): string | { error: string } {
   if (!env.STRIPE_KEY) {
@@ -142,14 +195,19 @@ function summarizeCharges(charges: StripeCharge[]) {
   }
 }
 
-export async function executeStripeTool(name: string, args: unknown, env: Env): Promise<unknown> {
-  const key = requireStripeKey(env)
-  if (typeof key !== 'string') return key
-
+export async function executeStripeTool(
+  name: string,
+  args: unknown,
+  env: Env,
+  chatId = 0,
+  options: ActionExecutionOptions = {}
+): Promise<unknown> {
   const a = args as Args
 
   switch (name) {
     case 'stripe_daily_summary': {
+      const key = requireStripeKey(env)
+      if (typeof key !== 'string') return key
       const days = clampLimit(a.days, 1, 30)
       const createdGte = toUnixSeconds(new Date(Date.now() - days * DAY_SECONDS * 1000))
       const charges = await stripeFetch<StripeList<StripeCharge>>(key, '/charges', {
@@ -166,6 +224,8 @@ export async function executeStripeTool(name: string, args: unknown, env: Env): 
     }
 
     case 'stripe_failed_payments': {
+      const key = requireStripeKey(env)
+      if (typeof key !== 'string') return key
       const limit = clampLimit(a.limit, 10, 25)
       const charges = await stripeFetch<StripeList<StripeCharge>>(key, '/charges', { limit })
       return charges.data
@@ -181,6 +241,8 @@ export async function executeStripeTool(name: string, args: unknown, env: Env): 
     }
 
     case 'stripe_pending_payments': {
+      const key = requireStripeKey(env)
+      if (typeof key !== 'string') return key
       const limit = clampLimit(a.limit, 10, 25)
       const intents = await stripeFetch<StripeList<StripePaymentIntent>>(key, '/payment_intents', { limit })
       return intents.data
@@ -195,7 +257,31 @@ export async function executeStripeTool(name: string, args: unknown, env: Env): 
         }))
     }
 
+
+    case 'stripe_refund': {
+      const refundArgs = (args ?? {}) as StripeRefundArgs
+      if (!refundArgs.paymentId) return { error: 'Brak paymentId — podaj identyfikator płatności do refundu.' }
+      if (!refundArgs.reason) return { error: 'Brak reason — podaj powód refundu do audytu.' }
+
+      const normalized: Required<StripeRefundArgs> = {
+        paymentId: refundArgs.paymentId,
+        revokePatron: refundArgs.revokePatron ?? true,
+        reason: refundArgs.reason,
+      }
+
+      return runAction({
+        env,
+        chatId,
+        description: `refund płatności ${normalized.paymentId}${normalized.revokePatron ? ' + cofnięcie patronatu' : ''}`,
+        intent: { tool: name, args: normalized },
+        approved: options.approved,
+        action: () => polutekRefund(env, normalized),
+      })
+    }
+
     case 'stripe_disputes': {
+      const key = requireStripeKey(env)
+      if (typeof key !== 'string') return key
       const limit = clampLimit(a.limit, 10, 25)
       const disputes = await stripeFetch<StripeList<StripeDispute>>(key, '/disputes', { limit })
       return disputes.data.map((d) => ({
