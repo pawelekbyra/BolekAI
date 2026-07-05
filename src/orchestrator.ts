@@ -1,13 +1,21 @@
 import type { Env } from './env'
 import { getHistory, saveMessage } from './memory'
 import { tools, executeTool } from './tools'
+import { buildPolutekConfigStatus } from './tools/polutek'
 import { getAllFacts } from './tools/facts'
 
 const BASE_SYSTEM_PROMPT = `Jesteś AGENT BOLEK — osobisty asystent AI swojego właściciela.
 Rozmawiasz wyłącznie po polsku. Jesteś konkretny, bezpośredni i pomocny.
 Masz dostęp do narzędzi: zadania, notatki, przypomnienia, pamięć o właścicielu oraz przeglądanie internetu.
 Gdy użytkownik chce coś zapamiętać, zapisać, przypomnieć lub sprawdzić — użyj narzędzia.
-Gdy pytanie dotyczy aktualnych informacji, newsów, cen, dokumentacji, ofert lub faktów które mogły się zmienić — użyj web_search albo web_fetch i oprzyj odpowiedź na wynikach.
+Gdy pytanie dotyczy aktualnych informacji, newsów, cen, dokumentacji, ofert lub faktów które mogły się zmienić — użyj web_search, web_fetch albo web_research i oprzyj odpowiedź na wynikach.
+Do prostego sprawdzenia użyj web_search/web_fetch. Do porównania kilku źródeł, rekomendacji zakupowej/technicznej albo decyzji wymagającej większej pewności użyj web_research.
+Po każdym researchu internetowym cytuj źródła w finalnej odpowiedzi w formacie:
+Według źródeł:
+- domena — krótki wniosek (URL)
+- domena — krótki wniosek (URL)
+Moja rekomendacja: ...
+Pewność: niska/średnia/wysoka — krótko dlaczego.
 Nigdy nie zmyślaj informacji które powinny być w bazie albo w internecie — zawsze użyj narzędzia.
 Gdy dowiadujesz się czegoś ważnego o właścicielu — zapisz to przez fact_save.`
 
@@ -121,6 +129,86 @@ function runAI(env: Env, messages: ChatMessage[], withTools = true): Promise<AIR
   return env.ANTHROPIC_API_KEY ? runClaude(env, messages, withTools) : runWorkersAI(env, messages, withTools)
 }
 
+
+type WebResearchSource = {
+  title?: string
+  url?: string
+  snippet?: string
+  excerpt?: string
+  error?: string
+}
+
+type WebResearchResult = {
+  query?: string
+  confidence?: string
+  sources?: WebResearchSource[]
+  comparison?: string[]
+  source_count?: number
+}
+
+function sourceDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return url
+  }
+}
+
+function compactEvidence(source: WebResearchSource): string {
+  const text = (source.excerpt || source.snippet || source.error || 'brak streszczenia')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return text.length > 240 ? `${text.slice(0, 240)}…` : text
+}
+
+function formatResearchAnswer(result: WebResearchResult): string {
+  const sources = result.sources?.filter((source) => source.url) ?? []
+  const usable = sources.filter((source) => !source.error)
+  const confidence = result.confidence === 'high' ? 'wysoka' : result.confidence === 'medium' ? 'średnia' : 'niska'
+
+  return [
+    `Według źródeł:`,
+    ...sources.map((source) => `- ${sourceDomain(source.url!)} — ${compactEvidence(source)} (${source.url})`),
+    '',
+    `Moja rekomendacja: oprzyj decyzję na ${usable.length} poprawnie pobranych źródłach i traktuj powyższe cytaty jako punkt startowy do finalnej decyzji.`,
+    `Pewność: ${confidence} — poprawnie pobrano ${usable.length}/${sources.length} źródeł.`,
+  ].join('\n')
+}
+
+async function handleOperatorCommand(userText: string, chatId: number, env: Env): Promise<string | null> {
+  const text = userText.trim()
+  if (!text.startsWith('/')) return null
+
+  const [command, ...rest] = text.split(/\s+/)
+  const arg = rest.join(' ').trim()
+
+  switch (command.toLowerCase()) {
+    case '/research': {
+      if (!arg) return 'Użycie: /research temat do sprawdzenia'
+      const result = await executeTool('web_research', { query: arg, limit: 5 }, env.DB, chatId, env) as WebResearchResult
+      return formatResearchAnswer(result)
+    }
+    case '/status': {
+      const polutek = buildPolutekConfigStatus(env)
+      return [
+        'Status Bolka:',
+        `- model: ${env.ANTHROPIC_API_KEY ? 'Claude' : env.AI_MODEL}`,
+        `- Polutek config: ${polutek.ready ? '✅ gotowy' : '⚠️ wymaga konfiguracji'}`,
+        `- KV cache: ${env.KV ? '✅ dostępny' : '❌ brak'}`,
+      ].join('\n')
+    }
+    case '/help':
+      return [
+        'Komendy operatorskie:',
+        '- /research temat — głęboki research z linkami i pewnością',
+        '- /status — szybki status Bolka i konfiguracji',
+        '- /help — ta lista',
+      ].join('\n')
+    default:
+      return null
+  }
+}
+
 // ─── Core ─────────────────────────────────────────────────────────────────────
 
 async function buildMessages(userText: string, chatId: number, env: Env): Promise<ChatMessage[]> {
@@ -149,6 +237,12 @@ async function resolveToolCalls(first: AIResponse, messages: ChatMessage[], chat
 
 export async function orchestrate(userText: string, chatId: number, env: Env): Promise<string> {
   await saveMessage(env.DB, chatId, 'user', userText)
+  const commandReply = await handleOperatorCommand(userText, chatId, env)
+  if (commandReply) {
+    await saveMessage(env.DB, chatId, 'assistant', commandReply)
+    return commandReply
+  }
+
   const messages = await buildMessages(userText, chatId, env)
   const first = await runAI(env, messages)
   const reply = await resolveToolCalls(first, messages, chatId, env)
@@ -158,9 +252,12 @@ export async function orchestrate(userText: string, chatId: number, env: Env): P
 
 export async function orchestrateStream(userText: string, chatId: number, env: Env): Promise<{ stream: ReadableStream }> {
   await saveMessage(env.DB, chatId, 'user', userText)
-  const messages = await buildMessages(userText, chatId, env)
-  const first = await runAI(env, messages)
-  const reply = await resolveToolCalls(first, messages, chatId, env)
+  const commandReply = await handleOperatorCommand(userText, chatId, env)
+  const reply = commandReply ?? await (async () => {
+    const messages = await buildMessages(userText, chatId, env)
+    const first = await runAI(env, messages)
+    return resolveToolCalls(first, messages, chatId, env)
+  })()
   await saveMessage(env.DB, chatId, 'assistant', reply)
 
   const encoder = new TextEncoder()

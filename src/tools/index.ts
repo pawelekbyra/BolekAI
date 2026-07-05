@@ -63,6 +63,6 @@ export async function executeTool(
   if (name.startsWith('clerk_'))     return executeClerkTool(name, args, env!)
   if (name.startsWith('polutek_'))   return executePolutekTool(name, args, env!)
   if (name.startsWith('email_'))     return executeEmailTool(name, args, env!, chatId, options)
-  if (name.startsWith('web_'))       return executeWebTool(name, args)
+  if (name.startsWith('web_'))       return executeWebTool(name, args, env)
   throw new Error(`Unknown tool: ${name}`)
 }
