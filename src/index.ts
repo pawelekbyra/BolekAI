@@ -6,10 +6,13 @@ import { orchestrateStream } from './orchestrator'
 import { runPendingTasks } from './agents/runner'
 import { buildPolutekBriefing, sendDailyPolutekBriefing } from './briefing'
 import { buildPolutekConfigStatus } from './tools/polutek'
+import { handleAdapterOptions, handleOpenAIChatCompletions } from './openai-adapter'
 
 const app = new Hono<{ Bindings: Env }>()
 
 app.use('/api/*', cors())
+
+app.options('/v1/chat/completions', handleAdapterOptions)
 
 app.get('/', (c) => c.text('AGENT BOLEK online ✓'))
 
@@ -21,6 +24,8 @@ app.post('/webhook/:secret', async (c) => {
   await handleUpdate(update, c.env)
   return c.text('ok')
 })
+
+app.post('/v1/chat/completions', handleOpenAIChatCompletions)
 
 app.post('/api/chat', async (c) => {
   const { messages, chatId = 0 } = await c.req.json<{

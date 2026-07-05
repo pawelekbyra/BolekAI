@@ -49,9 +49,11 @@ Bolek automatycznie przełącza się na Claude gdy klucz jest dostępny.
 - vercel.com → Settings → Tokens → Create
 - Cloudflare → kulfon → Settings → Variables and Secrets → dodaj `VERCEL_TOKEN`
 
-### 6. LibreChat / BolekCzat adapter (planowane)
-- `BOLEK_OPENAI_ADAPTER_KEY` — bearer token dla przyszłego endpointu `/v1/chat/completions`
-- `BOLEK_CORS_ORIGIN` — dozwolony origin dla BolekCzat/LibreChat
+### 6. LibreChat / BolekCzat adapter
+- `BOLEK_OPENAI_ADAPTER_KEY` — wymagany bearer token dla endpointu `/v1/chat/completions`
+- `BOLEK_CORS_ORIGIN` — opcjonalny, pojedynczy dozwolony origin dla BolekCzat/LibreChat
+
+Przykład konfiguracji LibreChat: Base URL `https://kulfon.pawel-perfect.workers.dev/v1`, endpoint `/chat/completions`, model `bolek`, API key ustawiony na wartość `BOLEK_OPENAI_ADAPTER_KEY`. Szczegóły: [`docs/LIBRECHAT-INTEGRATION.md`](docs/LIBRECHAT-INTEGRATION.md).
 
 ---
 
@@ -65,7 +67,7 @@ Bolek automatycznie przełącza się na Claude gdy klucz jest dostępny.
 | KV | `bolek-kv` |
 | Model AI | Claude Haiku (gdy klucz) / llama-3.2-3b (fallback) |
 | Webhook | `/webhook/zajebiscie` |
-| Planowany web UI | `pawelekbyra/BolekCzat` przez OpenAI-compatible adapter |
+| Planowany web UI | `pawelekbyra/BolekCzat` przez OpenAI-compatible adapter `/v1/chat/completions` |
 
 ---
 
