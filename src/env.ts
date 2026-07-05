@@ -12,4 +12,7 @@ export type Env = {
   CLERK_SECRET_KEY?: string
   POLUTEK_OPS_URL?: string
   POLUTEK_OPS_TOKEN?: string
+  POLUTEK_BRIEFING_CHAT_ID?: string
+  POLUTEK_BRIEFING_HOUR_UTC?: string
+  POLUTEK_VERCEL_PROJECT?: string
 }
