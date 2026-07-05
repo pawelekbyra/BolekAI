@@ -11,6 +11,7 @@ import { stripeTools, executeStripeTool } from './stripe'
 import { clerkTools, executeClerkTool } from './clerk'
 import { polutekTools, executePolutekTool } from './polutek'
 import { emailTools, executeEmailTool } from './email-imap-smtp'
+import { webTools, executeWebTool } from './web'
 import type { Env } from '../env'
 import type { ActionExecutionOptions } from '../agent-mode'
 
@@ -38,6 +39,7 @@ export const tools: ToolDefinition[] = [
   ...clerkTools,
   ...polutekTools,
   ...emailTools,
+  ...webTools,
 ]
 
 export async function executeTool(
@@ -61,5 +63,6 @@ export async function executeTool(
   if (name.startsWith('clerk_'))     return executeClerkTool(name, args, env!)
   if (name.startsWith('polutek_'))   return executePolutekTool(name, args, env!)
   if (name.startsWith('email_'))     return executeEmailTool(name, args, env!, chatId, options)
+  if (name.startsWith('web_'))       return executeWebTool(name, args)
   throw new Error(`Unknown tool: ${name}`)
 }

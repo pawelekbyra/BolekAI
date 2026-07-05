@@ -87,6 +87,14 @@ Bolek pamięta historię rozmów i fakty o Tobie na zawsze:
 ```
 Bolek sam napisze do Ciebie o wyznaczonej godzinie przez Telegram.
 
+### Internet
+```
+"sprawdź najnowsze informacje o Cloudflare Workers"
+"wyszukaj opinie o narzędziu X"
+"streść stronę https://example.com/artykul"
+```
+Bolek umie wyszukiwać aktualne informacje w sieci i pobierać treść konkretnych stron WWW. Używa internetu szczególnie wtedy, gdy pytanie dotyczy newsów, cen, dokumentacji, ofert lub faktów które mogły się zmienić.
+
 ### GitHub (wymaga GITHUB_TOKEN)
 ```
 "jakie mam repozytoria?"
@@ -110,6 +118,14 @@ Bolek sam napisze do Ciebie o wyznaczonej godzinie przez Telegram.
 "dodaj obsługę błędów do funkcji fetchUser i commituj do repo"
 ```
 
+
+### Poczta i support Polutka
+```
+"pokaż ostatnie maile supportowe"
+"zrób triage skrzynki kontakt@polutek.pl"
+"odpisz klientowi na ten wątek: ..."
+```
+Bolek potrafi monitorować wiadomości przez Resend Receiving, kategoryzować support i wysyłać odpowiedzi po bramce zgody. Wymaga `RESEND_API_KEY` oraz `EMAIL_SUPPORT_FROM` do wysyłki.
 
 ### Polutek ops-API (read-only)
 ```
@@ -231,6 +247,15 @@ Wszystkie ustawiane w Cloudflare → kulfon → Settings → Variables and Secre
 | `CLERK_SECRET_KEY` | nie | Read-only monitoring użytkowników Clerk dla Polutka |
 | `POLUTEK_OPS_URL` | nie | Bazowy URL ops-API Polutka, np. `https://polutek.pl/api/ops` |
 | `POLUTEK_OPS_TOKEN` | nie | Bearer token do ops-API Polutka |
+| `POLUTEK_BRIEFING_CHAT_ID` | nie | Chat ID do porannego briefingu Polutka |
+| `POLUTEK_BRIEFING_HOUR_UTC` | nie | Godzina UTC wysyłki briefingu, domyślnie `7` |
+| `POLUTEK_VERCEL_PROJECT` | nie | Nazwa projektu Vercel używana w briefingu Polutka |
+| `RESEND_API_KEY` | nie | Monitoring maili Resend i wysyłka odpowiedzi supportowych |
+| `EMAIL_SUPPORT_FROM` | nie | Adres nadawcy odpowiedzi supportowych, np. `kontakt@polutek.pl` |
+| `EMAIL_IMAP_HOST` / `EMAIL_IMAP_PORT` | nie | Opcjonalna konfiguracja IMAP skrzynki supportowej |
+| `EMAIL_IMAP_USER` / `EMAIL_IMAP_PASSWORD` | nie | Opcjonalne dane logowania IMAP |
+| `EMAIL_SMTP_HOST` / `EMAIL_SMTP_PORT` | nie | Opcjonalna konfiguracja SMTP skrzynki supportowej |
+| `EMAIL_SMTP_USER` / `EMAIL_SMTP_PASSWORD` | nie | Opcjonalne dane logowania SMTP |
 
 ---
 
@@ -252,9 +277,11 @@ src/
     github.ts         # GitHub API
     vercel.ts         # Vercel API
     coding.ts         # Zlecanie zadań kodowania Claude AI
+    web.ts            # Wyszukiwanie w internecie i pobieranie stron WWW
     stripe.ts         # Read-only monitoring płatności Stripe dla Polutka
     clerk.ts          # Read-only monitoring użytkowników Clerk dla Polutka
     polutek.ts        # Read-only klient ops-API Polutka
+    email-imap-smtp.ts # Poczta supportowa: Resend, IMAP/SMTP
     agents.ts         # Multi-agent system
     characters.ts     # Postacie z osobowościami
   agents/
@@ -266,6 +293,8 @@ src/
     002_memory_reminders.sql
     003_agents.sql
     004_characters.sql
+    005_pending_actions.sql
+    006_ops_events.sql
 
 web/                  # Interfejs webowy (Next.js)
   app/
