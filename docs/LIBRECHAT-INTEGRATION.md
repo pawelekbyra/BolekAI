@@ -1,6 +1,6 @@
 # Agent Bolek ↔ LibreChat / BolekCzat
 
-> **Status:** decyzja architektoniczna / plan do wdrożenia.  
+> **Status:** adapter `/v1/chat/completions` wdrożony w `kulfon`; LibreChat/BolekCzat pozostaje osobnym repo i klientem.
 > Bolek zostaje backendem i agentem operacyjnym. LibreChat, w forku `pawelekbyra/BolekCzat`, ma zostać docelowym web UI.
 
 ---
@@ -21,7 +21,7 @@ pawelekbyra/kulfon
 = Polutek ops
 = agent-mode / bramka zgody
 = /api/chat
-= przyszły adapter OpenAI-compatible
+= adapter OpenAI-compatible `/v1/chat/completions`
 
 pawelekbyra/BolekCzat
 = fork LibreChat
@@ -103,7 +103,7 @@ API key: BOLEK_OPENAI_ADAPTER_KEY
 
 ## 5. Wymagania adaptera
 
-Adapter w `kulfon` powinien:
+Adapter w `kulfon` obsługuje:
 
 1. Przyjmować OpenAI-compatible body:
 
@@ -151,6 +151,53 @@ Authorization: Bearer <BOLEK_OPENAI_ADAPTER_KEY>
 ```txt
 BOLEK_CORS_ORIGIN
 ```
+
+### 5.1. Uruchomiony endpoint
+
+```txt
+POST /v1/chat/completions
+Authorization: Bearer <BOLEK_OPENAI_ADAPTER_KEY>
+Content-Type: application/json
+```
+
+Zachowanie:
+
+- `stream: false` albo brak `stream` zwraca obiekt `chat.completion` zgodny z OpenAI.
+- `stream: true` zwraca SSE z chunkami `chat.completion.chunk` oraz końcowym `data: [DONE]`.
+- `system` i `tool` z requestu są zamieniane na bezpieczny, niezaufany kontekst tekstowy; klient nie może w ten sposób wykonać narzędzia ani ominąć approvali Bolka.
+- Brak lub błędny bearer token zwraca OpenAI-style `401`.
+- Brak `BOLEK_OPENAI_ADAPTER_KEY` w deploymentcie zwraca `503 missing_configuration`; klucz nie jest logowany ani zwracany.
+- CORS jest dodawany tylko dla originu równego `BOLEK_CORS_ORIGIN`.
+
+### 5.2. Przykładowy curl
+
+```bash
+curl https://kulfon.pawel-perfect.workers.dev/v1/chat/completions \
+  -H "Authorization: Bearer $BOLEK_OPENAI_ADAPTER_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "bolek",
+    "messages": [
+      { "role": "user", "content": "Cześć Bolek, podsumuj co umiesz." }
+    ]
+  }'
+```
+
+### 5.3. Lokalne testowanie
+
+```bash
+BOLEK_OPENAI_ADAPTER_KEY=local-dev-key npm run dev
+```
+
+Następnie wyślij request na:
+
+```txt
+http://localhost:8787/v1/chat/completions
+```
+
+### 5.4. Notatki produkcyjne
+
+W produkcji ustaw `BOLEK_OPENAI_ADAPTER_KEY` jako sekret Cloudflare Workera. Jeśli przeglądarkowy klient LibreChat/BolekCzat ma wołać Workera bez pośredniego backendu, ustaw także dokładny `BOLEK_CORS_ORIGIN`, np. origin deploymentu BolekCzat. Nie przekazuj LibreChatowi sekretów Stripe, Clerk, Vercel, Polutek, Resend ani haseł mailowych — LibreChat zna tylko klucz adaptera Bolka.
 
 ---
 
