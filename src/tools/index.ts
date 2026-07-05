@@ -12,6 +12,9 @@ import { clerkTools, executeClerkTool } from './clerk'
 import { polutekTools, executePolutekTool } from './polutek'
 import { emailTools, executeEmailTool } from './email-imap-smtp'
 import { webTools, executeWebTool } from './web'
+import { chatServiceTools, executeChatServiceTool } from './external/chat-service'
+import { workflowServiceTools, executeWorkflowServiceTool } from './external/workflow-service'
+import { knowledgeServiceTools, executeKnowledgeServiceTool } from './external/knowledge-service'
 import type { Env } from '../env'
 import type { ActionExecutionOptions } from '../agent-mode'
 
@@ -40,6 +43,10 @@ export const tools: ToolDefinition[] = [
   ...polutekTools,
   ...emailTools,
   ...webTools,
+  // External services (tri-tier architecture)
+  ...chatServiceTools,
+  ...workflowServiceTools,
+  ...knowledgeServiceTools,
 ]
 
 export async function executeTool(
@@ -64,5 +71,9 @@ export async function executeTool(
   if (name.startsWith('polutek_'))   return executePolutekTool(name, args, env!)
   if (name.startsWith('email_'))     return executeEmailTool(name, args, env!, chatId, options)
   if (name.startsWith('web_'))       return executeWebTool(name, args, env)
+  // External services (tri-tier architecture)
+  if (name.startsWith('chat_'))      return executeChatServiceTool(name, args, env!)
+  if (name.startsWith('flow_'))      return executeWorkflowServiceTool(name, args, env!)
+  if (name.startsWith('kb_'))        return executeKnowledgeServiceTool(name, args, env!)
   throw new Error(`Unknown tool: ${name}`)
 }

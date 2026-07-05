@@ -8,19 +8,31 @@ Docelowy nowy web UI Bolka powstaje jako osobny fork LibreChat: **[`pawelekbyra/
 
 ---
 
-## Jak to działa
+## Architektura
+
+Bolek to **sieć wyspecjalizowanych serwisów**, nie monolith.
 
 ```
-Ty (Telegram lub web) → Cloudflare Worker (kulfon) → AI (Claude lub llama) → Narzędzia → Baza D1
+                  ┌─────────────────────────┐
+                  │  BolekAI (Cloudflare)   │
+                  │  Mózg + Orchestrator    │
+                  └──────┬────┬────┬────────┘
+                         │    │    │
+           ┌─────────────┘    │    └─────────────┐
+           ▼                  ▼                  ▼
+      ┌─────────────┐   ┌──────────────┐   ┌──────────────┐
+      │ BolekCzat   │   │ BolekFlow    │   │  BolekKB     │
+      │ (web UI)    │   │ (workflows)  │   │ (knowledge)  │
+      └─────────────┘   └──────────────┘   └──────────────┘
 ```
 
-Docelowo web może działać też tak:
+**Jak to działa:**
 
-```
-Ty → BolekCzat / LibreChat → /v1/chat/completions w kulfonie → Bolek → Narzędzia → Baza D1
-```
+Ty (Telegram lub BolekCzat) → piszesz do Bolka normalnym językiem → Agent parsuje intent → wybiera narzędzia (wbudowane lub serwisy) → woła ich przez HTTP → agreguje wyniki → odpowiada Ci.
 
-Piszesz do Bolka normalnym językiem. On rozumie o co chodzi, wybiera narzędzie i odpowiada. Historia rozmów jest zapisywana — Bolek pamięta poprzednie rozmowy i fakty o Tobie.
+Historia rozmów + pamięć o Tobie przechowywane w D1 — Bolek pamięta wszystko.
+
+**Plan integracji:** 📖 **[`docs/MULTI-AGENT-ARCHITECTURE.md`](docs/MULTI-AGENT-ARCHITECTURE.md)** — szczegółowy opis tri-tier architektury.
 
 ---
 
