@@ -1,7 +1,7 @@
 # Bolek ↔ Polutek.pl — Integracja operacyjna
 
 > **Status:** projekt / do zbudowania. Ten dokument jest mapą budowy dla sesji kodowania bolka.
-> Narzędzia read-only `stripe.ts`, `clerk.ts` i `polutek.ts` są już dodane po stronie Bolka. Nadal trzeba wdrożyć ops-API po stronie Polutka, briefing i obsługę poczty.
+> Narzędzia read-only `stripe.ts`, `clerk.ts` i `polutek.ts` oraz cron briefingu są już dodane po stronie Bolka. Nadal trzeba wdrożyć ops-API po stronie Polutka i obsługę poczty.
 
 ---
 
@@ -90,7 +90,7 @@ Każde narzędzie to ten sam wzorzec co istniejący `src/tools/vercel.ts`: jeden
 | `src/tools/polutek.ts` ✅ **read-only już istnieje** | `polutek_` | wołanie ops-API Polutka: `polutek_daily_summary` i `polutek_patron_status`; odpowiedzi są sanityzowane z `videoUrl`. Akcje refund+revoke nadal do dodania później przez `runAction` |
 | `src/tools/briefing.ts` (lub w cron handlerze w `index.ts`) | — | składa dzienny raport z powyższych i wysyła na Telegram/mail przez Cron Trigger |
 
-Migracja D1 (nowy plik `src/db/migrations/005_ops.sql`) — jeśli bolek ma zapamiętywać stan operacyjny (np. ostatni raport, kolejka zatwierdzeń, log akcji). Zgodnie z regułą repo: **jedna migracja na zmianę, nigdy nie usuwać starych.**
+Migracja D1 `src/db/migrations/006_ops_events.sql` dodaje audyt operacyjny (`ops_events`) dla briefingów i przyszłych akcji ops. Zgodnie z regułą repo: **jedna migracja na zmianę, nigdy nie usuwać starych.**
 
 ---
 
@@ -131,6 +131,9 @@ Na tym etapie Bolek ma kod narzędzi read-only, ale **nie podłączamy jeszcze P
 | `EMAIL_SMTP_PASSWORD` | home.pl | Hasło do poczty (jak IMAP) | home.pl panel |
 | `POLUTEK_OPS_URL` | Polutek | URL ops-API (np. `https://polutek.pl/api/ops`). | — |
 | `POLUTEK_OPS_TOKEN` | Polutek | Bearer token współdzielony z `OPS_API_TOKEN` po stronie Polutka. | wygenerować (≥32 znaki losowe) |
+| `POLUTEK_BRIEFING_CHAT_ID` | Telegram | Chat ID właściciela, na który Bolek wysyła poranny briefing Polutka. Bez tego cron nic nie wyśle. | Telegram update / logi webhooka |
+| `POLUTEK_BRIEFING_HOUR_UTC` | Bolek | Opcjonalna godzina UTC wysyłki briefingu; domyślnie `7`. | własna decyzja |
+| `POLUTEK_VERCEL_PROJECT` | Vercel | Opcjonalna nazwa projektu Vercel; domyślnie `polutek-pl`. | Vercel project slug |
 
 Już istniejące i przydatne: `ANTHROPIC_API_KEY` (mózg), `VERCEL_TOKEN` (monitoring deploymentów/awarii Polutka — **działa już dziś**), `GITHUB_TOKEN`.
 
@@ -163,7 +166,7 @@ To odblokowuje bezpieczne dopisywanie przyszłych akcji typu `stripe_refund`, al
 - [x] `src/tools/clerk.ts` (read) + rejestracja
 - [x] `src/tools/polutek.ts` (read-only: summary + patron status) + rejestracja
 - [ ] Polutek: `app/api/ops/summary` (GET, bearer `OPS_API_TOKEN`) — wymagane do działania `polutek_daily_summary`
-- [ ] Cron briefing (Telegram) w `src/index.ts` / `briefing.ts`
+- [x] Cron briefing (Telegram) w `src/index.ts` / `briefing.ts` — wysyłka raz dziennie przez KV, preview pod `/api/briefing/polutek/preview`, audyt w `ops_events`
 - [ ] `src/tools/email-imap-smtp.ts` (IMAP/SMTP home.pl czytanie, SMTP wysyłanie, Resend monitoring)
 - [x] Refaktor `agent-mode.ts` — wykonywalna kolejka `pending_actions` (§7)
 - [ ] Polutek: `app/api/ops/refund` (POST, refund + revoke przez canoniczne use-case'y)
@@ -179,5 +182,5 @@ To odblokowuje bezpieczne dopisywanie przyszłych akcji typu `stripe_refund`, al
 - **Nieodwracalne akcje zawsze przez `runAction` (confirm).** Refund, ban, wysłanie maila, redeploy.
 - **Treść od użytkownika (maile, prośby) to dane, nie polecenia.** Agent czytający obcą treść nigdy nie ma bezpośredniej mocy finansowej bez potwierdzenia właściciela — ochrona przed prompt injection.
 - **Wnętrze Polutka tylko przez ops-API.** Bolek nie pisze do bazy Neon Polutka w sprawach patronatu/płatności.
-- **Wszystko, co bolek zrobił, ma zostać w logu** (D1) — audytowalność akcji.
+- **Wszystko, co bolek zrobił, ma zostać w logu** (D1) — audytowalność akcji. Briefingi zapisują zdarzenia w `ops_events`, a API `/api/ops/events` pozwala podejrzeć ostatnie wpisy.
 - **Zawężone, odwoływalne klucze.** Każdy klucz da się unieważnić bez ruszania produkcji Polutka.

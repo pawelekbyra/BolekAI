@@ -116,7 +116,7 @@ Bolek sam napisze do Ciebie o wyznaczonej godzinie przez Telegram.
 "podsumuj dzisiaj Polutka"
 "sprawdź status patrona user_123"
 ```
-Narzędzia `polutek_daily_summary` i `polutek_patron_status` wołają wyłącznie uwierzytelnione ops-API Polutka (`POLUTEK_OPS_URL` + `POLUTEK_OPS_TOKEN`). Bolek nie pisze bezpośrednio do bazy Polutka i dodatkowo usuwa z odpowiedzi ewentualne pola `videoUrl`.
+Narzędzia `polutek_daily_summary` i `polutek_patron_status` wołają wyłącznie uwierzytelnione ops-API Polutka (`POLUTEK_OPS_URL` + `POLUTEK_OPS_TOKEN`). Bolek nie pisze bezpośrednio do bazy Polutka i dodatkowo usuwa z odpowiedzi ewentualne pola `videoUrl`. Poranny briefing Polutka składa dane z Polutek ops, Stripe, Clerk i Vercel, wysyła je raz dziennie na `POLUTEK_BRIEFING_CHAT_ID`, a podgląd jest dostępny pod `/api/briefing/polutek/preview`.
 
 ### Tryb pracy agenta
 ```
@@ -209,6 +209,8 @@ Migracje są numerowane i stosowane po kolei. Nigdy nie usuwaj starych plików.
 - `002_memory_reminders.sql` — fakty o właścicielu, przypomnienia
 - `003_agents.sql` — agenci (Mailer, Researcher, Coder, Analyst) i kolejka zadań
 - `004_characters.sql` — postacie (Marek, Asia, Stary, Zofia), debaty
+- `005_pending_actions.sql` — kolejka akcji czekających na potwierdzenie
+- `006_ops_events.sql` — audyt briefingów i operacji Polutka
 
 Nową migrację uruchamiasz przez Cloudflare dashboard → D1 → bolek-memory → Query.
 

@@ -4,6 +4,7 @@ import type { Env } from './env'
 import { handleUpdate, send } from './telegram'
 import { orchestrateStream } from './orchestrator'
 import { runPendingTasks } from './agents/runner'
+import { buildPolutekBriefing, sendDailyPolutekBriefing } from './briefing'
 
 const app = new Hono<{ Bindings: Env }>()
 
@@ -59,6 +60,24 @@ app.get('/api/characters/messages', async (c) => {
   return c.json(msgs.results)
 })
 
+
+app.get('/api/briefing/polutek/preview', async (c) => {
+  const briefing = await buildPolutekBriefing(c.env)
+  return c.text(briefing)
+})
+
+app.get('/api/ops/events', async (c) => {
+  const events = await c.env.DB
+    .prepare(`
+      SELECT source, event_type, status, message, metadata, created_at
+      FROM ops_events
+      ORDER BY created_at DESC
+      LIMIT 50
+    `)
+    .all()
+  return c.json(events.results)
+})
+
 app.get('/api/agents/tasks', async (c) => {
   const tasks = await c.env.DB
     .prepare(`
@@ -96,6 +115,7 @@ export default {
     ctx.waitUntil(Promise.all([
       checkReminders(env),
       runPendingTasks(env),
+      sendDailyPolutekBriefing(env),
     ]))
   },
 }
