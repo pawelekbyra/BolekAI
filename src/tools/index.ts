@@ -17,7 +17,11 @@ import { workflowServiceTools, executeWorkflowServiceTool } from './external/wor
 import { knowledgeServiceTools, executeKnowledgeServiceTool } from './external/knowledge-service'
 import type { Env } from '../env'
 import type { ActionExecutionOptions } from '../agent-mode'
+import type { RiskLevel } from '../security/types'
 export type { RiskLevel } from '../security/types'
+
+export const DEFAULT_TOOL_RISK_LEVEL: RiskLevel = 'low'
+export const DEFAULT_TOOL_SIDE_EFFECT = false
 
 export type ToolDefinition = {
   name: string
@@ -26,6 +30,20 @@ export type ToolDefinition = {
     type: 'object'
     properties: Record<string, { type: string; description: string }>
     required?: string[]
+  }
+  riskLevel?: RiskLevel
+  sideEffect?: boolean
+  requiresApproval?: boolean
+}
+
+export type ToolSafetyMetadata = Required<Pick<ToolDefinition, 'riskLevel' | 'sideEffect'>> &
+  Pick<ToolDefinition, 'requiresApproval'>
+
+export function getToolSafetyMetadata(tool: ToolDefinition): ToolSafetyMetadata {
+  return {
+    riskLevel: tool.riskLevel ?? DEFAULT_TOOL_RISK_LEVEL,
+    sideEffect: tool.sideEffect ?? DEFAULT_TOOL_SIDE_EFFECT,
+    requiresApproval: tool.requiresApproval,
   }
 }
 

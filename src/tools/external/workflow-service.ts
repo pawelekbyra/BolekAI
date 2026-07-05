@@ -1,6 +1,7 @@
 import type { Env } from '../../env'
+import type { ToolDefinition } from '../index'
 
-export const workflowServiceTools = [
+export const workflowServiceTools: ToolDefinition[] = [
   {
     name: 'flow_execute_workflow',
     description: 'Execute a workflow in BolekFlow',

@@ -47,13 +47,13 @@ Cel: zatrzymać ryzyko zanim dojdą kolejne mocne narzędzia.
   - [x] Typ jest eksportowany z miejsca dostępnego dla tool registry i policy.
   - [x] TypeScript widzi go bez cyklicznych importów.
 
-- [ ] Rozszerzyć `ToolDefinition` o podstawowe metadane bezpieczeństwa.
+- [x] Rozszerzyć `ToolDefinition` o podstawowe metadane bezpieczeństwa.
 
   Definition of Done:
-  - [ ] `ToolDefinition` zawiera `riskLevel`.
-  - [ ] `ToolDefinition` zawiera `sideEffect`.
-  - [ ] `ToolDefinition` zawiera opcjonalne `requiresApproval`.
-  - [ ] Istnieją domyślne wartości albo wszystkie istniejące toole zostały uzupełnione.
+  - [x] `ToolDefinition` zawiera `riskLevel`.
+  - [x] `ToolDefinition` zawiera `sideEffect`.
+  - [x] `ToolDefinition` zawiera opcjonalne `requiresApproval`.
+  - [x] Istnieją domyślne wartości albo wszystkie istniejące toole zostały uzupełnione.
 
 - [ ] Sklasyfikować istniejące toole według ryzyka.
 
