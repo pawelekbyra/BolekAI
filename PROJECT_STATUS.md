@@ -35,18 +35,33 @@
 
 ---
 
-## 🔄 In Progress (Phase 1B — Testing & Validation)
+## ✅ Completed (Phase 1B — Testing & Validation)
+
+- [x] **Service health checks**
+  - [x] Add /health endpoint to verify service connectivity (/health returns status of all 3 services)
+  - [x] Graceful degradation when service unavailable (returns 503 if any service down)
+  - [x] Retry logic with exponential backoff (3 retries, 100-5000ms delay)
+  - [x] Timeout protection (5-30s per service)
+  - [x] Clear error messages for debugging
+
+- [x] **Error handling improvements**
+  - [x] Automatic retry on transient failures (5xx errors)
+  - [x] Prevent thundering herd with exponential backoff
+  - [x] Fail fast with timeout protection
+  - [x] Graceful error responses when services unconfigured
+
+- [x] **Service client enhancements**
+  - [x] Chat service with retry (15s timeout, 2 retries)
+  - [x] Workflow service with retry (30s timeout, 3 retries)
+  - [x] Knowledge service with retry (10s timeout, 3 retries)
+
+## 🔄 In Progress (Phase 1C — Local Integration Testing)
 
 - [ ] **Local integration testing**
   - [ ] Test chat_send_message with mock BolekCzat
   - [ ] Test flow_execute with mock BolekFlow
   - [ ] Test kb_query with mock BolekKB
-  - [ ] Error handling edge cases (service down, timeout, malformed response)
-
-- [ ] **Service health checks**
-  - [ ] Add /health endpoint to verify service connectivity
-  - [ ] Graceful degradation when service unavailable
-  - [ ] Retry logic with exponential backoff
+  - [ ] Verify retry logic works (simulate service timeouts)
 
 - [ ] **Agent flow testing**
   - [ ] User asks question → agent decides to use KB → returns results with citations
@@ -82,33 +97,46 @@
 
 ## 📋 Next Steps for Agents
 
-### If working on Phase 1B (Testing):
+### Phase 1C: Local Integration Testing
 
-1. **Set up local test environment:**
+1. **Start local services (in separate terminals):**
    ```bash
    # Terminal 1: BolekAI
    cd /home/user/BolekAI && npm run dev
    
-   # Terminal 2: Mock services
-   # (or start real services if available)
+   # Terminal 2: BolekCzat wrapper
+   cd /home/user/BolekCzat/wrapper && npm run dev
+   
+   # Terminal 3: BolekFlow wrapper
+   cd /home/user/BolekFlow/wrapper && npm run dev
+   
+   # Terminal 4: BolekKB wrapper
+   cd /home/user/BolekKB/wrapper && npm run dev
    ```
 
-2. **Run integration tests:**
-   - Test chat_send_message
-   - Test flow_execute
-   - Test kb_query
-   - Verify error handling
-
-3. **Update PROJECT_STATUS.md** with findings:
-   - What works ✅
-   - What breaks ❌
-   - What needs fixing 🔧
-
-4. **Commit results:**
+2. **Test health endpoint:**
    ```bash
-   git commit -m "test: verify service integration works"
-   git push -u origin claude/multi-repo-agent-j3bo9v
+   curl http://localhost:8787/health
+   # Should return status of all 3 services
    ```
+
+3. **Run service integration tests:**
+   - Create test script in `src/__tests__/integration.test.ts`
+   - Test each service client with real services
+   - Verify retry logic works (simulate timeout/500 errors)
+   - Check error handling for malformed responses
+
+4. **Document findings:**
+   - Update PROJECT_STATUS.md
+   - Note any issues or broken integrations
+   - Commit test results
+
+### Phase 2: Production Readiness (if time permits)
+
+- Monitoring & request logging
+- Service latency tracking
+- Error rate metrics
+- Alert thresholds
 
 ### If working on Phase 2 (Production):
 
