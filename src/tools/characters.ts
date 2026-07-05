@@ -6,6 +6,8 @@ import { runDebate } from '../agents/debate'
 export const characterTools: ToolDefinition[] = [
   {
     name: 'character_debate',
+    riskLevel: 'medium',
+    sideEffect: true,
     description: 'Uruchom debatę między postaciami na podany temat — każda postać wypowiada się ze swojej perspektywy',
     parameters: {
       type: 'object',
@@ -18,6 +20,8 @@ export const characterTools: ToolDefinition[] = [
   },
   {
     name: 'character_ask',
+    riskLevel: 'medium',
+    sideEffect: true,
     description: 'Zapytaj konkretną postać o coś — odpowie zgodnie ze swoją osobowością',
     parameters: {
       type: 'object',
@@ -30,6 +34,8 @@ export const characterTools: ToolDefinition[] = [
   },
   {
     name: 'character_list',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Wylistuj dostępne postacie i ich osobowości',
     parameters: {
       type: 'object',
@@ -38,6 +44,8 @@ export const characterTools: ToolDefinition[] = [
   },
   {
     name: 'character_history',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Pokaż ostatnie wypowiedzi postaci',
     parameters: {
       type: 'object',

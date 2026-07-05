@@ -27,6 +27,8 @@ type Args = {
 export const clerkTools: ToolDefinition[] = [
   {
     name: 'clerk_new_users',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Read-only: pokaż nowych użytkowników Clerk z ostatnich N dni. Wymaga CLERK_SECRET_KEY.',
     parameters: {
       type: 'object',
@@ -38,6 +40,8 @@ export const clerkTools: ToolDefinition[] = [
   },
   {
     name: 'clerk_user_summary',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Read-only: policz nowych, zablokowanych i aktywnych użytkowników Clerk w ostatnim oknie czasu. Wymaga CLERK_SECRET_KEY.',
     parameters: {
       type: 'object',

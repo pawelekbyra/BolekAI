@@ -6,6 +6,9 @@ import type { ActionExecutionOptions } from '../agent-mode'
 export const codingTools: ToolDefinition[] = [
   {
     name: 'coding_task',
+    riskLevel: 'high',
+    sideEffect: true,
+    requiresApproval: true,
     description: 'Zleć zadanie kodowania Claude AI — opisz co ma zostać napisane lub zmienione, podaj kontekst kodu jeśli potrzeba',
     parameters: {
       type: 'object',
@@ -20,6 +23,8 @@ export const codingTools: ToolDefinition[] = [
   },
   {
     name: 'coding_review',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Zleć review kodu — Claude przejrzy kod i wskaże problemy, sugestie, błędy',
     parameters: {
       type: 'object',

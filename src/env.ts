@@ -27,6 +27,7 @@ export type Env = {
   EMAIL_SMTP_PASSWORD?: string
   BOLEK_OPENAI_ADAPTER_KEY?: string
   BOLEK_CORS_ORIGIN?: string
+  READ_ONLY_MODE?: string
   // External services (tri-tier architecture)
   CHAT_SERVICE_URL?: string
   CHAT_SERVICE_TOKEN?: string

@@ -4,6 +4,8 @@ import type { ToolDefinition } from '../index'
 export const chatServiceTools: ToolDefinition[] = [
   {
     name: 'chat_send_message',
+    riskLevel: 'medium',
+    sideEffect: true,
     description: 'Send a message through BolekCzat web interface',
     parameters: {
       type: 'object',

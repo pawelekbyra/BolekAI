@@ -57,6 +57,8 @@ type StripeRefundArgs = {
 export const stripeTools: ToolDefinition[] = [
   {
     name: 'stripe_daily_summary',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Read-only: podsumuj przychód i płatności Stripe z ostatnich N dni. Wymaga STRIPE_KEY.',
     parameters: {
       type: 'object',
@@ -67,6 +69,8 @@ export const stripeTools: ToolDefinition[] = [
   },
   {
     name: 'stripe_failed_payments',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Read-only: pokaż ostatnie nieudane płatności Stripe. Wymaga STRIPE_KEY.',
     parameters: {
       type: 'object',
@@ -77,6 +81,8 @@ export const stripeTools: ToolDefinition[] = [
   },
   {
     name: 'stripe_pending_payments',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Read-only: pokaż płatności Stripe w stanie wymagającym uwagi lub niedokończone. Wymaga STRIPE_KEY.',
     parameters: {
       type: 'object',
@@ -87,6 +93,9 @@ export const stripeTools: ToolDefinition[] = [
   },
   {
     name: 'stripe_refund',
+    riskLevel: 'critical',
+    sideEffect: true,
+    requiresApproval: true,
     description: 'Akcja finansowa: zleć refund w Stripe oraz opcjonalne cofnięcie patronatu przez kanoniczne ops-API Polutka. Zawsze wymaga confirm gate.',
     parameters: {
       type: 'object',
@@ -100,6 +109,8 @@ export const stripeTools: ToolDefinition[] = [
   },
   {
     name: 'stripe_disputes',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Read-only: pokaż ostatnie spory/chargebacki Stripe. Wymaga STRIPE_KEY.',
     parameters: {
       type: 'object',

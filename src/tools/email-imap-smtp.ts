@@ -33,6 +33,8 @@ type ResendEmail = {
 export const emailTools: ToolDefinition[] = [
   {
     name: 'email_resend_sent',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Read-only: pokaż ostatnie maile systemowe wysłane przez Resend. Wymaga RESEND_API_KEY.',
     parameters: {
       type: 'object',
@@ -43,6 +45,8 @@ export const emailTools: ToolDefinition[] = [
   },
   {
     name: 'email_resend_received',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Read-only: pokaż ostatnie maile odebrane przez Resend Receiving. Wymaga RESEND_API_KEY i skonfigurowanego routingu domeny.',
     parameters: {
       type: 'object',
@@ -53,6 +57,8 @@ export const emailTools: ToolDefinition[] = [
   },
   {
     name: 'email_triage_latest',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Read-only: pobierz ostatnie odebrane maile i nadaj im prostą kategorię supportową bez wykonywania akcji.',
     parameters: {
       type: 'object',
@@ -63,6 +69,9 @@ export const emailTools: ToolDefinition[] = [
   },
   {
     name: 'email_send_reply',
+    riskLevel: 'high',
+    sideEffect: true,
+    requiresApproval: true,
     description: 'Akcja: wyślij odpowiedź supportową przez Resend dopiero po confirm gate. Wymaga RESEND_API_KEY i EMAIL_SUPPORT_FROM.',
     parameters: {
       type: 'object',

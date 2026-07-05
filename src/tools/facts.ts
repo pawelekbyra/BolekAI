@@ -3,6 +3,8 @@ import type { ToolDefinition } from './index'
 export const factTools: ToolDefinition[] = [
   {
     name: 'fact_save',
+    riskLevel: 'medium',
+    sideEffect: true,
     description: 'Zapamiętaj ważny fakt o właścicielu — imię, preferencje, praca, rodzina, nawyki, cokolwiek co warto wiedzieć na przyszłość',
     parameters: {
       type: 'object',
@@ -15,6 +17,8 @@ export const factTools: ToolDefinition[] = [
   },
   {
     name: 'fact_list',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Pobierz wszystkie zapamiętane fakty o właścicielu',
     parameters: {
       type: 'object',
@@ -23,6 +27,8 @@ export const factTools: ToolDefinition[] = [
   },
   {
     name: 'fact_delete',
+    riskLevel: 'medium',
+    sideEffect: true,
     description: 'Usuń zapamiętany fakt który jest nieaktualny',
     parameters: {
       type: 'object',

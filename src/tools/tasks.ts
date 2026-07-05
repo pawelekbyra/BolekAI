@@ -3,6 +3,8 @@ import type { ToolDefinition } from './index'
 export const taskTools: ToolDefinition[] = [
   {
     name: 'task_add',
+    riskLevel: 'medium',
+    sideEffect: true,
     description: 'Dodaj nowe zadanie do listy zadań użytkownika',
     parameters: {
       type: 'object',
@@ -15,6 +17,8 @@ export const taskTools: ToolDefinition[] = [
   },
   {
     name: 'task_list',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Pobierz listę aktywnych (niezakończonych) zadań',
     parameters: {
       type: 'object',
@@ -23,6 +27,8 @@ export const taskTools: ToolDefinition[] = [
   },
   {
     name: 'task_done',
+    riskLevel: 'medium',
+    sideEffect: true,
     description: 'Oznacz zadanie jako wykonane',
     parameters: {
       type: 'object',

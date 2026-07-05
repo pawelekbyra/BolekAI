@@ -55,23 +55,23 @@ Cel: zatrzymać ryzyko zanim dojdą kolejne mocne narzędzia.
   - [x] `ToolDefinition` zawiera opcjonalne `requiresApproval`.
   - [x] Istnieją domyślne wartości albo wszystkie istniejące toole zostały uzupełnione.
 
-- [ ] Sklasyfikować istniejące toole według ryzyka.
+- [x] Sklasyfikować istniejące toole według ryzyka.
 
   Definition of Done:
-  - [ ] Każdy tool ma `riskLevel`.
-  - [ ] Każdy tool ma `sideEffect`.
-  - [ ] Read-only toole są oznaczone jako `sideEffect: false`.
-  - [ ] `email_send_reply`, `github` write, `vercel_redeploy`, `stripe_refund` i podobne akcje są high/critical.
-  - [ ] W komentarzu lub dokumencie zapisano regułę klasyfikacji.
+  - [x] Każdy tool ma `riskLevel`.
+  - [x] Każdy tool ma `sideEffect`.
+  - [x] Read-only toole są oznaczone jako `sideEffect: false`.
+  - [x] `email_send_reply`, `github` write, `vercel_redeploy`, `stripe_refund` i podobne akcje są high/critical.
+  - [x] W komentarzu lub dokumencie zapisano regułę klasyfikacji.
 
 ## 1.2. Dodać read-only mode i kill switch
 
-- [ ] Dodać env `READ_ONLY_MODE`.
+- [x] Dodać env `READ_ONLY_MODE`.
 
   Definition of Done:
-  - [ ] `Env` zawiera opcjonalne `READ_ONLY_MODE`.
-  - [ ] Wartość `true` blokuje wykonywanie tooli z `sideEffect: true`.
-  - [ ] Blokada daje czytelny komunikat użytkownikowi.
+  - [x] `Env` zawiera opcjonalne `READ_ONLY_MODE`.
+  - [x] Wartość `true` blokuje wykonywanie tooli z `sideEffect: true`.
+  - [x] Blokada daje czytelny komunikat użytkownikowi.
 
 - [ ] Dodać env `SIDE_EFFECTS_DISABLED`.
 

@@ -3,6 +3,8 @@ import type { ToolDefinition } from './index'
 export const noteTools: ToolDefinition[] = [
   {
     name: 'note_save',
+    riskLevel: 'medium',
+    sideEffect: true,
     description: 'Zapisz notatkę lub ważną informację od użytkownika',
     parameters: {
       type: 'object',
@@ -15,6 +17,8 @@ export const noteTools: ToolDefinition[] = [
   },
   {
     name: 'note_search',
+    riskLevel: 'low',
+    sideEffect: false,
     description: 'Przeszukaj zapisane notatki użytkownika',
     parameters: {
       type: 'object',
