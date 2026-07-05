@@ -34,4 +34,12 @@ export type Env = {
   FLOW_SERVICE_TOKEN?: string
   KB_SERVICE_URL?: string
   KB_SERVICE_TOKEN?: string
+  // Tools — Calendar
+  GOOGLE_CALENDAR_API_KEY?: string
+  GOOGLE_CALENDAR_CLIENT_ID?: string
+  GOOGLE_CALENDAR_CLIENT_SECRET?: string
+  GOOGLE_CALENDAR_REFRESH_TOKEN?: string
+  // Tools — Weather
+  USER_LATITUDE?: string
+  USER_LONGITUDE?: string
 }
