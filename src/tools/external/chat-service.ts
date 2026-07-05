@@ -1,3 +1,4 @@
+import { fetchWithRetry } from '../../http-client'
 import type { Env } from '../../env'
 
 export const chatServiceTools = [
@@ -61,17 +62,22 @@ async function callChatService(
   }
 
   try {
-    const response = await fetch(`${url}/api/agent/message`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+    const response = await fetchWithRetry(
+      `${url}/api/agent/message`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userId: 'agent-bolek',
+          ...payload,
+        }),
+        timeout: 15000,
       },
-      body: JSON.stringify({
-        userId: 'agent-bolek',
-        ...payload,
-      }),
-    })
+      { maxRetries: 2, initialDelayMs: 300 }
+    )
 
     if (!response.ok) {
       return {

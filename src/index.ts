@@ -7,6 +7,7 @@ import { runPendingTasks } from './agents/runner'
 import { buildPolutekBriefing, sendDailyPolutekBriefing } from './briefing'
 import { buildPolutekConfigStatus } from './tools/polutek'
 import { handleAdapterOptions, handleOpenAIChatCompletions } from './openai-adapter'
+import { getHealthStatus } from './health'
 
 const app = new Hono<{ Bindings: Env }>()
 
@@ -15,6 +16,12 @@ app.use('/api/*', cors())
 app.options('/v1/chat/completions', handleAdapterOptions)
 
 app.get('/', (c) => c.text('AGENT BOLEK online ✓'))
+
+app.get('/health', async (c) => {
+  const health = await getHealthStatus(c.env)
+  const statusCode = health.status === 'healthy' ? 200 : health.status === 'degraded' ? 503 : 503
+  return c.json(health, statusCode)
+})
 
 app.post('/webhook/:secret', async (c) => {
   if (c.req.param('secret') !== c.env.TELEGRAM_WEBHOOK_SECRET) {

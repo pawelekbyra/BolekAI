@@ -1,3 +1,4 @@
+import { fetchWithRetry } from '../../http-client'
 import type { Env } from '../../env'
 
 export const workflowServiceTools = [
@@ -106,14 +107,19 @@ async function executeWorkflow(
   }
 
   try {
-    const response = await fetch(`${url}/api/agent/workflows/execute`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+    const response = await fetchWithRetry(
+      `${url}/api/agent/workflows/execute`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+        timeout: payload.timeout || 30000,
       },
-      body: JSON.stringify(payload),
-    })
+      { maxRetries: 3, initialDelayMs: 200 }
+    )
 
     if (!response.ok) {
       return {

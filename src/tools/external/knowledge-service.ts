@@ -1,3 +1,4 @@
+import { fetchWithRetry } from '../../http-client'
 import type { Env } from '../../env'
 
 export const knowledgeServiceTools = [
@@ -159,14 +160,19 @@ async function queryKnowledge(
   }
 
   try {
-    const response = await fetch(`${url}/api/agent/knowledge/query`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+    const response = await fetchWithRetry(
+      `${url}/api/agent/knowledge/query`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+        timeout: 10000,
       },
-      body: JSON.stringify(payload),
-    })
+      { maxRetries: 3, initialDelayMs: 200 }
+    )
 
     if (!response.ok) {
       return {
