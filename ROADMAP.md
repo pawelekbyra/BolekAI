@@ -5,6 +5,45 @@
 
 ---
 
+## 🔴 TIER 0: Foundations (Critical)
+
+### T0.1: Semantic Memory ⭐⭐⭐⭐⭐ ✅ DONE
+
+**Why:** Agent learns and recalls context by meaning, not rigid keys. Without it, agent has no long-term understanding.
+
+Tasks:
+- [x] **T0.1.1** Create `src/tools/memory.ts`
+  - [x] Define tool: `memory_remember` (store semantically searchable fact)
+  - [x] Define tool: `memory_recall` (find by meaning/query)
+  - [x] Define tool: `memory_forget` (delete outdated memory)
+  - [x] Implement embeddings via Workers AI (bge-m3, multilingual)
+  - [x] Implement Vectorize binding for vector storage
+
+- [x] **T0.1.2** Add to env.ts & wrangler.toml
+  - [x] MEMORY binding (Vectorize)
+  - [x] MEMORY_EMBEDDING_MODEL (default: bge-m3)
+  - [x] Vectorize index config in wrangler.toml
+
+- [x] **T0.1.3** Add D1 canonical storage
+  - [x] Migration 007_semantic_memory.sql
+  - [x] semantic_memories table (D1 = source of truth)
+  - [x] Vectors point to D1 rows (if Vectorize corrupts, can rebuild)
+
+- [x] **T0.1.4** Auto-recall in orchestrator
+  - [x] Orchestrator calls recallRelevant() each turn
+  - [x] Memories injected into system prompt (like facts)
+  - [x] Agents don't need to explicitly call memory_recall (auto-magic)
+
+- [x] **T0.1.5** Test
+  - [x] Write `src/__tests__/memory.test.ts`
+  - [x] Test remember/recall/forget
+  - [x] Test relevance threshold (0.4)
+  - [x] Test auto-recall in buildMessages()
+
+**Commit:** `09ab186` - Semantic memory (Vectorize + bge-m3)
+
+---
+
 ## 🎯 TIER 1: Core Features (High Priority)
 
 ### T1.1: Calendar Integration ⭐⭐⭐⭐⭐ ✅ DONE
@@ -344,6 +383,9 @@ For each tool:
 ## 📊 Current Status
 
 ```
+TIER 0:
+  Memory:       ████████████████████ 100% ✅ (Vectorize + bge-m3)
+
 TIER 1:
   Calendar:     ████████████████████ 100% ✅
   Email:        ████████████████████ 100% ✅ (via Resend)

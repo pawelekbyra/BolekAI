@@ -38,10 +38,11 @@ npm run deploy
 - Dispatch to tools
 - Manage conversation flow
 
-### Layer 3: Memory (`src/memory.ts`)
-- D1 database operations
-- KV cache management
-- Context retrieval
+### Layer 3: Memory (`src/memory.ts` + `src/tools/memory.ts`)
+- **Conversation history** — D1 messages table (short-term)
+- **Semantic memory** — Vectorize + bge-m3 embeddings (long-term, searchable by meaning)
+- **KV cache** — Session and config caching
+- **Auto-recall** — orchestrator injects relevant memories each turn (no explicit tool call needed)
 
 ### Layer 4: Tools (`src/tools/`)
 - Built-in tools (tasks, notes, reminders, facts)

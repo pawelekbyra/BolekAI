@@ -55,6 +55,15 @@
   - [x] Workflow service with retry (30s timeout, 3 retries)
   - [x] Knowledge service with retry (10s timeout, 3 retries)
 
+- [x] **Semantic Memory Foundation (TIER 0)**
+  - [x] Vectorize binding (MEMORY) configured in wrangler.toml
+  - [x] Workers AI embeddings (bge-m3, multilingual)
+  - [x] D1 canonical storage (semantic_memories table)
+  - [x] Memory tools: memory_remember / memory_recall / memory_forget
+  - [x] Auto-recall into system prompt (each turn)
+  - [x] Unit tests for store/recall/forget + orchestrator injection
+  - [x] Threshold filtering (0.4 relevance score)
+
 ## 🔄 In Progress (Phase 1C — Local Integration Testing)
 
 - [ ] **Local integration testing**
@@ -222,6 +231,6 @@ See `docs/MULTI-AGENT-ARCHITECTURE.md` for full API contracts.
 
 ## Last Updated
 
-2026-01-15 — Initial Phase 1 completion
+2026-07-06 — Phase 1B complete (Semantic Memory added)
 
-**Next review:** After Phase 1B testing complete
+**Next review:** After Phase 1C testing (integration with external services)
