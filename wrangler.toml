@@ -16,6 +16,12 @@ migrations_dir = "src/db/migrations"
 binding = "KV"
 id = "8683744b08e3472ca144d7fb3b646a1c"
 
+# Semantic memory — vector recall (bge-m3, 1024 dims, cosine).
+# Create once:  wrangler vectorize create bolek-semantic-memory --dimensions=1024 --metric=cosine
+[[vectorize]]
+binding = "MEMORY"
+index_name = "bolek-semantic-memory"
+
 [vars]
 AI_MODEL = "@cf/meta/llama-3.2-3b-instruct"
 

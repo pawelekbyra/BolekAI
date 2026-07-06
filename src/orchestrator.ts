@@ -3,6 +3,7 @@ import { getHistory, saveMessage } from './memory'
 import { tools, executeTool } from './tools'
 import { buildPolutekConfigStatus } from './tools/polutek'
 import { getAllFacts } from './tools/facts'
+import { recallRelevant } from './tools/memory'
 
 const BASE_SYSTEM_PROMPT = `Jesteś AGENT BOLEK — osobisty asystent AI swojego właściciela.
 Rozmawiasz wyłącznie po polsku. Jesteś konkretny, bezpośredni i pomocny.
@@ -17,7 +18,8 @@ Według źródeł:
 Moja rekomendacja: ...
 Pewność: niska/średnia/wysoka — krótko dlaczego.
 Nigdy nie zmyślaj informacji które powinny być w bazie albo w internecie — zawsze użyj narzędzia.
-Gdy dowiadujesz się czegoś ważnego o właścicielu — zapisz to przez fact_save.`
+Gdy dowiadujesz się czegoś ważnego o właścicielu — zapisz to przez fact_save.
+Gdy pojawia się szerszy kontekst, decyzja albo wydarzenie warte przypomnienia po znaczeniu — zapisz przez memory_remember. Fakty (imię, alergia) idą do fact_save; pamięci narracyjne do memory_remember.`
 
 type ChatMessage = {
   role: 'system' | 'user' | 'assistant' | 'tool'
@@ -212,9 +214,13 @@ async function handleOperatorCommand(userText: string, chatId: number, env: Env)
 // ─── Core ─────────────────────────────────────────────────────────────────────
 
 async function buildMessages(userText: string, chatId: number, env: Env): Promise<ChatMessage[]> {
-  const [history, facts] = await Promise.all([getHistory(env.DB, chatId, 10), getAllFacts(env.DB)])
+  const [history, facts, memories] = await Promise.all([
+    getHistory(env.DB, chatId, 10),
+    getAllFacts(env.DB),
+    recallRelevant(env, userText),
+  ])
   return [
-    { role: 'system', content: BASE_SYSTEM_PROMPT + facts },
+    { role: 'system', content: BASE_SYSTEM_PROMPT + facts + memories },
     ...history.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
     { role: 'user', content: userText },
   ]

@@ -14,6 +14,7 @@ import { emailTools, executeEmailTool } from './email-imap-smtp'
 import { webTools, executeWebTool } from './web'
 import { calendarTools, executeCalendarTool } from './calendar'
 import { weatherTools, executeWeatherTool } from './weather'
+import { memoryTools, executeMemoryTool } from './memory'
 import { chatServiceTools, executeChatServiceTool } from './external/chat-service'
 import { workflowServiceTools, executeWorkflowServiceTool } from './external/workflow-service'
 import { knowledgeServiceTools, executeKnowledgeServiceTool } from './external/knowledge-service'
@@ -47,6 +48,7 @@ export const tools: ToolDefinition[] = [
   ...webTools,
   ...calendarTools,
   ...weatherTools,
+  ...memoryTools,
   // External services (tri-tier architecture)
   ...chatServiceTools,
   ...workflowServiceTools,
@@ -77,6 +79,7 @@ export async function executeTool(
   if (name.startsWith('web_'))       return executeWebTool(name, args, env)
   if (name.startsWith('calendar_'))  return executeCalendarTool(name, args, env!)
   if (name.startsWith('weather_'))   return executeWeatherTool(name, args, env!)
+  if (name.startsWith('memory_'))    return executeMemoryTool(name, args, env!)
   // External services (tri-tier architecture)
   if (name.startsWith('chat_'))      return executeChatServiceTool(name, args, env!)
   if (name.startsWith('flow_'))      return executeWorkflowServiceTool(name, args, env!)

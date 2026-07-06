@@ -2,6 +2,7 @@ export type Env = {
   DB: D1Database
   KV: KVNamespace
   AI: Ai
+  MEMORY: VectorizeIndex
   TELEGRAM_BOT_TOKEN: string
   TELEGRAM_WEBHOOK_SECRET: string
   AI_MODEL: string
@@ -42,4 +43,6 @@ export type Env = {
   // Tools — Weather
   USER_LATITUDE?: string
   USER_LONGITUDE?: string
+  // Tools — Semantic Memory
+  MEMORY_EMBEDDING_MODEL?: string
 }
