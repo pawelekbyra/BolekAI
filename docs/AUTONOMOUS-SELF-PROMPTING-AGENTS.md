@@ -460,6 +460,109 @@ Customer Support:
 
 ---
 
+## Creator Platform Agent (for Polutek.pl)
+
+**Reference:** [`pawelekbyra/polutek-pl`](https://github.com/pawelekbyra/polutek-pl)
+
+### Polutek VOD Platform
+
+Single-creator video platform with patron system:
+- Videos at 3 access levels: PUBLIC, LOGGED_IN, PATRON
+- Stripe tips above threshold grant lifetime patron status
+- Tech: Next.js 15, Neon PostgreSQL, Clerk, Stripe, Cloudflare Stream
+- Pre-launch (operational proof needed before production)
+
+### What Bolek Does for Creator (Polutek)
+
+**Patron System Manager:**
+```
+✓ New patron welcome → auto-email
+✓ Daily revenue: "₹2,500 from 3 new patrons today"
+✓ Weekly report: "15 patrons total, +20% growth"
+✓ Churn detection: "Patron lapsed → try re-engage"
+✓ Lifetime value tracking per patron
+```
+
+**Content Management:**
+```
+✓ Video upload confirmation
+✓ PlaybackPlan decisions (PUBLIC vs PATRON)
+✓ Caption status tracking (PL/EN WebVTT)
+✓ Alert: "New video needs access tier decision"
+✓ Auto-suggest: "Video trending, make patron-only?"
+```
+
+**Playback & Quality:**
+```
+✓ Cloudflare Stream playback errors
+✓ Signed token generation failures
+✓ Watch-time analytics: "45% drop at 12min mark"
+✓ Region availability monitoring
+✓ Suggest: "Viewers stopping here, check video"
+```
+
+**Community & Support:**
+```
+✓ Viewer FAQ: "How do I become patron?" → auto-answer
+✓ Mailing list management
+✓ Comment moderation
+✓ Engagement analytics: "New viewers", "Regulars", "Patrons"
+✓ Weekly sentiment: "Comments trending positive/negative"
+```
+
+**Creator Stats (Self-Prompting Claude):**
+```
+"Generate summary of this week"
+  → Revenue, viewers, patrons, top videos
+
+"Why did video 3 engagement drop?"
+  → Analyze watch time, demographics
+
+"Should we make video X patron-only?"
+  → Suggest based on demand, patron feedback
+
+"What's our patron retention rate?"
+  → Calculate trends, forecast next month
+```
+
+**Real Weekly Workflow:**
+
+```
+Monday 9 AM:
+Bolek → Telegram Summary:
+
+"📊 Weekly Report (July 1-7)
+ 
+Revenue:        ₹12,500 (+15% vs last week)
+New Patrons:    12 (+45% YoY)
+Total Viewers:  2,340 (+8%)
+Videos:         5 published
+Engagement:     Video #8: 89% completion ⭐
+
+⚠️ Alert: Video #3 drop-off at 12min
+✅ Suggestion: Promo video #8 (trending)
+
+All systems healthy ✓
+"
+```
+
+You glance at Telegram, make 1-2 decisions (e.g., "make #8 patron"), Bolek executes.
+
+**Autonomy Levels:**
+| Action | Level | Rule |
+|--------|-------|------|
+| Welcome email | 1 | Always |
+| FAQ answer | 1 | If confidence > 0.9 |
+| Daily report | 1 | Every morning |
+| Suggest content tier | 2 | Propose, wait OK |
+| Change video access | 2 | Ask first |
+| Moderate comments | 2 | Flag, propose action |
+| Escalate fraud | 3 | Always to creator |
+
+**Cost:** ~$15-25/month added (Claude API + Bolek).
+
+---
+
 ## Next Steps
 
 1. **Prototype:** Build minimal self-prompting loop for Docker errors
@@ -467,7 +570,8 @@ Customer Support:
 3. **Expand:** Add more error types to KNOWN_FIXABLE_ERRORS
 4. **Monitor:** Track success rate of auto-fixes
 5. **Integrate:** Connect to Bolek for unified control
+6. **Scale:** Deploy Store Manager (Kakałowy), Creator Platform (Polutek)
 
 ---
 
-**Author Note:** This is a living document. As we build Bolek and autonomous agents, patterns learned here should be fed back into the design.
+**Author Note:** This is a living document. As we build Bolek and autonomous agents, patterns learned here should be fed back into the design. Each use case (deployment, e-commerce store, creator platform) teaches us about agent autonomy levels and escalation patterns.
