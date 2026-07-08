@@ -314,19 +314,149 @@ def should_self_prompt(error, context):
 
 ## Integration with Bolek
 
-Bolek (in Kulfon) can be the **orchestrator** for Kakałowy Sklepik deployments:
+Bolek (in Kulfon) can be the **orchestrator** for Kakałowy Sklepik — both deployment AND store operations:
 
 ```
 Bolek (Telegram interface)
-  ↓ routes to specific service
-Self-Prompting Deployment Agent (specialized for Kakałowy)
-  ├─ Monitors: GitHub Actions, Docker, Deployment
-  ├─ Self-prompts Claude for fixes
-  ├─ Reports back to Bolek
-  └─ Bolek notifies user
+  ├─ routes to: Deployment Agent
+  │  ├─ Monitors: GitHub Actions, Docker, Deployment
+  │  ├─ Self-prompts Claude for fixes
+  │  └─ Reports back to Bolek
+  │
+  └─ routes to: Store Manager Agent (NEW)
+     ├─ Monitors: Orders, Payments, Inventory
+     ├─ Processes: Refunds, Notifications
+     ├─ Self-prompts Claude for decisions
+     └─ Reports back to Bolek
 ```
 
 User talks to Bolek, Bolek coordinates specialized agents per project.
+
+---
+
+## Store Manager Agent (for Kakałowy Sklepik)
+
+### What It Does
+
+Autonomous store operations manager that runs 24/7.
+
+**Monitoring:**
+```
+✓ Stripe payments (successful/failed)
+✓ Orders (new, shipped, returns)
+✓ Inventory (low stock alerts)
+✓ Customer inquiries (support tickets)
+✓ Sales metrics (daily/weekly reports)
+✓ Deployment health (API, database)
+```
+
+**Autonomous Actions:**
+```
+✓ Process refunds (payment failed → auto-refund)
+✓ Send notifications (order received, shipped, etc.)
+✓ Restock alerts (low inventory warnings)
+✓ Answer FAQ (from knowledge base)
+✓ Generate reports (daily sales summary)
+✓ Monitor deployment (self-fix issues)
+```
+
+**Escalation to User:**
+```
+⚠️ Customer complaint (refund + negative review)
+⚠️ Fraud detected (unusual purchase pattern)
+⚠️ Technical issue (can't diagnose autonomously)
+⚠️ Strategic decision (discontinue product, price change)
+```
+
+### Real Workflow: Customer Refund
+
+```
+Customer email arrives: "Chciałem inny smak, mogę zwrócić?"
+
+  ↓ Agent reads email (IMAP webhook)
+  ↓ Parses intent: "Refund request"
+  ↓ Looks up order: #12345 (₹599) from Spree
+  ↓ Self-prompts Claude:
+     "Customer wants refund. Order #12345: ₹599.
+      Refundable? Check Spree order status.
+      Time window? Check order date.
+      Action: Process refund?"
+  ↓ Claude responds: "Yes, refundable. Process ₹599."
+  ↓ Agent calls Stripe API: refund ₹599
+  ↓ Updates Spree order: status = "refunded"
+  ↓ Sends email: "Refund approved ✓"
+  ↓ Logs customer behavior: CRM tracking
+  ↓ Notifies you: "Refund processed for order #12345"
+
+Done. Zero manual work. You wake up to summary.
+```
+
+### Daily Bolek Routine (Store Manager)
+
+```
+Morning (6 AM):
+  ├─ Stripe: "10 orders processed overnight, ₹5,000 revenue"
+  ├─ Inventory: "⚠️ Czekolada 70% low (3 units left)"
+  ├─ Support: "3 new customer inquiries"
+  ├─ Deployment: "All healthy ✓"
+  └─ Telegram to You: Report + alerts
+
+Throughout Day:
+  ├─ New order → auto-send "Thanks for buying"
+  ├─ Customer asks "Czy macie wersję bez cukru?" → bot answers FAQ
+  ├─ Payment fails → auto-refund + notify
+  ├─ Low stock → alert you
+  └─ Deployment issue → self-fixes + reports
+
+Customer Support:
+  ├─ "Kiedy dostanę paczkę?" → answers based on order status
+  ├─ "Czy można zmienić adres?" → escalates to you
+  ├─ "Product review?" → records feedback
+  └─ "Want discount code?" → generates personalized offer
+```
+
+### Tech Stack: Store Manager
+
+**Integrations:**
+- Spree Store API v3 (orders, products, inventory)
+- Stripe API + webhooks (payments, refunds)
+- IMAP/Email (customer inquiries)
+- SMS/Email service (notifications)
+- Analytics (sales metrics, customer behavior)
+- Claude API (self-prompting for decisions)
+- Telegram (user notifications + escalation)
+
+**Autonomy Levels:**
+
+| Action | Level | Rule |
+|--------|-------|------|
+| Process refund | 1 | If order refundable AND within window |
+| Send notification | 1 | Always (low risk) |
+| Answer FAQ | 1 | If confidence > 0.9 |
+| Adjust inventory | 2 | Propose + wait for approval |
+| Price change | 2 | Suggest + need user OK |
+| Contact customer | 2 | Draft message + wait |
+| Escalate issue | 3 | If unclear → user decides |
+
+### Cost Analysis (Kakałowy)
+
+**Monthly Costs:**
+- Stripe webhook integration: $0 (built-in)
+- Spree API calls: $0 (local)
+- Claude API (store logic): ~$10-20
+- Bolek runtime (Cloudflare): $0-5
+- **Total: $10-25/month** for 24/7 store manager
+
+**ROI:** Save 5-10 hours/month on manual store operations = easily pays for itself.
+
+### Future Extensions
+
+- **Recommendations:** Suggest products to customers
+- **Dynamic pricing:** Adjust based on demand
+- **Forecasting:** Predict inventory needs
+- **Marketing:** Generate email campaigns
+- **Analytics:** Deep customer behavior insights
+- **Loyalty:** Auto-generate personalized offers
 
 ---
 
