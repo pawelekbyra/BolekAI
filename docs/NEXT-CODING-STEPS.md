@@ -126,23 +126,23 @@ Cel: zatrzymać ryzyko zanim dojdą kolejne mocne narzędzia.
 
 ## 1.5. Minimalne testy bezpieczeństwa fazy 1
 
-**Status**: Wymaga setup test framework (vitest/jest). Policy engine i kill switche są kod-ready do testowania.
+**Status**: ✅ COMPLETE
 
-- [ ] Dodać testy policy dla high/critical tooli.
-
-  Definition of Done:
-  - [ ] `stripe_refund` wymaga approvala.
-  - [ ] `email_send_reply` wymaga approvala.
-  - [ ] `vercel_redeploy` wymaga approvala.
-  - [ ] GitHub write wymaga approvala.
-  - [ ] `web_search` albo inny read-only tool może przejść jako `allow`.
-
-- [ ] Dodać testy kill switch/read-only.
+- [x] Dodać testy policy dla high/critical tooli.
 
   Definition of Done:
-  - [ ] `READ_ONLY_MODE=true` blokuje side-effect tool.
-  - [ ] `SIDE_EFFECTS_DISABLED=true` blokuje side-effect tool.
-  - [ ] Read-only tool nadal działa, jeśli nie ma innej blokady.
+  - [x] `stripe_refund` wymaga approvala.
+  - [x] `email_send_reply` wymaga approvala.
+  - [x] `vercel_redeploy` wymaga approvala.
+  - [x] GitHub write wymaga approvala.
+  - [x] `web_search` albo inny read-only tool może przejść jako `allow`.
+
+- [x] Dodać testy kill switch/read-only.
+
+  Definition of Done:
+  - [x] `READ_ONLY_MODE=true` blokuje side-effect tool.
+  - [x] `SIDE_EFFECTS_DISABLED=true` blokuje side-effect tool.
+  - [x] Read-only tool nadal działa, jeśli nie ma innej blokady.
 
 ## Zamknięcie fazy 1
 
