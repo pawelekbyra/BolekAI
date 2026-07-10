@@ -83,30 +83,30 @@ Cel: zatrzymać ryzyko zanim dojdą kolejne mocne narzędzia.
 
 ## 1.3. Dodać minimalny policy check przed wykonaniem toola
 
-- [ ] Dodać typ `PolicyDecision`.
+- [x] Dodać typ `PolicyDecision`.
 
   Definition of Done:
-  - [ ] Istnieje typ `PolicyDecision` z wariantami `allow`, `deny`, `require_approval`.
-  - [ ] Opcjonalnie istnieje wariant `require_step_up_auth`.
-  - [ ] Typ jest używany w runtime, nie tylko zadeklarowany.
+  - [x] Istnieje typ `PolicyDecision` z wariantami `allow`, `deny`, `require_approval`.
+  - [x] Opcjonalnie istnieje wariant `require_step_up_auth`.
+  - [x] Typ jest używany w runtime, nie tylko zadeklarowany.
 
-- [ ] Dodać funkcję `decideToolPolicy()`.
-
-  Definition of Done:
-  - [ ] Funkcja przyjmuje tool metadata, args, tryb agenta i env.
-  - [ ] Low-risk read-only zwraca `allow`.
-  - [ ] High/critical zwraca `require_approval`.
-  - [ ] `READ_ONLY_MODE` blokuje side-effect tools.
-  - [ ] `SIDE_EFFECTS_DISABLED` blokuje side-effect tools.
-  - [ ] Manual mode nie wykonuje side-effect tools.
-
-- [ ] Podpiąć policy check przed każdym `executeTool()`.
+- [x] Dodać funkcję `decideToolPolicy()`.
 
   Definition of Done:
-  - [ ] Orchestrator nie odpala `executeTool` bez policy decision.
-  - [ ] `deny` zwraca bezpieczną odpowiedź bez wykonania toola.
-  - [ ] `require_approval` nie wykonuje toola automatycznie.
-  - [ ] `allow` wykonuje tool jak wcześniej.
+  - [x] Funkcja przyjmuje tool metadata, args, tryb agenta i env.
+  - [x] Low-risk read-only zwraca `allow`.
+  - [x] High/critical zwraca `require_approval`.
+  - [x] `READ_ONLY_MODE` blokuje side-effect tools.
+  - [x] `SIDE_EFFECTS_DISABLED` blokuje side-effect tools.
+  - [x] Manual mode nie wykonuje side-effect tools.
+
+- [x] Podpiąć policy check przed każdym `executeTool()`.
+
+  Definition of Done:
+  - [x] Orchestrator nie odpala `executeTool` bez policy decision.
+  - [x] `deny` zwraca bezpieczną odpowiedź bez wykonania toola.
+  - [x] `require_approval` nie wykonuje toola automatycznie.
+  - [x] `allow` wykonuje tool jak wcześniej.
 
 ## 1.4. Zabezpieczyć tryby agenta
 
@@ -436,6 +436,6 @@ Cel: dodać głos jako interfejs, nie jako obejście policy.
 
 Pierwsze zadanie do wykonania:
 
-> **1.3. Dodać typ `PolicyDecision` i funkcję `decideToolPolicy()`.**
+> **1.4. Zabezpieczyć tryby agenta — `AgentMode`.**
 
-Nie zaczynaj od approvali, UI, Postgresa, voice ani nowych integracji, dopóki minimalny policy check przed `executeTool()` nie jest gotowy.
+Nie zaczynaj od approvali, UI, Postgresa, voice ani nowych integracji, dopóki tryby agenta nie będą w pełni powiązane z policy engine.
