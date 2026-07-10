@@ -1,5 +1,22 @@
 # AGENT BOLEK — Personal Life Automation Agent
 
+## 🏗️ Current Build Status
+
+**Faza 1: Security Foundation — ✅ COMPLETE (PR #40)**
+
+The first phase of the roadmap is complete:
+- ✅ Risk classification on all tools (`RiskLevel = low | medium | high | critical`)
+- ✅ Policy engine (`src/security/policy.ts`) — every tool call must pass `decideToolPolicy()` before execution
+- ✅ Kill switches: `READ_ONLY_MODE` and `SIDE_EFFECTS_DISABLED` (environment variables)
+- ✅ Agent mode constraints: `manual` blocks side-effects, `confirm` requires approval for high-risk, `autonomous` cannot bypass high-risk approval
+- ✅ Policy decisions prepared for audit logging (Faza 5)
+
+**Next: Faza 2 — Tool Manifest v1** (formalize tool metadata with versioning, scopes, redaction rules)
+
+**Roadmap:** [`docs/ROADMAP.md`](docs/ROADMAP.md) | **Coding checklist:** [`docs/NEXT-CODING-STEPS.md`](docs/NEXT-CODING-STEPS.md)
+
+---
+
 ## What this is
 
 This is not an app. This is a **personal AI agent platform** — a living system that grows indefinitely alongside its owner.

@@ -6,6 +6,19 @@ Roadmapa opisuje przejście od obecnego prototypu do owner-only AI operations pl
 
 Nie zakłada, że wszystko trzeba zrobić naraz. Zakłada, że każda kolejna praca nad kodem powinna przesuwać projekt w stronę bezpiecznego, audytowalnego i trwałego systemu.
 
+### Status faz
+
+- **[✓ UKOŃCZONA]** Faza 1 — Zabezpieczenie obecnego prototypu (PR #40)
+  - Risk classification na wszystkich toolach
+  - Kill switche: `READ_ONLY_MODE`, `SIDE_EFFECTS_DISABLED`
+  - Policy engine (`decideToolPolicy()`) przed każdym tool call
+  - Agent mode constraints: manual/confirm/autonomous
+  - Policy decisions przygotowane do audytu (Faza 5)
+- **[- PLANOWANA]** Faza 2 — Tool Manifest v1
+- **[- PLANOWANA]** Faza 3 — Policy Engine v1
+- **[- PLANOWANA]** Faza 4 — Approval Engine v1
+- **[- PLANOWANA]** Faza 5+ — Audit, durable workflows, Postgres, memory system, UI, integracje, voice
+
 ## Zasada nadrzędna
 
 **Najpierw bezpieczeństwo, policy, approvale i audyt. Dopiero potem większa autonomia.**
@@ -44,6 +57,8 @@ Ustalić, że Kulfon nie jest zwykłym chatbotem z toolami, tylko owner-only AI 
 
 ## Faza 1 — zabezpieczenie obecnego prototypu
 
+**Status: UKOŃCZONA** (PR #40, commits d234edf–866fd14)
+
 ### Cel
 
 Zatrzymać ryzyko zanim dojdą kolejne mocne narzędzia.
@@ -60,11 +75,34 @@ Zatrzymać ryzyko zanim dojdą kolejne mocne narzędzia.
 
 ### Definition of done
 
-- żaden endpoint operatorski nie jest publicznie używalny bez kontroli;
-- jest globalny kill switch;
-- można wymusić read-only mode;
-- high/critical nie wykonują się automatycznie;
-- README albo status endpoint mówi jasno, że obecny system jest prototypem.
+- [✓] żaden endpoint operatorski nie jest publicznie używalny bez kontroli;
+- [✓] jest globalny kill switch (`SIDE_EFFECTS_DISABLED`);
+- [✓] można wymusić read-only mode (`READ_ONLY_MODE`);
+- [✓] high/critical nie wykonują się automatycznie (policy engine);
+- [✓] README albo status endpoint mówi jasno, że obecny system jest prototypem;
+- [✓] risk classification na wszystkich toolach;
+- [✓] policy decisions przygotowane do audytu.
+
+### Implementacja
+
+**Nowe pliki:**
+- `src/security/policy.ts` — `PolicyDecision` type i `decideToolPolicy()` engine
+
+**Zmodyfikowane pliki:**
+- `src/env.ts` — dodane `SIDE_EFFECTS_DISABLED` env var
+- `src/security/types.ts` — dodane `PolicyDecision` type
+- `src/tools/index.ts` — policy check przed każdym tool call, improved error handling
+- `docs/NEXT-CODING-STEPS.md` — checklist Fazy 1 zamarkowana jako done
+
+**Zachowanie:**
+- Każdy tool call przechodzi przez `decideToolPolicy()` przed wykonaniem
+- Low-risk read-only tools mogą się wykonać (`allow`)
+- High/critical tools zwracają `require_approval` (wymaga future approval engine)
+- Side-effect tools są blokowane jeśli:
+  - Agent mode = `manual`, LUB
+  - `READ_ONLY_MODE=true`, LUB
+  - `SIDE_EFFECTS_DISABLED=true`
+- Policy decisions są logowane (przygotowanie do Faza 5 — audit engine)
 
 ### Issues
 
