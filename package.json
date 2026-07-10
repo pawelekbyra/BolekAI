@@ -11,6 +11,7 @@
     "web:build": "npm --workspace agent-bolek-web run build"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.68.0",
     "hono": "^4.6.0"
   },
   "devDependencies": {
