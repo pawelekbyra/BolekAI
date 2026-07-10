@@ -73,13 +73,13 @@ Cel: zatrzymać ryzyko zanim dojdą kolejne mocne narzędzia.
   - [x] Wartość `true` blokuje wykonywanie tooli z `sideEffect: true`.
   - [x] Blokada daje czytelny komunikat użytkownikowi.
 
-- [ ] Dodać env `SIDE_EFFECTS_DISABLED`.
+- [x] Dodać env `SIDE_EFFECTS_DISABLED`.
 
   Definition of Done:
-  - [ ] `Env` zawiera opcjonalne `SIDE_EFFECTS_DISABLED`.
-  - [ ] Wartość `true` blokuje wszystkie side-effect tools.
-  - [ ] Blokada jest sprawdzana przed wykonaniem toola.
-  - [ ] Blokada jest logowana lub przygotowana do logowania w audycie.
+  - [x] `Env` zawiera opcjonalne `SIDE_EFFECTS_DISABLED`.
+  - [x] Wartość `true` blokuje wszystkie side-effect tools.
+  - [x] Blokada jest sprawdzana przed wykonaniem toola.
+  - [x] Blokada jest logowana lub przygotowana do logowania w audycie.
 
 ## 1.3. Dodać minimalny policy check przed wykonaniem toola
 
@@ -436,6 +436,6 @@ Cel: dodać głos jako interfejs, nie jako obejście policy.
 
 Pierwsze zadanie do wykonania:
 
-> **1.1. Dodać typ `RiskLevel`.**
+> **1.3. Dodać typ `PolicyDecision` i funkcję `decideToolPolicy()`.**
 
-Nie zaczynaj od policy engine, approvali, UI, Postgresa, voice ani nowych integracji, dopóki risk metadata dla tooli nie jest rozpoczęte.
+Nie zaczynaj od approvali, UI, Postgresa, voice ani nowych integracji, dopóki minimalny policy check przed `executeTool()` nie jest gotowy.

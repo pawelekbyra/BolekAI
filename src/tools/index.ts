@@ -51,10 +51,14 @@ export function isReadOnlyModeEnabled(env?: Pick<Env, 'READ_ONLY_MODE'>): boolea
   return env?.READ_ONLY_MODE?.trim().toLowerCase() === 'true'
 }
 
+export function isSideEffectsDisabled(env?: Pick<Env, 'SIDE_EFFECTS_DISABLED'>): boolean {
+  return env?.SIDE_EFFECTS_DISABLED?.trim().toLowerCase() === 'true'
+}
+
 export type ToolBlockedResult = {
   ok: false
   blocked: true
-  reason: 'read_only_mode'
+  reason: 'read_only_mode' | 'side_effects_disabled'
   tool: string
   message: string
 }
@@ -66,6 +70,19 @@ function readOnlyBlockedResult(tool: ToolDefinition): ToolBlockedResult {
     reason: 'read_only_mode',
     tool: tool.name,
     message: `READ_ONLY_MODE=true — nie wykonuję narzędzia ${tool.name}, bo ma sideEffect: true. Wyłącz READ_ONLY_MODE tylko świadomie, jeśli chcesz pozwolić na akcje zmieniające stan.`,
+  }
+}
+
+function sideEffectsDisabledBlockedResult(tool: ToolDefinition): ToolBlockedResult {
+  // Faza 5 (audit_events) will replace this with a real audit write; for now this is the
+  // single choke point where a kill-switch block becomes visible for future audit wiring.
+  console.warn(`[kill-switch] SIDE_EFFECTS_DISABLED=true blocked tool "${tool.name}"`)
+  return {
+    ok: false,
+    blocked: true,
+    reason: 'side_effects_disabled',
+    tool: tool.name,
+    message: `SIDE_EFFECTS_DISABLED=true — globalny kill switch blokuje narzędzie ${tool.name}, bo ma sideEffect: true. Wyłącz SIDE_EFFECTS_DISABLED tylko świadomie, jeśli chcesz pozwolić na akcje zmieniające stan.`,
   }
 }
 
@@ -99,8 +116,9 @@ export async function executeTool(
   options: ActionExecutionOptions = {}
 ): Promise<unknown> {
   const tool = tools.find((candidate) => candidate.name === name)
-  if (tool && isReadOnlyModeEnabled(env) && getToolSafetyMetadata(tool).sideEffect) {
-    return readOnlyBlockedResult(tool)
+  if (tool && getToolSafetyMetadata(tool).sideEffect) {
+    if (isSideEffectsDisabled(env)) return sideEffectsDisabledBlockedResult(tool)
+    if (isReadOnlyModeEnabled(env)) return readOnlyBlockedResult(tool)
   }
 
   if (name.startsWith('task_'))     return executeTaskTool(name, args, db)
