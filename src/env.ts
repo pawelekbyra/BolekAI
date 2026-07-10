@@ -28,6 +28,7 @@ export type Env = {
   BOLEK_OPENAI_ADAPTER_KEY?: string
   BOLEK_CORS_ORIGIN?: string
   READ_ONLY_MODE?: string
+  SIDE_EFFECTS_DISABLED?: string
   // External services (tri-tier architecture)
   CHAT_SERVICE_URL?: string
   CHAT_SERVICE_TOKEN?: string

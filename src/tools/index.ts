@@ -17,8 +17,11 @@ import { workflowServiceTools, executeWorkflowServiceTool } from './external/wor
 import { knowledgeServiceTools, executeKnowledgeServiceTool } from './external/knowledge-service'
 import type { Env } from '../env'
 import type { ActionExecutionOptions } from '../agent-mode'
+import { getMode } from '../agent-mode'
 import type { RiskLevel } from '../security/types'
+import { decideToolPolicy } from '../security/policy'
 export type { RiskLevel } from '../security/types'
+export type { PolicyDecision } from '../security/policy'
 
 export const DEFAULT_TOOL_RISK_LEVEL: RiskLevel = 'low'
 export const DEFAULT_TOOL_SIDE_EFFECT = false
@@ -51,10 +54,14 @@ export function isReadOnlyModeEnabled(env?: Pick<Env, 'READ_ONLY_MODE'>): boolea
   return env?.READ_ONLY_MODE?.trim().toLowerCase() === 'true'
 }
 
+export function isSideEffectsDisabled(env?: Pick<Env, 'SIDE_EFFECTS_DISABLED'>): boolean {
+  return env?.SIDE_EFFECTS_DISABLED?.trim().toLowerCase() === 'true'
+}
+
 export type ToolBlockedResult = {
   ok: false
   blocked: true
-  reason: 'read_only_mode'
+  reason: 'read_only_mode' | 'side_effects_disabled' | 'policy_deny' | 'requires_approval'
   tool: string
   message: string
 }
@@ -66,6 +73,41 @@ function readOnlyBlockedResult(tool: ToolDefinition): ToolBlockedResult {
     reason: 'read_only_mode',
     tool: tool.name,
     message: `READ_ONLY_MODE=true — nie wykonuję narzędzia ${tool.name}, bo ma sideEffect: true. Wyłącz READ_ONLY_MODE tylko świadomie, jeśli chcesz pozwolić na akcje zmieniające stan.`,
+  }
+}
+
+function sideEffectsDisabledBlockedResult(tool: ToolDefinition): ToolBlockedResult {
+  // Faza 5 (audit_events) will replace this with a real audit write; for now this is the
+  // single choke point where a kill-switch block becomes visible for future audit wiring.
+  console.warn(`[kill-switch] SIDE_EFFECTS_DISABLED=true blocked tool "${tool.name}"`)
+  return {
+    ok: false,
+    blocked: true,
+    reason: 'side_effects_disabled',
+    tool: tool.name,
+    message: `SIDE_EFFECTS_DISABLED=true — globalny kill switch blokuje narzędzie ${tool.name}, bo ma sideEffect: true. Wyłącz SIDE_EFFECTS_DISABLED tylko świadomie, jeśli chcesz pozwolić na akcje zmieniające stan.`,
+  }
+}
+
+function policyBlockedResult(tool: ToolDefinition, reason: string): ToolBlockedResult {
+  console.warn(`[policy] blocked tool "${tool.name}": ${reason}`)
+  return {
+    ok: false,
+    blocked: true,
+    reason: 'policy_deny',
+    tool: tool.name,
+    message: `Polityka bezpieczeństwa blokuje narzędzie ${tool.name}: ${reason}`,
+  }
+}
+
+function requiresApprovalResult(tool: ToolDefinition, reason: string): ToolBlockedResult {
+  console.warn(`[policy] tool "${tool.name}" requires approval: ${reason}`)
+  return {
+    ok: false,
+    blocked: true,
+    reason: 'requires_approval',
+    tool: tool.name,
+    message: `Narzędzie ${tool.name} wymaga potwierdzenia: ${reason}`,
   }
 }
 
@@ -99,8 +141,24 @@ export async function executeTool(
   options: ActionExecutionOptions = {}
 ): Promise<unknown> {
   const tool = tools.find((candidate) => candidate.name === name)
-  if (tool && isReadOnlyModeEnabled(env) && getToolSafetyMetadata(tool).sideEffect) {
-    return readOnlyBlockedResult(tool)
+
+  // Policy check: must happen before any execution
+  if (tool && !options.approved) {
+    const agentMode = await getMode(db)
+    const metadata = getToolSafetyMetadata(tool)
+    const decision = decideToolPolicy({
+      tool: { name: tool.name, metadata },
+      agentMode,
+      env,
+    })
+
+    if (decision.type === 'deny') {
+      return policyBlockedResult(tool, decision.reason)
+    }
+    if (decision.type === 'require_approval') {
+      return requiresApprovalResult(tool, decision.reason)
+    }
+    // decision.type === 'allow' continues below
   }
 
   if (name.startsWith('task_'))     return executeTaskTool(name, args, db)
