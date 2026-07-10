@@ -34,6 +34,15 @@ BolekAI is a **lean, focused orchestrator** — not a monolithic system. Each ex
 
 **Key principle:** Each service is **independently deployable**, has its own database, can evolve separately, and communicates via **HTTP API only**.
 
+```txt
+BolekAI myśli.
+BolekCzat pokazuje.
+BolekKB pamięta dokumenty.
+BolekFlow automatyzuje.
+BolekDev koduje.
+Paweł zatwierdza ryzykowne akcje.
+```
+
 ---
 
 ## 2. Tier 1: Agent Core (BolekAI)
@@ -293,6 +302,35 @@ Response:
 
 ---
 
+### 3.4 BolekDev Service
+
+**Role:** Coding executor
+
+**Base:** OpenHands / Agent Canvas
+
+**Hosted:** Anywhere (Docker, VPS, self-hosted)
+
+**Target responsibilities:**
+- Accept coding tasks
+- Clone/mount the target repo
+- Create branches
+- Edit code
+- Run tests, typecheck, lint, build
+- Commit changes
+- Open pull requests
+- Report results back to BolekAI
+
+**What BolekDev Does NOT Own:**
+- Merge decisions
+- Production deploys
+- Approval/risk decisions
+
+BolekDev works through branch → PR only. It never merges or deploys production without explicit owner approval.
+
+Docs live in its own repo: `pawelekbyra/BolekDev/docs/BOLEKDEV-ARCHITECTURE.md`.
+
+---
+
 ## 4. Tool Registration in BolekAI
 
 Each external service is registered as a **tool** in the orchestrator:
@@ -413,6 +451,11 @@ Agent formats response → send to Telegram
 3. **No secret sprawl:** Service-to-service calls go through agent only
 4. **Policy enforcement:** Agent owns all risk decisions
 5. **Audit trail:** Each tool call is logged
+6. **BolekCzat gets no operational secrets** — it only talks to BolekAI
+7. **BolekKB never executes actions** — it only serves knowledge/sources
+8. **BolekFlow never bypasses approval** for mutating actions
+9. **BolekDev works through branch/PR only** — no direct push to main
+10. **Merge, deploy, refund, patron revoke, sending important emails, and price changes always require explicit owner approval**
 
 ### Environment Variables
 
@@ -532,11 +575,21 @@ npm run test:integration
 
 ### Phase 4: More Services (Q4+)
 
-- BolekDev (coding executor)
+- BolekDev (coding executor) — first manual coding task → branch → PR before any automation
 - BolekEmail (email management)
 - BolekCalendar (scheduling)
 - BolekMoney (financial analysis)
 - ...any new domain
+
+Recommended fine-grained order within these phases:
+
+1. BolekAI: stable `/v1/chat/completions` adapter.
+2. BolekCzat: LibreChat as web UI to BolekAI.
+3. BolekKB: test knowledge base with manual documents.
+4. BolekFlow: first safe workflow with no secrets.
+5. BolekDev: first manual coding task → branch → PR.
+6. BolekAI: add `kb_*`, `flow_*`, `dev_*` tools.
+7. BolekCzat: convenient panels/status views for workflows, knowledge, and coding tasks.
 
 ---
 
@@ -731,9 +784,8 @@ BolekAI supports multiple versions if needed
 ```
 BolekAI/docs/
 ├── VISION.md                    # Long-term goals
-├── BOLEK-NETWORK.md            # High-level ecosystem map
-├── MULTI-AGENT-ARCHITECTURE.md # THIS FILE — implementation plan
-├── ARCHITECTURE.md             # Original Kulfon vision
+├── MULTI-AGENT-ARCHITECTURE.md # THIS FILE — implementation plan + service network
+├── archive/ARCHITECTURE.md     # Superseded target-architecture proposal (see banner)
 ├── POLUTEK-INTEGRATION.md      # Polutek-specific ops
 └── ROADMAP.md                  # Timeline
 ```

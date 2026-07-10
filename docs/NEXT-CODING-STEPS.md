@@ -1,4 +1,4 @@
-# Kulfon — Next Coding Steps
+# Bolek — Next Coding Steps
 
 Ten plik jest roboczą checklistą dla agentów kodujących.
 
@@ -9,7 +9,7 @@ Nie odznaczaj zadania, jeśli zrobiono tylko część pracy.
 ## Jak pracować z tą checklistą
 
 1. Przeczytaj `AGENTS.md`.
-2. Przeczytaj `docs/VISION.md`, `docs/ARCHITECTURE.md` i `docs/ROADMAP.md`.
+2. Przeczytaj `docs/VISION.md`, `docs/MULTI-AGENT-ARCHITECTURE.md` i `docs/ROADMAP.md`.
 3. Wybierz pierwsze niezrobione zadanie z najwyższej niezamkniętej fazy.
 4. Wykonaj tylko to zadanie.
 5. Uruchom dostępne testy/typecheck/lint.
@@ -401,6 +401,9 @@ Cel: przepisać integracje pod manifesty, policy, approvale i audyt.
 - [ ] Clerk read-only z redakcją PII.
 - [ ] Polutek ops read-only z redakcją domenową.
 - [ ] Polutek refund/revoke jako critical approval przez ops-API.
+- [ ] Health check endpoint per zewnętrzny serwis (BolekCzat/BolekFlow/BolekKB) z graceful degradation, gdy serwis jest niedostępny.
+- [ ] Retry z exponential backoff dla wywołań zewnętrznych serwisów (przeniesione z usuniętego PROJECT_STATUS.md).
+- [ ] Podstawowe metryki serwisów (latency, error rate) zapisywane do audytu/KV.
 - [ ] Faza 10 ukończona.
 
 ---

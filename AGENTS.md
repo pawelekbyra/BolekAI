@@ -6,7 +6,7 @@ Jeżeli jesteś agentem kodującym, **zacznij tutaj**. Nie zaczynaj pracy od los
 
 ## 1. Cel projektu
 
-Kulfon/Bolek ma zostać przebudowany z prototypu tool-augmented chatbota w **owner-only AI operations platform**.
+Bolek ma zostać przebudowany z prototypu tool-augmented chatbota w **owner-only AI operations platform**.
 
 Najważniejsza zasada:
 
@@ -19,7 +19,7 @@ Nie rozwijaj projektu jako coraz większego Workera z kolejnymi toolami bez wars
 Przed rozpoczęciem pracy przeczytaj:
 
 1. `docs/VISION.md`
-2. `docs/ARCHITECTURE.md`
+2. `docs/MULTI-AGENT-ARCHITECTURE.md`
 3. `docs/ROADMAP.md`
 4. `docs/NEXT-CODING-STEPS.md`
 5. Ten plik: `AGENTS.md`
@@ -29,9 +29,11 @@ Jeżeli dokumenty są ze sobą sprzeczne, priorytet ma kolejność:
 1. `AGENTS.md`
 2. `docs/NEXT-CODING-STEPS.md`
 3. `docs/ROADMAP.md`
-4. `docs/ARCHITECTURE.md`
+4. `docs/MULTI-AGENT-ARCHITECTURE.md`
 5. `docs/VISION.md`
 6. README i starsze dokumenty
+
+`docs/archive/` zawiera zarchiwizowane, superseded propozycje architektoniczne (nie czytaj ich jako aktualną instrukcję — każdy plik ma baner wyjaśniający dlaczego jest nieaktualny).
 
 ## 3. Tryb pracy: jedno zadanie naraz
 
@@ -54,7 +56,7 @@ Zadanie można oznaczyć jako wykonane tylko wtedy, gdy:
 - testy/typecheck/lint zostały uruchomione, jeśli istnieją;
 - zmiana jest ograniczona do zakresu zadania;
 - Definition of Done z checklisty jest spełnione;
-- nie złamano zasad z `docs/VISION.md`, `docs/ARCHITECTURE.md` i `docs/ROADMAP.md`;
+- nie złamano zasad z `docs/VISION.md`, `docs/MULTI-AGENT-ARCHITECTURE.md` i `docs/ROADMAP.md`;
 - jeśli zachowanie systemu się zmieniło, dokumentacja została zaktualizowana;
 - zadanie nie wprowadza nowego high-risk side effect bez policy, approvala i audytu.
 

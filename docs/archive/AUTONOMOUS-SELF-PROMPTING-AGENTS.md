@@ -1,4 +1,6 @@
-# Autonomous Self-Prompting Agents
+> **ARCHIVED — 2026-07-10.** This document's autonomy table lists "Process refund" as Level 1 (fully autonomous, no approval) for its Store Manager Agent pattern. This directly contradicts the hard rule everywhere else in the repo (AGENTS.md, VISION.md, ROADMAP.md, POLUTEK-INTEGRATION.md) that refunds are always critical-risk and require explicit owner approval through the confirm gate. Do not use this doc's autonomy levels as current guidance — kept only as a historical exploration of the self-prompting-loop concept, which may still be useful for non-financial, reversible operations (e.g. log-triage, deploy-monitoring) once evaluated against the actual policy engine.
+
+# Autonomous Self-Prompting Agents (ARCHIVED)
 
 > **Status:** Architecture concept for autonomous agents that detect problems and self-prompt Claude API to generate fixes.
 >

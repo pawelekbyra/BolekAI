@@ -380,12 +380,11 @@ wrangler tail -f
 
 ## Current Phase
 
-See [`PROJECT_STATUS.md`](PROJECT_STATUS.md) for what's next.
+See [`CLAUDE.md`](CLAUDE.md) for the current build status banner, and [`docs/NEXT-CODING-STEPS.md`](docs/NEXT-CODING-STEPS.md) for what's next.
 
 ---
 
 ## Architecture References
 
-- [`docs/MULTI-AGENT-ARCHITECTURE.md`](docs/MULTI-AGENT-ARCHITECTURE.md) — How 4 services work together
-- [`docs/BOLEK-NETWORK.md`](docs/BOLEK-NETWORK.md) — High-level ecosystem
+- [`docs/MULTI-AGENT-ARCHITECTURE.md`](docs/MULTI-AGENT-ARCHITECTURE.md) — How the service network works together (includes the ecosystem map)
 - [`docs/POLUTEK-INTEGRATION.md`](docs/POLUTEK-INTEGRATION.md) — Polutek-specific ops

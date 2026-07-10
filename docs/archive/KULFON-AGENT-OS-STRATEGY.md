@@ -1,4 +1,6 @@
-# Kulfon Agent OS Strategy
+> **ARCHIVED — 2026-07-10.** This document proposed OpenAI as the primary model runtime and a full core migration to Mastra/LangGraph + Postgres, with Cloudflare demoted to ingress only. The owner decided the canonical direction is **Cloudflare Worker + D1 as the durable agent core, Anthropic as the sole model provider, Next.js/Vercel as UI layer only** — matching `docs/ANTHROPIC-ROADMAP.md` and the actual codebase (`package.json` has only `@anthropic-ai/sdk`; `web/` is already a Next.js frontend, not a separate backend core). Kept for reference on layer concepts (Policy/Approval/Audit Engine, Tool Registry, evals structure) and the reusable snippets already folded into `docs/ROADMAP.md`. Its stack and model-provider conclusions are superseded.
+
+# Kulfon Agent OS Strategy (ARCHIVED)
 
 > Status: strategic direction after July 2026 research
 >
