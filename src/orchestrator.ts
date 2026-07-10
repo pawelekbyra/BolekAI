@@ -157,11 +157,13 @@ function toClaudeParams(messages: ChatMessage[]): { system: string; messages: An
   return { system, messages: claudeMessages }
 }
 
-const claudeTools: Anthropic.Tool[] = tools.map((t) => ({
-  name: t.name,
-  description: t.description,
-  input_schema: t.parameters as Anthropic.Tool.InputSchema,
-}))
+function getClaudeTools(): Anthropic.Tool[] {
+  return tools.map((t) => ({
+    name: t.name,
+    description: t.description,
+    input_schema: t.parameters as Anthropic.Tool.InputSchema,
+  }))
+}
 
 /**
  * Runs one turn of the conversation against Claude. If `onTextDelta` is given,
@@ -175,10 +177,10 @@ async function runClaudeTurn(
   onTextDelta?: (delta: string) => void
 ): Promise<Anthropic.Message> {
   if (!onTextDelta) {
-    return client.messages.create({ model: CLAUDE_MODEL, max_tokens: 4096, system, messages, tools: claudeTools })
+    return client.messages.create({ model: CLAUDE_MODEL, max_tokens: 4096, system, messages, tools: getClaudeTools() })
   }
 
-  const stream = client.messages.stream({ model: CLAUDE_MODEL, max_tokens: 4096, system, messages, tools: claudeTools })
+  const stream = client.messages.stream({ model: CLAUDE_MODEL, max_tokens: 4096, system, messages, tools: getClaudeTools() })
   stream.on('text', onTextDelta)
   return stream.finalMessage()
 }
