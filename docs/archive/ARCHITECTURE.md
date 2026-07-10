@@ -1,4 +1,6 @@
-# Kulfon — architektura docelowa
+> **ZARCHIWIZOWANE — 2026-07-10.** Ten dokument proponował pełną migrację core'u na Vercel/Node/Postgres z OpenAI jako primary model providerem. Właściciel zdecydował, że kanoniczny kierunek to **Cloudflare Worker + D1 jako trwały core agenta, Anthropic jako jedyny provider modelu, Next.js/Vercel tylko jako warstwa UI** — zgodnie z `docs/ANTHROPIC-ROADMAP.md` i realnym stanem kodu (`package.json` ma wyłącznie `@anthropic-ai/sdk`, `web/` to już istniejący Next.js frontend, nie osobny core). Dokument zostaje jako punkt odniesienia do koncepcji warstw (Policy/Approval/Audit Engine, Tool Registry), ale jego wnioski o stacku i providerze modelu są nieaktualne. Zastępuje go `docs/ROADMAP.md` i `docs/NEXT-CODING-STEPS.md`.
+
+# Kulfon — architektura docelowa (ARCHIWALNE)
 
 ## Status dokumentu
 

@@ -1,26 +1,36 @@
-# Kulfon — wizja produktu
+# Bolek — wizja produktu
 
 ## Status dokumentu
 
-Ten dokument opisuje kierunek docelowy Kulfona po analizie obecnego repo i raportu deep research. Nie opisuje w pełni aktualnego stanu implementacji.
+Ten dokument opisuje kierunek docelowy Boleka po analizie obecnego repo i raportu deep research. Nie opisuje w pełni aktualnego stanu implementacji.
 
-Obecny Kulfon/Bolek jest prototypem integracyjnym: Cloudflare Worker, Telegram/web UI, pamięć w D1, zestaw narzędzi i pierwsze mechanizmy agentowe. Docelowo projekt ma urosnąć do prywatnej platformy operacyjnej AI dla właściciela.
+Obecny Bolek jest prototypem integracyjnym: Cloudflare Worker, Telegram/web UI, pamięć w D1, zestaw narzędzi i pierwsze mechanizmy agentowe. Docelowo projekt ma urosnąć do prywatnej platformy operacyjnej AI dla właściciela.
 
 ## Jednozdaniowa wizja
 
-**Kulfon to owner-only AI operating system: prywatny operator, który pamięta kontekst, monitoruje projekty, przygotowuje decyzje, wykonuje bezpieczne akcje i prosi o zgodę przed wszystkim, co ma realny skutek.**
+**Bolek to owner-only AI operating system: prywatny operator, który pamięta kontekst, monitoruje projekty, przygotowuje decyzje, wykonuje bezpieczne akcje i prosi o zgodę przed wszystkim, co ma realny skutek.**
 
-## Czym Kulfon nie ma być
+Zasada nadrzędna (przeniesiona z archiwalnego `docs/archive/KULFON-AGENT-OS-STRATEGY.md`):
 
-Kulfon nie ma być zwykłym chatbotem z dopiętymi toolami.
+```text
+LLM proponuje.
+System decyduje.
+Właściciel zatwierdza ryzyko.
+Executor wykonuje.
+Audyt zapisuje wszystko.
+```
+
+## Czym Bolek nie ma być
+
+Bolek nie ma być zwykłym chatbotem z dopiętymi toolami.
 
 Nie ma też być agentem, który „ma klucze do wszystkiego” i wykonuje akcje bez twardych zasad. Autonomia bez polityk, audytu i approvali jest anty-celem.
 
-Kulfon nie powinien być jednym wielkim Workerem, do którego dopisywane są kolejne integracje bez formalnego modelu uprawnień, ryzyka, trwałych workflowów i audytu.
+Bolek nie powinien być jednym wielkim Workerem, do którego dopisywane są kolejne integracje bez formalnego modelu uprawnień, ryzyka, trwałych workflowów i audytu.
 
-## Czym Kulfon ma być
+## Czym Bolek ma być
 
-Kulfon ma być prywatnym centrum operacyjnym właściciela.
+Bolek ma być prywatnym centrum operacyjnym właściciela.
 
 Ma łączyć kilka ról:
 
@@ -46,7 +56,7 @@ Dopiero potem dodaje się akcje skutkowe: wysyłka maila, zapis do GitHuba, rede
 
 ### 3. Autonomia tylko tam, gdzie ryzyko jest niskie
 
-Kulfon może autonomicznie:
+Bolek może autonomicznie:
 
 - czytać dane;
 - monitorować;
@@ -58,7 +68,7 @@ Kulfon może autonomicznie:
 - tworzyć propozycje planów;
 - budować raporty.
 
-Kulfon nie powinien autonomicznie wykonywać bez approvala:
+Bolek nie powinien autonomicznie wykonywać bez approvala:
 
 - maili wychodzących;
 - refundów;
@@ -116,7 +126,7 @@ Każda istotna akcja musi zostawić ślad:
 
 ### 7. Pamięć musi być świadoma zgody
 
-Kulfon ma pamiętać dużo, ale nie wszystko bezrefleksyjnie.
+Bolek ma pamiętać dużo, ale nie wszystko bezrefleksyjnie.
 
 Pamięć powinna być podzielona na:
 
@@ -156,7 +166,7 @@ Docelowy UI powinien mieć:
 
 ### 10. Genialność = kontrolowana pętla pracy
 
-Najlepsza wersja Kulfona nie polega na tym, że „robi wszystko sam”.
+Najlepsza wersja Boleka nie polega na tym, że „robi wszystko sam”.
 
 Najlepsza wersja wygląda tak:
 
@@ -174,7 +184,7 @@ Najlepsza wersja wygląda tak:
 
 ### Poranny briefing
 
-Kulfon rano wysyła właścicielowi podsumowanie:
+Bolek rano wysyła właścicielowi podsumowanie:
 
 - Polutek: przychód, patroni, pending payments, nowe konta, anomalie;
 - Vercel: deploye, runtime errors, awarie;
@@ -186,17 +196,17 @@ Kulfon rano wysyła właścicielowi podsumowanie:
 
 Właściciel pisze: „co się stało z Polutkiem?”.
 
-Kulfon sprawdza Vercel, Stripe, Clerk, ops-API, ostatnie deploye i maile. Daje diagnozę, hipotezy, wpływ na użytkowników i proponowane akcje.
+Bolek sprawdza Vercel, Stripe, Clerk, ops-API, ostatnie deploye i maile. Daje diagnozę, hipotezy, wpływ na użytkowników i proponowane akcje.
 
 ### Coding operator
 
 Właściciel pisze: „napraw błąd z webhookiem”.
 
-Kulfon czyta repo, logi, issue i ostatnie commity. Przygotowuje plan, patch lub PR. Merge/deploy wymaga approvala.
+Bolek czyta repo, logi, issue i ostatnie commity. Przygotowuje plan, patch lub PR. Merge/deploy wymaga approvala.
 
 ### Support operator
 
-Kulfon czyta maila supportowego, klasyfikuje sprawę, sprawdza status użytkownika i przygotowuje odpowiedź. Wysyłka wymaga approvala.
+Bolek czyta maila supportowego, klasyfikuje sprawę, sprawdza status użytkownika i przygotowuje odpowiedź. Wysyłka wymaga approvala.
 
 ### Voice operator
 
@@ -217,6 +227,6 @@ głos -> transkrypcja -> agent runtime -> narzędzia/pamięć -> odpowiedź -> g
 
 ## Najważniejsza decyzja produktowa
 
-Nie rozwijamy Kulfona jako coraz większego prototypu z dopisywanymi toolami.
+Nie rozwijamy Boleka jako coraz większego prototypu z dopisywanymi toolami.
 
 Rozwijamy go jako **owner-only AI operations platform**, gdzie narzędzia, approvale, audyt, pamięć i workflowy są podstawą architektury.
