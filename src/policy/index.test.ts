@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { decideRiskLevelPolicy, decideToolPolicy, type PolicyContext } from './index'
+import { decideRiskLevelPolicy, decideToolPolicy, evaluateProjectAllowlist, type PolicyContext } from './index'
 
 describe('Policy central export', () => {
   it('allows low-risk read-only tools from src/policy', () => {
@@ -72,5 +72,48 @@ describe('Risk-level policies', () => {
     expect(decideRiskLevelPolicy({ toolName: 'stripe_refund', riskLevel: 'critical', sideEffect: true })).toMatchObject({
       type: 'require_approval',
     })
+  })
+})
+
+describe('Project allowlist preparation', () => {
+  it('evaluates project and target allowlist matches without enforcing a full project model', () => {
+    const context: PolicyContext = {
+      tool: {
+        name: 'github_push_file',
+        metadata: {
+          riskLevel: 'high',
+          sideEffect: true,
+        },
+      },
+      agentMode: 'confirm',
+      target: { type: 'github', id: 'github_push_file' },
+      projectScope: { projectId: 'bolek-ai', projectName: 'BolekAI' },
+      projectAllowlist: {
+        projectIds: ['bolek-ai'],
+        targetTypes: ['github'],
+      },
+    }
+
+    expect(evaluateProjectAllowlist(context)).toEqual({
+      configured: true,
+      projectMatched: true,
+      targetMatched: true,
+    })
+  })
+
+  it('reports unconfigured allowlists without changing policy behavior', () => {
+    const context: PolicyContext = {
+      tool: {
+        name: 'web_search',
+        metadata: {
+          riskLevel: 'low',
+          sideEffect: false,
+        },
+      },
+      agentMode: 'confirm',
+    }
+
+    expect(evaluateProjectAllowlist(context)).toEqual({ configured: false })
+    expect(decideToolPolicy(context)).toEqual({ type: 'allow' })
   })
 })

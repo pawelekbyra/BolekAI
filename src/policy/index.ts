@@ -22,6 +22,19 @@ export type PolicyProjectScope = {
   environment?: string
 }
 
+export type PolicyProjectAllowlist = {
+  projectIds?: string[]
+  projectNames?: string[]
+  targetTypes?: string[]
+  targetIds?: string[]
+}
+
+export type ProjectAllowlistEvaluation = {
+  configured: boolean
+  projectMatched?: boolean
+  targetMatched?: boolean
+}
+
 export interface PolicyContext {
   tool: {
     name: string
@@ -33,6 +46,7 @@ export interface PolicyContext {
   env?: Env
   target?: PolicyTarget
   projectScope?: PolicyProjectScope
+  projectAllowlist?: PolicyProjectAllowlist
 }
 
 function isReadOnlyModeEnabled(env?: Pick<Env, 'READ_ONLY_MODE'>): boolean {
@@ -41,6 +55,30 @@ function isReadOnlyModeEnabled(env?: Pick<Env, 'READ_ONLY_MODE'>): boolean {
 
 function isSideEffectsDisabled(env?: Pick<Env, 'SIDE_EFFECTS_DISABLED'>): boolean {
   return env?.SIDE_EFFECTS_DISABLED?.trim().toLowerCase() === 'true'
+}
+
+function matchesOptionalAllowlist(value: string | undefined, allowlist: string[] | undefined): boolean | undefined {
+  if (!allowlist || allowlist.length === 0) return undefined
+  return value !== undefined && allowlist.includes(value)
+}
+
+export function evaluateProjectAllowlist(context: PolicyContext): ProjectAllowlistEvaluation {
+  const allowlist = context.projectAllowlist
+
+  if (!allowlist) {
+    return { configured: false }
+  }
+
+  const projectIdMatched = matchesOptionalAllowlist(context.projectScope?.projectId, allowlist.projectIds)
+  const projectNameMatched = matchesOptionalAllowlist(context.projectScope?.projectName, allowlist.projectNames)
+  const targetTypeMatched = matchesOptionalAllowlist(context.target?.type, allowlist.targetTypes)
+  const targetIdMatched = matchesOptionalAllowlist(context.target?.id, allowlist.targetIds)
+
+  return {
+    configured: true,
+    projectMatched: projectIdMatched ?? projectNameMatched,
+    targetMatched: targetTypeMatched ?? targetIdMatched,
+  }
 }
 
 export type RiskLevelPolicyInput = {

@@ -223,11 +223,11 @@ Cel: rozwinąć minimalny policy check w centralny policy engine.
   - [x] Low/medium/high/critical mają jawne zasady.
   - [x] Zasady są testowane.
 
-- [ ] Dodać przygotowanie pod allowlisty projektowe.
+- [x] Dodać przygotowanie pod allowlisty projektowe.
 
   Definition of Done:
-  - [ ] Projekt/target może w przyszłości wpływać na decyzję.
-  - [ ] Nie trzeba jeszcze implementować pełnych projektów.
+  - [x] Projekt/target może w przyszłości wpływać na decyzję.
+  - [x] Nie trzeba jeszcze implementować pełnych projektów.
 
 - [ ] Faza 3 ukończona.
 
