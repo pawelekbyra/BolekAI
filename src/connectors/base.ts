@@ -54,21 +54,36 @@ export abstract class BaseConnector {
 
   abstract execute(toolName: string, args: unknown): Promise<ConnectorExecutionResult>
 
-  redactOutput(data: unknown): unknown {
+  redactOutput(data: unknown, toolName?: string): unknown {
     if (typeof data !== 'object' || data === null) return data
 
     const obj = { ...data } as Record<string, unknown>
 
+    // Redact global fields
     for (const field of this.manifest.redactionRules.globalFields) {
       if (field in obj) {
         obj[field] = '[REDACTED]'
       }
     }
 
+    // Redact tool-specific fields
+    if (toolName && this.manifest.redactionRules.toolSpecific[toolName]) {
+      for (const field of this.manifest.redactionRules.toolSpecific[toolName]) {
+        if (field in obj) {
+          obj[field] = '[REDACTED]'
+        }
+      }
+    }
+
+    // Redact patterns in all string values
     for (const pattern of this.manifest.redactionRules.patterns) {
       for (const [key, value] of Object.entries(obj)) {
         if (typeof value === 'string') {
           obj[key] = value.replace(pattern, '[REDACTED]')
+        }
+        // Also check if key matches pattern
+        if (pattern.test(key)) {
+          obj[key] = '[REDACTED]'
         }
       }
     }

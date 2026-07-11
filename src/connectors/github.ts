@@ -59,7 +59,7 @@ export class GitHubConnector extends BaseConnector {
         type: 'object',
         properties: {
           repo: { type: 'string', description: 'Repository in owner/repo format' },
-          state: { type: 'string', enum: ['open', 'closed', 'all'], description: 'Issue state' },
+          state: { type: 'string', description: 'Issue state (open|closed|all)' },
         },
         required: ['repo'],
       },

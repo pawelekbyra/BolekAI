@@ -20,7 +20,10 @@ export class PolutekConnector extends BaseConnector {
     },
     redactionRules: {
       globalFields: ['apiKey', 'token', 'secret', 'password'],
-      patterns: [/polutek_[a-zA-Z0-9_]+/gi],
+      patterns: [
+        /polutek_[a-zA-Z0-9_]+/gi,
+        /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
+      ],
       toolSpecific: {
         'polutek_get_patron': ['email', 'paymentMethod'],
         'polutek_process_refund': ['chargeId', 'email'],
@@ -66,7 +69,7 @@ export class PolutekConnector extends BaseConnector {
         type: 'object',
         properties: {
           limit: { type: 'number', description: 'Limit results' },
-          status: { type: 'string', enum: ['active', 'inactive', 'all'], description: 'Filter by status' },
+          status: { type: 'string', description: 'Filter by status (active|inactive|all)' },
         },
       },
     },
@@ -92,7 +95,7 @@ export class PolutekConnector extends BaseConnector {
         type: 'object',
         properties: {
           patronId: { type: 'string', description: 'Patron ID' },
-          status: { type: 'string', enum: ['active', 'inactive'], description: 'New status' },
+          status: { type: 'string', description: 'New status (active|inactive)' },
         },
         required: ['patronId', 'status'],
       },

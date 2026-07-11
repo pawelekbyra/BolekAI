@@ -32,7 +32,7 @@ describe('Connectors', () => {
       const result = connector.redactOutput({
         token: 'token_secret123',
         content: 'regular data',
-      })
+      }) as Record<string, unknown>
       expect(result).toEqual({
         token: '[REDACTED]',
         content: 'regular data',
@@ -56,7 +56,7 @@ describe('Connectors', () => {
       const result = connector.redactOutput({
         sk_test_123: 'secret',
         amount: 1000,
-      })
+      }) as Record<string, unknown>
       expect(result.sk_test_123).toBe('[REDACTED]')
       expect(result.amount).toBe(1000)
     })
@@ -80,9 +80,9 @@ describe('Connectors', () => {
       const result = connector.redactOutput({
         to: 'user@example.com',
         body: 'Contact me at admin@example.com',
-      })
+      }) as Record<string, unknown>
       expect(result.to).toBe('[REDACTED]')
-      expect(result.body).toContain('[REDACTED]')
+      expect(String(result.body)).toContain('[REDACTED]')
     })
 
     it('has medium default risk', () => {
@@ -111,11 +111,14 @@ describe('Connectors', () => {
 
     it('redacts patron data', () => {
       const connector = new PolutekConnector({ env: {} })
-      const result = connector.redactOutput({
-        email: 'patron@example.com',
-        paymentMethod: 'cc_4242',
-        patronId: '123',
-      })
+      const result = connector.redactOutput(
+        {
+          email: 'patron@example.com',
+          paymentMethod: 'cc_4242',
+          patronId: '123',
+        },
+        'polutek_get_patron'
+      ) as Record<string, unknown>
       expect(result.email).toBe('[REDACTED]')
       expect(result.paymentMethod).toBe('[REDACTED]')
       expect(result.patronId).toBe('123')
