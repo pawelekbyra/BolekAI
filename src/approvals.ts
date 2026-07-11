@@ -68,7 +68,17 @@ export function buildApprovalImpact(toolName: string, riskLevel: RiskLevel, side
   return `Narzędzie ${toolName} ma riskLevel=${riskLevel}. Approval jest wymagany przez policy mimo braku zadeklarowanego side-effectu.`
 }
 
-export class ApprovalStore {
+export interface ApprovalStorage {
+  create(input: CreateApprovalInput): Promise<ApprovalRecord>
+  get(id: string): Promise<ApprovalRecord | null>
+  approve(id: string, chatId: number): Promise<boolean>
+  deny(id: string, chatId: number): Promise<boolean>
+  markExpired(id: string): Promise<void>
+  markExecuted(id: string, result: unknown): Promise<boolean>
+  markFailed(id: string, error: string): Promise<boolean>
+}
+
+export class ApprovalStore implements ApprovalStorage {
   constructor(private readonly db: D1Database) {}
 
   async create(input: CreateApprovalInput): Promise<ApprovalRecord> {

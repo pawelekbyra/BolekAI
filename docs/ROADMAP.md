@@ -34,7 +34,11 @@ Nie zakłada, że wszystko trzeba zrobić naraz. Zakłada, że każda kolejna pr
   - Obecny agent task runner ma `attempt_count`, `locked_at`, `locked_by` i `run_id`
   - Równoległość side-effect tasks ograniczona do jednego slotu
   - Docelowy workflow engine wybrany: Inngest
-- **[- PLANOWANA]** Faza 7+ — Postgres, memory system, UI, integracje, voice
+- **[✓ UKOŃCZONA]** Faza 7 — Postgres source of truth prep (2026-07-11)
+  - Storage abstractions dla approvals, audit events i task runs
+  - Runtime używa store interfaces dla nowych approval/audit/task-run ścieżek
+  - Draft Postgres schema w `docs/POSTGRES-SCHEMA-DRAFT.sql`
+- **[- PLANOWANA]** Faza 8+ — Memory system, UI, integracje, voice
 
 ## Zasada nadrzędna
 

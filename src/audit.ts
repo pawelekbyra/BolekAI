@@ -35,11 +35,15 @@ function safeSerialize(value: unknown): string | null {
   }
 }
 
-export async function auditEvent(db: D1Database | undefined, input: AuditEventInput): Promise<void> {
-  if (!db) return
+export interface AuditEventStorage {
+  write(input: AuditEventInput): Promise<void>
+}
 
-  try {
-    await db
+export class D1AuditEventStore implements AuditEventStorage {
+  constructor(private readonly db: D1Database) {}
+
+  async write(input: AuditEventInput): Promise<void> {
+    await this.db
       .prepare(`
         INSERT INTO audit_events (
           id, chat_id, event_type, tool_name, risk_level, policy_decision,
@@ -58,6 +62,14 @@ export async function auditEvent(db: D1Database | undefined, input: AuditEventIn
         safeSerialize(input.data)
       )
       .run()
+  }
+}
+
+export async function auditEvent(db: D1Database | undefined, input: AuditEventInput): Promise<void> {
+  if (!db) return
+
+  try {
+    await new D1AuditEventStore(db).write(input)
   } catch (err) {
     console.warn('[audit] failed to write audit event', {
       eventType: input.eventType,
