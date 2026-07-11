@@ -26,7 +26,7 @@ Nie odznaczaj zadania, jeśli zrobiono tylko część pracy.
 - [x] Faza 5 — Audit v1
 - [x] Faza 6 — Durable workflows
 - [x] Faza 7 — Postgres source of truth
-- [ ] Faza 8 — Memory System v1
+- [x] Faza 8 — Memory System v1
 - [ ] Faza 9 — Command Center UI
 - [ ] Faza 10 — Integracje produkcyjne
 - [ ] Faza 11 — Evals i release gates
@@ -362,13 +362,13 @@ Cel: przygotować migrację z D1 do docelowego storage.
 
 Cel: oddzielić pamięć od historii rozmów.
 
-- [ ] Dodać model `memory_items`.
-- [ ] Dodać typy pamięci: `profile`, `project`, `decision`, `operational`, `episodic`.
-- [ ] Dodać memory proposal flow.
-- [ ] Dodać edit/delete pamięci.
-- [ ] Dodać redakcję sekretów przed zapisem pamięci.
-- [ ] Przygotować miejsce pod embeddings/pgvector, ale nie wektoryzować wszystkiego automatycznie.
-- [ ] Faza 8 ukończona.
+- [x] Dodać model `memory_items`.
+- [x] Dodać typy pamięci: `profile`, `project`, `decision`, `operational`, `episodic`.
+- [x] Dodać memory proposal flow.
+- [x] Dodać edit/delete pamięci.
+- [x] Dodać redakcję sekretów przed zapisem pamięci.
+- [x] Przygotować miejsce pod embeddings/pgvector, ale nie wektoryzować wszystkiego automatycznie.
+- [x] Faza 8 ukończona.
 
 ---
 
@@ -439,10 +439,10 @@ Cel: dodać głos jako interfejs, nie jako obejście policy.
 
 # Następne zadanie sugerowane dla agenta
 
-Faza 7 ukończona. Następna:
+Faza 8 ukończona. Następna:
 
-> **Faza 8 — Memory System v1**
+> **Faza 9 — Command Center UI**
 
-Zacząć od modelu `memory_items`, typów pamięci i memory proposal flow.
+Zacząć od approval inbox i audit timeline, bez dokładania nowych integracji.
 
-Nie zaczynaj UI, voice ani nowych integracji, dopóki memory model i consent flow nie będą gotowe.
+Nie zaczynaj voice ani produkcyjnych integracji, dopóki podstawowy Command Center UI nie będzie gotowy.

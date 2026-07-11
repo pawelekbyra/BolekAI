@@ -38,7 +38,12 @@ Nie zakłada, że wszystko trzeba zrobić naraz. Zakłada, że każda kolejna pr
   - Storage abstractions dla approvals, audit events i task runs
   - Runtime używa store interfaces dla nowych approval/audit/task-run ścieżek
   - Draft Postgres schema w `docs/POSTGRES-SCHEMA-DRAFT.sql`
-- **[- PLANOWANA]** Faza 8+ — Memory system, UI, integracje, voice
+- **[✓ UKOŃCZONA]** Faza 8 — Memory System v1 (2026-07-11)
+  - Model `memory_items` z typami pamięci i statusem proposal/active/rejected/deleted
+  - Memory proposal flow przez narzędzia `memory_*`
+  - Edit/delete pamięci i redakcja sekretów przed zapisem
+  - Pola pod embeddings/pgvector bez automatycznego wektoryzowania
+- **[- PLANOWANA]** Faza 9+ — Command Center UI, integracje, voice
 
 ## Zasada nadrzędna
 
