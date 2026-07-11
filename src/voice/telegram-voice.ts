@@ -33,10 +33,16 @@ export class TelegramVoiceHandler {
     const fileInfoRes = await fetch(fileInfoUrl)
     if (!fileInfoRes.ok) throw new Error(`Telegram getFile failed: ${fileInfoRes.status}`)
 
-    const fileInfo = await fileInfoRes.json()
+    const fileInfo = (await fileInfoRes.json()) as {
+      ok: boolean
+      description?: string
+      result?: { file_path: string }
+    }
     if (!fileInfo.ok) throw new Error(`Telegram error: ${fileInfo.description}`)
 
-    const filePath = fileInfo.result.file_path
+    const filePath = fileInfo.result?.file_path
+    if (!filePath) throw new Error('No file path in Telegram response')
+
     const fileUrl = `${this.apiBase}/file/bot${this.botToken}/${filePath}`
 
     const fileRes = await fetch(fileUrl)
@@ -111,7 +117,11 @@ export class TelegramVoiceHandler {
     needsApproval: boolean
     reason: string
   } {
+    const lowerText = text.toLowerCase()
+
+    // Critical keywords in English and Polish (with accent variants)
     const criticalKeywords = [
+      // English
       'refund',
       'delete',
       'remove',
@@ -120,11 +130,26 @@ export class TelegramVoiceHandler {
       'rollback',
       'cancel',
       'deny',
+      // Polish (with accents)
+      'zwróć',
+      'zwrot',
+      'usun',
+      'usuń',
+      'wdróż',
+      'wdróz',
+      'wdroz',
+      'cofnij',
+      'wycofaj',
+      'odmów',
+      'odrzuc',
+      'odrzuć',
+      // Polish variants without accents
+      'zwroc',
+      'usun',
+      'odmiow',
     ]
 
-    const mentioned = criticalKeywords.filter((kw) =>
-      text.toLowerCase().includes(kw)
-    )
+    const mentioned = criticalKeywords.filter((kw) => lowerText.includes(kw))
 
     if (mentioned.length > 0 && requiresApproval) {
       return {

@@ -1,6 +1,56 @@
 import fs from 'fs'
 import path from 'path'
-import YAML from 'yaml'
+
+// Simple YAML parser for fixtures (no external dependency)
+function parseYAML(content: string): Record<string, unknown>[] {
+  const docs: Record<string, unknown>[] = []
+  const blocks = content.split('---').filter((b) => b.trim())
+
+  for (const block of blocks) {
+    const doc: Record<string, unknown> = {}
+    const lines = block.trim().split('\n')
+
+    let currentKey = ''
+    let currentList: string[] = []
+
+    for (const line of lines) {
+      if (line.startsWith(' ') || line.startsWith('\t')) {
+        // List item or nested value
+        if (line.trim().startsWith('- ')) {
+          currentList.push(line.trim().substring(2))
+        }
+      } else if (line.includes(':')) {
+        // Save previous list if any
+        if (currentList.length > 0) {
+          doc[currentKey] = currentList
+          currentList = []
+        }
+
+        const [key, ...valueParts] = line.split(':')
+        const value = valueParts.join(':').trim()
+        currentKey = key.trim()
+
+        if (value) {
+          // Simple type conversion
+          if (value === 'true') doc[currentKey] = true
+          else if (value === 'false') doc[currentKey] = false
+          else if (!isNaN(Number(value))) doc[currentKey] = Number(value)
+          else doc[currentKey] = value
+        }
+      }
+    }
+
+    if (currentList.length > 0) {
+      doc[currentKey] = currentList
+    }
+
+    if (Object.keys(doc).length > 0) {
+      docs.push(doc)
+    }
+  }
+
+  return docs
+}
 
 export interface EvalCase {
   id: string
@@ -38,10 +88,10 @@ export class EvalRunner {
 
       const filePath = path.join(fixtureDir, file)
       const content = fs.readFileSync(filePath, 'utf-8')
-      const docs = YAML.parseAllDocuments(content)
+      const docs = parseYAML(content)
 
       for (const doc of docs) {
-        const data = doc.toJS() as EvalCase
+        const data = doc as EvalCase
         if (data.id && data.input && data.expected) {
           this.fixtures.push(data)
         }

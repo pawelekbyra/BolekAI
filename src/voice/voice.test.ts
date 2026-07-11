@@ -41,8 +41,8 @@ describe('Voice Interface — Faza 12', () => {
     it('catches multiple critical keywords', () => {
       const result = handler.validateVoiceApproval('Usuń plik i wdróż zmiany', true)
       expect(result.needsApproval).toBe(true)
-      expect(result.reason).toContain('delete')
-      expect(result.reason).toContain('deploy')
+      expect(result.reason).toContain('usuń')
+      expect(result.reason).toContain('wdróż')
     })
 
     it('identifies refund operations as critical', () => {
