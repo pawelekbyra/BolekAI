@@ -71,10 +71,10 @@ Structured approval objects with TTL and idempotency. Audit event logging for al
 UI components for approvals, audit timeline, tasks, integrations. 6 live integrations with risk profiles, redaction, audit logging: GitHub, Vercel, Email, Stripe, Clerk, Polutek — implemented as tools in `src/tools/*.ts` (registered in `src/tools/index.ts`), sharing the manifest/redaction framework in `src/tools/manifest.ts`. (An earlier parallel `src/connectors/` class-based scaffold from this phase was never wired into the tool registry and was removed as dead code on 2026-07-11 — see "Corrections" below.)
 
 ### Faza 11 — Evals & Release Gates ✅
-Regression test framework. 85+ test cases across 6 security categories: approval enforcement, prompt injection, memory consent, idempotency, redaction, critical operations.
+Security regression suite (`evals/evals.test.ts`) that drives the real `executeTool`/`decideToolPolicy`/`ApprovalStore`/audit/memory pipeline against a real in-memory SQLite database (`evals/fake-d1.ts`, via Node's `node:sqlite`) — not fixture-to-fixture comparisons. 6 scenario tests covering: approval enforcement (critical + high risk), prompt-injection resistance, double-execution prevention, output redaction, and memory consent + secret redaction. See "Corrections" below for what this replaced.
 
 ### Faza 12 — Voice Interface ✅
-Telegram voice notes → transcription → same policy pipeline as text. Critical operations (refund, delete, deploy) require explicit approval even when spoken. All voice commands audited.
+Telegram voice notes → real transcription via Cloudflare Workers AI (`@cf/openai/whisper`) → same policy pipeline as text. Wired into the live webhook in `src/telegram.ts`. Critical operations (refund, delete, deploy) require explicit approval even when spoken. All voice commands audited.
 
 ---
 
@@ -220,19 +220,28 @@ Migration targets for scale:
 
 ## Evals & Testing (Faza 11)
 
-Test suite covers:
-1. **Approval enforcement** — critical ops require approval
-2. **Prompt injection** — malicious inputs don't bypass policy
-3. **Memory consent** — no personal data stored without approval
-4. **Idempotency** — refunds can't execute twice
-5. **Redaction** — secrets removed from tool outputs
-6. **Critical operations** — refund, delete, deploy, rollback detected
+`evals/evals.test.ts` runs 6 scenario tests against the real production code paths
+(`executeTool`, `decideToolPolicy`, `ApprovalStore`, `auditEvent`, `executeMemoryTool`), backed
+by a real SQLite database (`evals/fake-d1.ts` runs the actual migration SQL through Node's
+`node:sqlite`, not a hand-rolled mock). It covers:
+
+1. **Approval enforcement** — `stripe_refund` (critical) and `github_push_file` (high) require
+   approval and never reach `fetch()` without it
+2. **Prompt injection** — text crafted to look like an override instruction inside tool args
+   does not change the policy decision (policy is driven by tool risk metadata, not by args content)
+3. **Double-execution prevention** — approving/executing the same approval twice is rejected by
+   the DB-level state transition guard (`WHERE status = 'pending'` / `'approved'`)
+4. **Redaction** — a tool leaking `api_key`/`token` fields gets them replaced with `[REDACTED]`
+   via the real `redactToolResult`
+5. **Memory consent** — `memory_propose` never becomes `active` without an explicit
+   `memory_approve` call, and secrets in the raw content are redacted before the row is written
 
 ```bash
-npm test -- evals.test.ts
-# Runs 85+ regression tests
-# Categories: approval, security, memory, redaction, critical-ops
+npx vitest run evals/evals.test.ts
 ```
+
+The full suite (`src/**/*.test.ts` + `evals/evals.test.ts`) is 84 tests across 10 files as of
+2026-07-11 — see "Corrections" below for what this replaced.
 
 ---
 
@@ -247,16 +256,20 @@ npm test -- evals.test.ts
 6. Send response (text + optional audio)
 
 ### Safety
-✅ **Voice does NOT bypass approval** — same policy engine as text
+✅ **Voice does NOT bypass approval** — transcribed text goes through the same
+`processText()` path (`handleActionConfirmation` → `orchestrate` → `executeTool` →
+`decideToolPolicy`) as typed messages
 ✅ **Critical ops require explicit confirmation** — user sees/hears approval
-✅ **All voice audited** — transcription + confidence + execution logged
-✅ **Minimum confidence threshold** — low-confidence transcriptions rejected (< 85%)
+✅ **Tool executions are audited** — same `auditEvent()` calls as the text path
+⚠️ **Confidence-based rejection is NOT implemented** — `VOICE_SAFETY_RULES.minTranscriptionConfidence`
+in `src/voice/voice-integrations.ts` is a documented target, not enforced code; Workers AI Whisper
+doesn't return a usable confidence score, and no code path currently checks one before executing.
 
 Example:
 ```
 User (voice): "Zwróć 50 złotych"
 ↓
-Transcribed: "Zwróć 50 złotych" (confidence: 0.95)
+Transcribed via Workers AI Whisper: "Zwróć 50 złotych"
 ↓
 Policy: stripe_refund → risk_level = "critical" → require_approval
 ↓
@@ -265,7 +278,7 @@ User taps: APPROVE
 ↓
 Stripe refund executed, response sent to Telegram
 ↓
-Audit logged: voice_command + transcription + approval + execution
+Audit logged: policy_decision + approval_created + approval_executed
 ```
 
 ---
@@ -297,13 +310,8 @@ src/
     schema.sql                # D1 schema
     migrations/               # Schema evolution
 evals/
-  runner.ts                   # Eval framework
-  evals.test.ts               # Regression test suite
-  fixtures/                   # YAML test cases
-    stripe-refund-approval.yaml
-    prompt-injection-prevention.yaml
-    memory-consent.yaml
-    redaction-and-idempotency.yaml
+  fake-d1.ts                   # Real SQLite (node:sqlite) behind the D1Database interface
+  evals.test.ts                # Security regression suite (see Faza 11 above)
 wrangler.toml                 # Cloudflare Worker config
 ```
 
@@ -365,6 +373,49 @@ weren't actually true of the running system. Fixed in the same change that added
   Polutek/Email integrations that `src/tools/index.ts` dispatches to live in `src/tools/*.ts`.
   The unused folder was deleted; the real integrations are documented above under "Connectors
   (Faza 10)".
+
+## Corrections (2026-07-11, second pass)
+
+A second, independent review re-verified every "done" claim against the running code instead of
+trusting this document, and found the same overclaiming pattern repeating:
+
+- **The eval suite tested nothing.** `evals/evals.test.ts` claimed "85+ regression tests" but
+  contained 6 hardcoded fixture objects and 15 assertions that only checked one hardcoded JS value
+  against another (e.g. `expect(stripeEval?.expected.approval_created).toBe(true)`). Nothing ever
+  called `executeTool`, `decideToolPolicy`, or any other production function. `evals/runner.ts`
+  (`EvalRunner`, `createMockExecutor`) and `evals/fixtures/*.yaml` were dead code — nothing loaded
+  the YAML fixtures. **Rewritten**: the suite now runs 6 real scenarios against `executeTool` /
+  `ApprovalStore` / `redactToolResult` / `executeMemoryTool`, backed by a real SQLite engine
+  (`evals/fake-d1.ts`, via Node's built-in `node:sqlite`) executing the actual migration schema —
+  not a mock. The dead `runner.ts` and unused fixtures were deleted.
+- **Voice transcription was a hardcoded string.** `transcribeVoiceNote()` returned
+  `'[Transcribed audio content would go here]'` with a comment admitting it was a placeholder, and
+  `handleTelegramVoiceMessage`/`handleVoiceMessage` were never called from `src/telegram.ts` or
+  `src/index.ts` — voice notes sent to the live webhook were silently dropped despite Faza 12 being
+  marked ✅. **Fixed**: `transcribeVoiceNote()` now calls Workers AI (`env.AI.run('@cf/openai/whisper', ...)`),
+  and `src/telegram.ts` routes `update.message.voice` to the voice handler with the same
+  `processText()` pipeline text messages use (`src/telegram.test.ts` guards the wiring itself,
+  not just the transcription function, against silently regressing to "defined but never called").
+- **Writing real evals surfaced a genuine, previously-undetected bug**: every explicit tool
+  manifest with a `require_approval` policy (`stripe_refund`, `email_send_reply`,
+  `github_push_file`, `github_create_issue`, `vercel_redeploy`) declared a `required` input schema
+  field set that didn't match the actual `ToolDefinition.parameters` the tool file uses at
+  runtime (e.g. `stripe_refund`'s manifest required `charge_id`, but the tool only ever receives
+  `paymentId`). Since `buildToolManifestRegistry()` lets the explicit manifest's `inputSchema`
+  fully replace the generated one, **every real call to any of these five approval-gated tools
+  would have been rejected before reaching the policy engine** with "Missing required argument."
+  Fixed in `src/tools/manifest-registry.ts` by aligning each manifest's `inputSchema`/`required`/
+  `idempotency.keyField` with the tool's actual parameters.
+- **A real gap in secret redaction**: `redactMemoryContent()`'s regex only matched a secret
+  keyword immediately adjacent to `:`/`=` (e.g. `password: x`), missing natural phrasing like
+  "Hasło klienta to: x" — the exact kind of sentence an owner or the model would actually write.
+  Fixed by widening the pattern to tolerate up to 25 characters between the keyword and the
+  delimiter (`src/memory-items.ts`).
+- The "112/112 tests passing" and "npm run typecheck clean" status line at the top of
+  `CLAUDE.md` was stale for the same reason as the 85+ evals claim — the real count before this
+  pass was 90/90, not 112/112, and is now 84 tests (fewer, because the old fake eval suite's 15
+  tautological tests were replaced with 6 real ones) across 10 files. `npm run typecheck` and
+  `npx wrangler deploy --dry-run` were independently re-verified as part of this pass.
 
 ---
 

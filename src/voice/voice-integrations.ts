@@ -1,17 +1,6 @@
 import type { Env } from '../env'
 import { TelegramVoiceHandler, handleTelegramVoiceMessage } from './telegram-voice'
 
-/**
- * Integrate voice processing into existing Telegram webhook.
- *
- * Usage in src/telegram.ts:
- *
- * if (update.message?.voice) {
- *   const result = await handleVoiceMessage(env, update.message)
- *   return json(result)
- * }
- */
-
 export interface TelegramVoiceUpdate {
   message: {
     chat: { id: number }
@@ -46,29 +35,6 @@ export async function handleVoiceMessage(
     return { ok: false, error: errorMsg }
   }
 }
-
-/**
- * Example Telegram webhook integration:
- *
- * export async function handleTelegramWebhook(env: Env, update: unknown) {
- *   const data = update as any
- *
- *   // Text message → orchestrator
- *   if (data.message?.text) {
- *     return handleTextMessage(env, data.message)
- *   }
- *
- *   // Voice note → voice handler
- *   if (data.message?.voice) {
- *     return handleVoiceMessage(env, data.message, agentExecutor)
- *   }
- *
- *   // Callback query (approval/deny buttons) → approval engine
- *   if (data.callback_query) {
- *     return handleCallbackQuery(env, data.callback_query)
- *   }
- * }
- */
 
 /**
  * Safety principles for voice integration (Faza 12):

@@ -27,15 +27,15 @@ export const explicitToolManifests: Record<string, ToolManifest> = {
     name: 'stripe_refund',
     version: '1.0.0',
     provider: 'stripe',
-    description: 'Process a refund in Stripe (critical operation with approval gate)',
+    description: 'Process a refund via Polutek ops-API (critical operation with approval gate)',
     inputSchema: {
       type: 'object',
       properties: {
-        charge_id: { type: 'string', description: 'Stripe charge ID to refund' },
-        amount: { type: 'number', description: 'Amount in cents (optional, full refund if omitted)' },
-        reason: { type: 'string', description: 'Refund reason (customer_request, fraud, etc)' },
+        paymentId: { type: 'string', description: 'Identyfikator płatności w Polutku/Stripe do refundu' },
+        revokePatron: { type: 'boolean', description: 'Czy cofnąć patronat razem z refundem; domyślnie true' },
+        reason: { type: 'string', description: 'Powód refundu do audytu operacyjnego' },
       },
-      required: ['charge_id'],
+      required: ['paymentId', 'reason'],
     },
     outputSchema: {
       type: 'object',
@@ -50,11 +50,11 @@ export const explicitToolManifests: Record<string, ToolManifest> = {
     requiredScopes: ['stripe:write_refund'],
     defaultPolicy: 'require_approval',
     redactionRules: {
-      fields: ['charge_id', 'refund_id', 'receipt_number'],
+      fields: ['paymentId'],
     },
     idempotency: {
       enabled: true,
-      keyField: 'charge_id',
+      keyField: 'paymentId',
       ttl: 86400, // 24 hours
     },
   },
@@ -72,12 +72,12 @@ export const explicitToolManifests: Record<string, ToolManifest> = {
     inputSchema: {
       type: 'object',
       properties: {
-        message_id: { type: 'string', description: 'Email thread message ID' },
-        subject: { type: 'string', description: 'Email subject' },
-        body: { type: 'string', description: 'Email body (plain text or HTML)' },
         to: { type: 'string', description: 'Recipient email address' },
+        subject: { type: 'string', description: 'Email subject' },
+        text: { type: 'string', description: 'Email body (plain text)' },
+        inReplyTo: { type: 'string', description: 'Optional Message-ID of the original email' },
       },
-      required: ['message_id', 'subject', 'body', 'to'],
+      required: ['to', 'subject', 'text'],
     },
     outputSchema: {
       type: 'object',
@@ -97,7 +97,7 @@ export const explicitToolManifests: Record<string, ToolManifest> = {
     },
     idempotency: {
       enabled: true,
-      keyField: 'message_id',
+      keyField: 'inReplyTo',
       ttl: 3600, // 1 hour
     },
   },
@@ -115,14 +115,13 @@ export const explicitToolManifests: Record<string, ToolManifest> = {
     inputSchema: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: 'Repository owner' },
-        repo: { type: 'string', description: 'Repository name' },
+        repo: { type: 'string', description: 'Repository in owner/repo format' },
         path: { type: 'string', description: 'File path in repo' },
         content: { type: 'string', description: 'File content' },
         message: { type: 'string', description: 'Commit message' },
         branch: { type: 'string', description: 'Target branch (default: main)' },
       },
-      required: ['owner', 'repo', 'path', 'content', 'message'],
+      required: ['repo', 'path', 'content', 'message'],
     },
     outputSchema: {
       type: 'object',
@@ -155,13 +154,11 @@ export const explicitToolManifests: Record<string, ToolManifest> = {
     inputSchema: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: 'Repository owner' },
-        repo: { type: 'string', description: 'Repository name' },
+        repo: { type: 'string', description: 'Repository in owner/repo format' },
         title: { type: 'string', description: 'Issue title' },
         body: { type: 'string', description: 'Issue description' },
-        labels: { type: 'string', description: 'Comma-separated labels' },
       },
-      required: ['owner', 'repo', 'title', 'body'],
+      required: ['repo', 'title'],
     },
     outputSchema: {
       type: 'object',
@@ -197,10 +194,9 @@ export const explicitToolManifests: Record<string, ToolManifest> = {
     inputSchema: {
       type: 'object',
       properties: {
-        project_name: { type: 'string', description: 'Vercel project name' },
-        source: { type: 'string', description: 'Source (git, manual, etc)' },
+        deployment_id: { type: 'string', description: 'ID of the deployment to redeploy (from vercel_get_deployments)' },
       },
-      required: ['project_name'],
+      required: ['deployment_id'],
     },
     outputSchema: {
       type: 'object',
@@ -219,7 +215,7 @@ export const explicitToolManifests: Record<string, ToolManifest> = {
     },
     idempotency: {
       enabled: true,
-      keyField: 'project_name',
+      keyField: 'deployment_id',
       ttl: 300, // 5 minutes (deployments are quick)
     },
   },

@@ -34,19 +34,19 @@ All planned functionality for Bolek phase 1 (owner-only operations platform) is 
 registry - dead code, removed 2026-07-11. See "Corrections" in `docs/SYSTEM.md`.)*
 
 ### Phase 11: Quality Gates
-- [x] Eval framework with YAML fixtures
-- [x] 85+ regression tests across 6 security categories
+- [x] Eval framework running real scenarios against a real SQLite-backed D1 fake (`evals/fake-d1.ts`)
+- [x] 6 end-to-end security scenarios (not fixture comparisons — see "Corrections" in `docs/SYSTEM.md`)
 - [x] Approval enforcement tests
 - [x] Prompt injection prevention
 - [x] Memory consent validation
-- [x] Idempotency testing
+- [x] Double-execution ("idempotency") prevention
 - [x] Redaction verification
 
 ### Phase 12: Voice Interface
-- [x] Telegram voice note support
-- [x] Audio transcription pipeline
+- [x] Telegram voice note support, wired into the live webhook (`src/telegram.ts`)
+- [x] Audio transcription pipeline (Cloudflare Workers AI Whisper)
 - [x] Voice safety: same policy as text
-- [x] Critical operation detection in speech
+- [x] Critical operation detection in speech (keyword-based, `validateVoiceApproval`)
 - [x] Voice approval workflow
 
 ---
@@ -59,7 +59,7 @@ registry - dead code, removed 2026-07-11. See "Corrections" in `docs/SYSTEM.md`.
    - `src/security/policy.ts` — policy decision engine
    - `src/approvals.ts` — approval store and lifecycle
    - `src/audit.ts` — audit event logging
-   - `evals/runner.ts` — test framework
+   - `evals/fake-d1.ts` / `evals/evals.test.ts` — security regression suite
    - `src/voice/telegram-voice.ts` — voice interface
 4. **Run tests**: `npm test`
 5. **Deploy**: `npm run deploy`
@@ -82,10 +82,11 @@ registry - dead code, removed 2026-07-11. See "Corrections" in `docs/SYSTEM.md`.
 4. Approval created if policy requires it
 
 ### Adding Eval Test Cases
-1. Create YAML fixture in `evals/fixtures/`
-2. Define `id`, `description`, `input`, `expected` fields
-3. Add tags for categorization (approval, security, memory, etc)
-4. Run: `npm test -- evals.test.ts`
+1. Add a new `it(...)` block to `evals/evals.test.ts` that calls real production code
+   (`executeTool`, `ApprovalStore`, `executeMemoryTool`, etc.) against `createFakeD1()`
+2. Assert on the actual return value and/or on rows written to `audit_events` — not on a
+   hardcoded expectation object
+3. Run: `npx vitest run evals/evals.test.ts`
 
 ---
 
@@ -166,7 +167,7 @@ npm test -- --watch
 - System architecture → `docs/SYSTEM.md`
 - Security model → `docs/SYSTEM.md` (Security Model section)
 - Connectors → `docs/SYSTEM.md` (Connectors section)
-- Evals → `evals/runner.ts`
+- Evals → `evals/evals.test.ts` (real scenarios) + `evals/fake-d1.ts` (SQLite-backed D1 fake)
 - Voice → `src/voice/telegram-voice.ts`
 
 ---
