@@ -21,7 +21,7 @@ import { getMode } from '../agent-mode'
 import type { RiskLevel } from '../security/types'
 import { decideToolPolicy } from '../security/policy'
 import { buildToolManifestRegistry } from './manifest-registry'
-import { redactToolOutput } from './manifest'
+import { normalizeToolArgs, redactToolOutput, validateToolArgs } from './manifest'
 export type { RiskLevel } from '../security/types'
 export type { PolicyDecision } from '../security/policy'
 
@@ -136,6 +136,43 @@ export const tools: ToolDefinition[] = [
 
 export const toolManifestRegistry = buildToolManifestRegistry(tools)
 
+
+export type ToolInvalidArgsResult = {
+  ok: false
+  blocked: true
+  reason: 'invalid_args'
+  tool: string
+  message: string
+}
+
+export function invalidToolArgsResult(toolName: string, error: string): ToolInvalidArgsResult {
+  return {
+    ok: false,
+    blocked: true,
+    reason: 'invalid_args',
+    tool: toolName,
+    message: `Nieprawidłowe argumenty dla narzędzia ${toolName}: ${error}`,
+  }
+}
+
+export type PreparedToolArgs =
+  | { ok: true; args: unknown }
+  | { ok: false; result: ToolInvalidArgsResult }
+
+export function prepareToolArgsForExecution(name: string, args: unknown): PreparedToolArgs {
+  const manifest = toolManifestRegistry[name]
+  if (!manifest) return { ok: true, args }
+
+  const normalizedArgs = normalizeToolArgs(manifest, args)
+  const validation = validateToolArgs(manifest, normalizedArgs)
+
+  if (!validation.valid) {
+    return { ok: false, result: invalidToolArgsResult(name, validation.error ?? 'Unknown validation error') }
+  }
+
+  return { ok: true, args: normalizedArgs }
+}
+
 export function redactToolResult(name: string, output: unknown): unknown {
   const manifest = toolManifestRegistry[name]
   return manifest ? redactToolOutput(manifest, output) : output
@@ -181,6 +218,11 @@ export async function executeTool(
 ): Promise<unknown> {
   const tool = tools.find((candidate) => candidate.name === name)
   const manifest = toolManifestRegistry[name]
+  const preparedArgs = prepareToolArgsForExecution(name, args)
+
+  if (!preparedArgs.ok) {
+    return preparedArgs.result
+  }
 
   // Policy check: must happen before any execution
   if (tool && manifest && !options.approved) {
@@ -206,6 +248,6 @@ export async function executeTool(
     // decision.type === 'allow' continues below
   }
 
-  const result = await executeToolWithoutOutputRedaction(name, args, db, chatId, env, options)
+  const result = await executeToolWithoutOutputRedaction(name, preparedArgs.args, db, chatId, env, options)
   return redactToolResult(name, result)
 }

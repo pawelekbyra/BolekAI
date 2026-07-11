@@ -184,12 +184,12 @@ Cel: zastąpić luźną listę tooli formalnym rejestrem narzędzi z metadanymi 
   - [x] Redaguje globalne pola typu `token`, `secret`, `password`, `authorization`, `cookie`, `videoUrl`.
   - [x] Tool może mieć własne reguły redakcji.
 
-- [ ] Dodać hook walidacji/normalizacji argumentów.
+- [x] Dodać hook walidacji/normalizacji argumentów.
 
   Definition of Done:
-  - [ ] Args toola są walidowane przed execution path.
-  - [ ] Błędne args nie odpalają toola.
-  - [ ] Użytkownik dostaje czytelny komunikat o błędzie.
+  - [x] Args toola są walidowane przed execution path.
+  - [x] Błędne args nie odpalają toola.
+  - [x] Użytkownik dostaje czytelny komunikat o błędzie.
 
 - [ ] Faza 2 ukończona.
 

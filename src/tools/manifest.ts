@@ -167,8 +167,8 @@ export function validateToolArgs(manifest: ToolManifest, args: unknown): { valid
       if (expectedType === 'string' && typeof value !== 'string') {
         return { valid: false, error: `Argument "${field}" must be a string, got ${typeof value}` }
       }
-      if (expectedType === 'number' && typeof value !== 'number') {
-        return { valid: false, error: `Argument "${field}" must be a number, got ${typeof value}` }
+      if (expectedType === 'number' && (typeof value !== 'number' || !Number.isFinite(value))) {
+        return { valid: false, error: `Argument "${field}" must be a finite number, got ${typeof value}` }
       }
       if (expectedType === 'boolean' && typeof value !== 'boolean') {
         return { valid: false, error: `Argument "${field}" must be a boolean, got ${typeof value}` }
@@ -205,9 +205,10 @@ export function normalizeToolArgs(manifest: ToolManifest, args: unknown): unknow
       continue
     }
 
-    // Parse numbers
+    // Parse numeric strings only when the whole string is a finite number.
     if (schema.type === 'number' && typeof value === 'string') {
-      normalized[field] = parseFloat(value)
+      const parsed = Number(value.trim())
+      normalized[field] = Number.isFinite(parsed) ? parsed : value
       continue
     }
 
