@@ -2,6 +2,7 @@ import type { Env } from '../env'
 import { getAgent } from './registry'
 import { send } from '../telegram'
 import { auditEvent } from '../audit'
+import { D1TaskRunStore } from '../task-runs'
 
 type AgentTask = {
   id: number
@@ -13,54 +14,6 @@ type AgentTask = {
 
 const MAX_PARALLEL_TASKS = 10
 const MAX_PARALLEL_SIDE_EFFECT_TASKS = 1
-
-type DurableStatus = 'queued' | 'running' | 'waiting_for_approval' | 'done' | 'failed' | 'cancelled'
-
-async function createTaskRun(env: Env, task: AgentTask, runId: string, lockedBy: string): Promise<void> {
-  await env.DB.prepare(`
-    INSERT INTO task_runs (
-      id, source_type, source_id, status, title, side_effect, attempt_count,
-      locked_at, locked_by, started_at, created_at, updated_at
-    ) VALUES (?, 'agent_task', ?, 'running', ?, ?, 1, CURRENT_TIMESTAMP, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-  `).bind(runId, String(task.id), `${task.agent_name}: ${task.task}`, task.side_effect, lockedBy).run()
-}
-
-async function finishTaskRun(env: Env, runId: string, status: Extract<DurableStatus, 'done' | 'failed'>, result: string): Promise<void> {
-  const resultColumn = status === 'done' ? 'result' : 'error'
-  await env.DB.prepare(`
-    UPDATE task_runs
-    SET status = ?, ${resultColumn} = ?, finished_at = CURRENT_TIMESTAMP, locked_at = NULL,
-        locked_by = NULL, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `).bind(status, result, runId).run()
-}
-
-async function recordTaskStep(
-  env: Env,
-  runId: string,
-  stepOrder: number,
-  name: string,
-  status: Extract<DurableStatus, 'done' | 'failed'>,
-  data: { input?: unknown; output?: unknown; error?: string }
-): Promise<void> {
-  await env.DB.prepare(`
-    INSERT INTO task_steps (
-      id, task_run_id, step_order, name, status, attempt_count, input, output, error,
-      started_at, finished_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-  `)
-    .bind(
-      crypto.randomUUID(),
-      runId,
-      stepOrder,
-      name,
-      status,
-      data.input === undefined ? null : JSON.stringify(data.input),
-      data.output === undefined ? null : JSON.stringify(data.output),
-      data.error ?? null
-    )
-    .run()
-}
 
 async function claimTask(task: AgentTask, env: Env, lockedBy: string, runId: string): Promise<boolean> {
   const result = await env.DB.prepare(`
@@ -88,7 +41,15 @@ async function runTask(task: AgentTask, env: Env, lockedBy: string): Promise<voi
   const claimed = await claimTask(task, env, lockedBy, runId)
   if (!claimed) return
 
-  await createTaskRun(env, task, runId, lockedBy)
+  const taskRunStore = new D1TaskRunStore(env.DB)
+  await taskRunStore.createRun({
+    id: runId,
+    sourceType: 'agent_task',
+    sourceId: String(task.id),
+    title: `${task.agent_name}: ${task.task}`,
+    sideEffect: task.side_effect === 1,
+    lockedBy,
+  })
 
   await env.DB.prepare(`
     UPDATE agents SET status = 'working', current_task = ?, updated_at = CURRENT_TIMESTAMP WHERE name = ?
@@ -105,7 +66,11 @@ async function runTask(task: AgentTask, env: Env, lockedBy: string): Promise<voi
 
     const result = response.response ?? 'Brak odpowiedzi.'
 
-    await recordTaskStep(env, runId, 1, 'agent_model_response', 'done', {
+    await taskRunStore.recordStep({
+      runId,
+      stepOrder: 1,
+      name: 'agent_model_response',
+      status: 'done',
       input: { agentName: task.agent_name, task: task.task },
       output: { result },
     })
@@ -117,7 +82,7 @@ async function runTask(task: AgentTask, env: Env, lockedBy: string): Promise<voi
       WHERE id = ?
     `).bind(result, task.id).run()
 
-    await finishTaskRun(env, runId, 'done', result)
+    await taskRunStore.finishRun({ runId, status: 'done', result })
     await releaseAgent(env, task)
 
     await auditEvent(env.DB, {
@@ -138,7 +103,11 @@ ${result}`
   } catch (err) {
     const error = err instanceof Error ? err.message : 'Nieznany błąd'
 
-    await recordTaskStep(env, runId, 1, 'agent_model_response', 'failed', {
+    await taskRunStore.recordStep({
+      runId,
+      stepOrder: 1,
+      name: 'agent_model_response',
+      status: 'failed',
       input: { agentName: task.agent_name, task: task.task },
       error,
     })
@@ -150,7 +119,7 @@ ${result}`
       WHERE id = ?
     `).bind(error, task.id).run()
 
-    await finishTaskRun(env, runId, 'failed', error)
+    await taskRunStore.finishRun({ runId, status: 'failed', result: error })
     await releaseAgent(env, task)
 
     await auditEvent(env.DB, {

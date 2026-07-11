@@ -25,7 +25,7 @@ Nie odznaczaj zadania, jeśli zrobiono tylko część pracy.
 - [x] Faza 4 — Approval Engine v1
 - [x] Faza 5 — Audit v1
 - [x] Faza 6 — Durable workflows
-- [ ] Faza 7 — Postgres source of truth
+- [x] Faza 7 — Postgres source of truth
 - [ ] Faza 8 — Memory System v1
 - [ ] Faza 9 — Command Center UI
 - [ ] Faza 10 — Integracje produkcyjne
@@ -349,12 +349,12 @@ Cel: odejść od prostego cronowego pollera dla długich i wieloetapowych zadań
 
 Cel: przygotować migrację z D1 do docelowego storage.
 
-- [ ] Dodać storage abstraction dla approvals.
-- [ ] Dodać storage abstraction dla audit events.
-- [ ] Dodać storage abstraction dla task runs.
-- [ ] Przygotować Postgres schema draft.
-- [ ] Nie pisać nowego core bezpośrednio pod `env.DB.prepare(...)`, jeśli można użyć store interface.
-- [ ] Faza 7 ukończona.
+- [x] Dodać storage abstraction dla approvals.
+- [x] Dodać storage abstraction dla audit events.
+- [x] Dodać storage abstraction dla task runs.
+- [x] Przygotować Postgres schema draft.
+- [x] Nie pisać nowego core bezpośrednio pod `env.DB.prepare(...)`, jeśli można użyć store interface.
+- [x] Faza 7 ukończona.
 
 ---
 
@@ -439,10 +439,10 @@ Cel: dodać głos jako interfejs, nie jako obejście policy.
 
 # Następne zadanie sugerowane dla agenta
 
-Faza 6 ukończona. Następna:
+Faza 7 ukończona. Następna:
 
-> **Faza 7 — Postgres source of truth**
+> **Faza 8 — Memory System v1**
 
-Zacząć od storage abstraction dla approvals, audit events i task runs oraz przygotować Postgres schema draft.
+Zacząć od modelu `memory_items`, typów pamięci i memory proposal flow.
 
-Nie zaczynaj UI, voice ani nowych integracji, dopóki source-of-truth/storage abstraction fundamenty nie będą gotowe.
+Nie zaczynaj UI, voice ani nowych integracji, dopóki memory model i consent flow nie będą gotowe.
