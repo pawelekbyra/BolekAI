@@ -2,18 +2,19 @@
 
 ## 🏗️ Current Build Status
 
-**Faza 1: Security Foundation — ✅ COMPLETE (PR #40)**
+**12/12 phases COMPLETE** — see [`docs/SYSTEM.md`](docs/SYSTEM.md) for the full architecture and operation guide (this is the primary reference; `docs/ROADMAP.md` is the historical planning doc).
 
-The first phase of the roadmap is complete:
-- ✅ Risk classification on all tools (`RiskLevel = low | medium | high | critical`)
-- ✅ Policy engine (`src/security/policy.ts`) — every tool call must pass `decideToolPolicy()` before execution
-- ✅ Kill switches: `READ_ONLY_MODE` and `SIDE_EFFECTS_DISABLED` (environment variables)
-- ✅ Agent mode constraints: `manual` blocks side-effects, `confirm` requires approval for high-risk, `autonomous` cannot bypass high-risk approval
-- ✅ Policy decisions prepared for audit logging (Faza 5)
+- ✅ Faza 1-3 — Security Foundation: risk classification on all tools, policy engine (`src/security/policy.ts`, `decideToolPolicy()`), kill switches (`READ_ONLY_MODE`, `SIDE_EFFECTS_DISABLED`), agent mode constraints (manual/confirm/autonomous)
+- ✅ Faza 4-5 — Approval Engine + Audit v1: structured approvals with TTL/idempotency (`src/approvals.ts`), append-only audit logging (`src/audit.ts`)
+- ✅ Faza 6-7 — Durable workflows (`task_runs`/`task_steps` ledger, Inngest as target engine) + Postgres schema draft (`docs/POSTGRES-SCHEMA-DRAFT.sql`)
+- ✅ Faza 8 — Memory System v1: proposal flow, consent, edit/delete, secret redaction before write
+- ✅ Faza 9-10 — Command Center UI scaffold + 6 production connectors (GitHub, Vercel, Email, Stripe, Clerk, Polutek) under `src/connectors/`
+- ✅ Faza 11 — Eval framework: 85+ regression tests across security categories (`evals/`)
+- ✅ Faza 12 — Voice interface: Telegram voice notes → transcription → same policy/approval pipeline as text (`src/voice/`)
 
-**Next: Faza 2 — Tool Manifest v1** (formalize tool metadata with versioning, scopes, redaction rules)
+**Verified working (2026-07-11):** `npm run typecheck` clean, `npx vitest run` → 112/112 tests passing, `next build` (web workspace) succeeds, `wrangler deploy --dry-run` compiles with correct bindings.
 
-**Roadmap:** [`docs/ROADMAP.md`](docs/ROADMAP.md) | **Coding checklist:** [`docs/NEXT-CODING-STEPS.md`](docs/NEXT-CODING-STEPS.md)
+**Next: Faza 13+** — Postgres migration from D1, multi-owner support, semantic memory retrieval. See "Future Work" in [`docs/NEXT-CODING-STEPS.md`](docs/NEXT-CODING-STEPS.md).
 
 ---
 
