@@ -72,7 +72,7 @@ export async function executeAgentTool(
       }
 
       const row = await env.DB
-        .prepare('INSERT INTO agent_tasks (agent_name, task, chat_id) VALUES (?, ?, ?) RETURNING id')
+        .prepare("INSERT INTO agent_tasks (agent_name, task, chat_id, status, side_effect) VALUES (?, ?, ?, 'queued', 0) RETURNING id")
         .bind(agentName, a.task!, chatId)
         .first<{ id: number }>()
 

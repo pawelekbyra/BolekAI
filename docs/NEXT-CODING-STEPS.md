@@ -24,7 +24,7 @@ Nie odznaczaj zadania, jeśli zrobiono tylko część pracy.
 - [x] Faza 3 — Policy Engine v1
 - [x] Faza 4 — Approval Engine v1
 - [x] Faza 5 — Audit v1
-- [ ] Faza 6 — Durable workflows
+- [x] Faza 6 — Durable workflows
 - [ ] Faza 7 — Postgres source of truth
 - [ ] Faza 8 — Memory System v1
 - [ ] Faza 9 — Command Center UI
@@ -336,12 +336,12 @@ Cel: każda istotna akcja ma być odtwarzalna i wyjaśnialna.
 
 Cel: odejść od prostego cronowego pollera dla długich i wieloetapowych zadań.
 
-- [ ] Dodać `task_runs` i `task_steps`.
-- [ ] Dodać statusy `queued`, `running`, `waiting_for_approval`, `done`, `failed`, `cancelled`.
-- [ ] Dodać `attempt_count`, `locked_at`, `locked_by` dla obecnego runnera.
-- [ ] Ograniczyć równoległość side-effect tasks.
-- [ ] Wybrać Inngest albo Trigger.dev dla docelowego workflow engine.
-- [ ] Faza 6 ukończona.
+- [x] Dodać `task_runs` i `task_steps`.
+- [x] Dodać statusy `queued`, `running`, `waiting_for_approval`, `done`, `failed`, `cancelled`.
+- [x] Dodać `attempt_count`, `locked_at`, `locked_by` dla obecnego runnera.
+- [x] Ograniczyć równoległość side-effect tasks.
+- [x] Wybrać Inngest albo Trigger.dev dla docelowego workflow engine.
+- [x] Faza 6 ukończona.
 
 ---
 
@@ -439,10 +439,10 @@ Cel: dodać głos jako interfejs, nie jako obejście policy.
 
 # Następne zadanie sugerowane dla agenta
 
-Faza 5 ukończona. Następna:
+Faza 6 ukończona. Następna:
 
-> **Faza 6 — Durable workflows**
+> **Faza 7 — Postgres source of truth**
 
-Zacząć od modeli `task_runs` i `task_steps`, statusów durable workflow oraz pól lock/attempt dla obecnego runnera.
+Zacząć od storage abstraction dla approvals, audit events i task runs oraz przygotować Postgres schema draft.
 
-Nie zaczynaj UI, voice ani nowych integracji, dopóki durable workflow fundamenty nie będą gotowe.
+Nie zaczynaj UI, voice ani nowych integracji, dopóki source-of-truth/storage abstraction fundamenty nie będą gotowe.
