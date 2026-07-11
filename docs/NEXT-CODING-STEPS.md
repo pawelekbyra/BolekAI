@@ -248,12 +248,12 @@ Cel: zastąpić prototypowe `pending_actions` bezpiecznym approval flow.
   - [x] Tabela zawiera `id`, `chat_id`, `tool_name`, `risk_level`, `normalized_args`, `preview`, `impact`, `status`, `idempotency_key`, `expires_at`, timestamps.
   - [x] Statusy obejmują `pending`, `approved`, `denied`, `expired`, `executed`, `failed`.
 
-- [ ] Dodać `ApprovalStore`.
+- [x] Dodać `ApprovalStore`.
 
   Definition of Done:
-  - [ ] Istnieją metody `create`, `get`, `approve`, `deny`, `markExecuted`, `markFailed`.
-  - [ ] Implementacja działa na obecnym storage.
-  - [ ] Interfejs pozwala później przenieść storage do Postgresa.
+  - [x] Istnieją metody `create`, `get`, `approve`, `deny`, `markExecuted`, `markFailed`.
+  - [x] Implementacja działa na obecnym storage.
+  - [x] Interfejs pozwala później przenieść storage do Postgresa.
 
 - [ ] Tworzyć approval zamiast wykonywać high/critical tool.
 
