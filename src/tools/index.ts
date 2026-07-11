@@ -19,9 +19,11 @@ import type { Env } from '../env'
 import type { ActionExecutionOptions } from '../agent-mode'
 import { getMode } from '../agent-mode'
 import type { RiskLevel } from '../security/types'
-import { decideToolPolicy } from '../security/policy'
+import { decideToolPolicy } from '../policy'
+import { buildToolManifestRegistry } from './manifest-registry'
+import { normalizeToolArgs, redactToolOutput, validateToolArgs } from './manifest'
 export type { RiskLevel } from '../security/types'
-export type { PolicyDecision } from '../security/policy'
+export type { PolicyDecision } from '../policy'
 
 export const DEFAULT_TOOL_RISK_LEVEL: RiskLevel = 'low'
 export const DEFAULT_TOOL_SIDE_EFFECT = false
@@ -132,35 +134,58 @@ export const tools: ToolDefinition[] = [
   ...knowledgeServiceTools,
 ]
 
-export async function executeTool(
+export const toolManifestRegistry = buildToolManifestRegistry(tools)
+
+
+export type ToolInvalidArgsResult = {
+  ok: false
+  blocked: true
+  reason: 'invalid_args'
+  tool: string
+  message: string
+}
+
+export function invalidToolArgsResult(toolName: string, error: string): ToolInvalidArgsResult {
+  return {
+    ok: false,
+    blocked: true,
+    reason: 'invalid_args',
+    tool: toolName,
+    message: `Nieprawidłowe argumenty dla narzędzia ${toolName}: ${error}`,
+  }
+}
+
+export type PreparedToolArgs =
+  | { ok: true; args: unknown }
+  | { ok: false; result: ToolInvalidArgsResult }
+
+export function prepareToolArgsForExecution(name: string, args: unknown): PreparedToolArgs {
+  const manifest = toolManifestRegistry[name]
+  if (!manifest) return { ok: true, args }
+
+  const normalizedArgs = normalizeToolArgs(manifest, args)
+  const validation = validateToolArgs(manifest, normalizedArgs)
+
+  if (!validation.valid) {
+    return { ok: false, result: invalidToolArgsResult(name, validation.error ?? 'Unknown validation error') }
+  }
+
+  return { ok: true, args: normalizedArgs }
+}
+
+export function redactToolResult(name: string, output: unknown): unknown {
+  const manifest = toolManifestRegistry[name]
+  return manifest ? redactToolOutput(manifest, output) : output
+}
+
+async function executeToolWithoutOutputRedaction(
   name: string,
   args: unknown,
   db: D1Database,
-  chatId = 0,
-  env?: Env,
-  options: ActionExecutionOptions = {}
+  chatId: number,
+  env: Env | undefined,
+  options: ActionExecutionOptions
 ): Promise<unknown> {
-  const tool = tools.find((candidate) => candidate.name === name)
-
-  // Policy check: must happen before any execution
-  if (tool && !options.approved) {
-    const agentMode = await getMode(db)
-    const metadata = getToolSafetyMetadata(tool)
-    const decision = decideToolPolicy({
-      tool: { name: tool.name, metadata },
-      agentMode,
-      env,
-    })
-
-    if (decision.type === 'deny') {
-      return policyBlockedResult(tool, decision.reason)
-    }
-    if (decision.type === 'require_approval') {
-      return requiresApprovalResult(tool, decision.reason)
-    }
-    // decision.type === 'allow' continues below
-  }
-
   if (name.startsWith('task_'))     return executeTaskTool(name, args, db)
   if (name.startsWith('note_'))     return executeNoteTool(name, args, db)
   if (name.startsWith('fact_'))     return executeFactTool(name, args, db)
@@ -180,4 +205,55 @@ export async function executeTool(
   if (name.startsWith('flow_'))      return executeWorkflowServiceTool(name, args, env!)
   if (name.startsWith('kb_'))        return executeKnowledgeServiceTool(name, args, env!)
   throw new Error(`Unknown tool: ${name}`)
+}
+
+
+export async function executeTool(
+  name: string,
+  args: unknown,
+  db: D1Database,
+  chatId = 0,
+  env?: Env,
+  options: ActionExecutionOptions = {}
+): Promise<unknown> {
+  const tool = tools.find((candidate) => candidate.name === name)
+  const manifest = toolManifestRegistry[name]
+  const preparedArgs = prepareToolArgsForExecution(name, args)
+
+  if (!preparedArgs.ok) {
+    return preparedArgs.result
+  }
+
+  // Policy check: must happen before any execution
+  if (tool && manifest && !options.approved) {
+    const agentMode = await getMode(db)
+    const metadata = getToolSafetyMetadata({
+      ...tool,
+      riskLevel: manifest.riskLevel,
+      sideEffect: manifest.sideEffect,
+      requiresApproval: manifest.defaultPolicy === 'require_approval',
+    })
+    const decision = decideToolPolicy({
+      tool: { name: manifest.name, metadata },
+      args: preparedArgs.args,
+      chatId,
+      agentMode,
+      env,
+      target: {
+        type: manifest.provider,
+        id: manifest.name,
+      },
+    })
+
+    if (decision.type === 'deny') {
+      return policyBlockedResult(tool, decision.reason)
+    }
+    if (decision.type === 'require_approval') {
+      return requiresApprovalResult(tool, decision.reason)
+    }
+    // decision.type === 'allow' continues below
+  }
+
+  const result = await executeToolWithoutOutputRedaction(name, preparedArgs.args, db, chatId, env, options)
+  return redactToolResult(name, result)
 }

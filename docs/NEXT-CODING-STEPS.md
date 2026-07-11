@@ -20,8 +20,8 @@ Nie odznaczaj zadania, jeśli zrobiono tylko część pracy.
 ## Status faz
 
 - [ ] Faza 1 — Zabezpieczenie obecnego prototypu
-- [ ] Faza 2 — Tool Manifest v1
-- [ ] Faza 3 — Policy Engine v1
+- [x] Faza 2 — Tool Manifest v1
+- [x] Faza 3 — Policy Engine v1
 - [ ] Faza 4 — Approval Engine v1
 - [ ] Faza 5 — Audit v1
 - [ ] Faza 6 — Durable workflows
@@ -162,42 +162,42 @@ Cel: zatrzymać ryzyko zanim dojdą kolejne mocne narzędzia.
 
 Cel: zastąpić luźną listę tooli formalnym rejestrem narzędzi z metadanymi ryzyka.
 
-- [ ] Dodać typ `ToolManifest`.
+- [x] Dodać typ `ToolManifest`.
 
   Definition of Done:
-  - [ ] Manifest zawiera `id`, `name`, `version`, `provider`, `description`.
-  - [ ] Manifest zawiera `inputSchema` i opcjonalne `outputSchema`.
-  - [ ] Manifest zawiera `riskLevel`, `sideEffect`, `requiredScopes`, `defaultPolicy`.
-  - [ ] Manifest zawiera `redactionRules` i `idempotency`.
+  - [x] Manifest zawiera `id`, `name`, `version`, `provider`, `description`.
+  - [x] Manifest zawiera `inputSchema` i opcjonalne `outputSchema`.
+  - [x] Manifest zawiera `riskLevel`, `sideEffect`, `requiredScopes`, `defaultPolicy`.
+  - [x] Manifest zawiera `redactionRules` i `idempotency`.
 
-- [ ] Zmigrować istniejące `ToolDefinition` do manifestów.
-
-  Definition of Done:
-  - [ ] Istniejące toole są dostępne przez manifest registry.
-  - [ ] Dispatcher potrafi znaleźć manifest po nazwie toola.
-  - [ ] Nie zniknęła żadna istniejąca funkcjonalność.
-
-- [ ] Dodać hook `redactToolOutput()`.
+- [x] Zmigrować istniejące `ToolDefinition` do manifestów.
 
   Definition of Done:
-  - [ ] Funkcja przyjmuje manifest i output.
-  - [ ] Redaguje globalne pola typu `token`, `secret`, `password`, `authorization`, `cookie`, `videoUrl`.
-  - [ ] Tool może mieć własne reguły redakcji.
+  - [x] Istniejące toole są dostępne przez manifest registry.
+  - [x] Dispatcher potrafi znaleźć manifest po nazwie toola.
+  - [x] Nie zniknęła żadna istniejąca funkcjonalność.
 
-- [ ] Dodać hook walidacji/normalizacji argumentów.
-
-  Definition of Done:
-  - [ ] Args toola są walidowane przed execution path.
-  - [ ] Błędne args nie odpalają toola.
-  - [ ] Użytkownik dostaje czytelny komunikat o błędzie.
-
-- [ ] Faza 2 ukończona.
+- [x] Dodać hook `redactToolOutput()`.
 
   Definition of Done:
-  - [ ] Każdy tool ma manifest.
-  - [ ] Policy korzysta z manifestu.
-  - [ ] Output może być redagowany.
-  - [ ] Dispatcher nie polega wyłącznie na luźnej nazwie bez metadanych.
+  - [x] Funkcja przyjmuje manifest i output.
+  - [x] Redaguje globalne pola typu `token`, `secret`, `password`, `authorization`, `cookie`, `videoUrl`.
+  - [x] Tool może mieć własne reguły redakcji.
+
+- [x] Dodać hook walidacji/normalizacji argumentów.
+
+  Definition of Done:
+  - [x] Args toola są walidowane przed execution path.
+  - [x] Błędne args nie odpalają toola.
+  - [x] Użytkownik dostaje czytelny komunikat o błędzie.
+
+- [x] Faza 2 ukończona.
+
+  Definition of Done:
+  - [x] Każdy tool ma manifest.
+  - [x] Policy korzysta z manifestu.
+  - [x] Output może być redagowany.
+  - [x] Dispatcher nie polega wyłącznie na luźnej nazwie bez metadanych.
 
 ---
 
@@ -205,36 +205,36 @@ Cel: zastąpić luźną listę tooli formalnym rejestrem narzędzi z metadanymi 
 
 Cel: rozwinąć minimalny policy check w centralny policy engine.
 
-- [ ] Wydzielić `src/policy/`.
+- [x] Wydzielić `src/policy/`.
 
   Definition of Done:
-  - [ ] Policy logic nie siedzi przypadkowo w orchestratorze.
-  - [ ] Istnieje centralny eksport policy.
+  - [x] Policy logic nie siedzi przypadkowo w orchestratorze.
+  - [x] Istnieje centralny eksport policy.
 
-- [ ] Dodać `PolicyContext`.
-
-  Definition of Done:
-  - [ ] Context zawiera tool, args, chatId, agentMode, env, target i project scope, jeśli dostępne.
-  - [ ] Context jest wystarczający do audytu decyzji.
-
-- [ ] Dodać polityki per risk level.
+- [x] Dodać `PolicyContext`.
 
   Definition of Done:
-  - [ ] Low/medium/high/critical mają jawne zasady.
-  - [ ] Zasady są testowane.
+  - [x] Context zawiera tool, args, chatId, agentMode, env, target i project scope, jeśli dostępne.
+  - [x] Context jest wystarczający do audytu decyzji.
 
-- [ ] Dodać przygotowanie pod allowlisty projektowe.
-
-  Definition of Done:
-  - [ ] Projekt/target może w przyszłości wpływać na decyzję.
-  - [ ] Nie trzeba jeszcze implementować pełnych projektów.
-
-- [ ] Faza 3 ukończona.
+- [x] Dodać polityki per risk level.
 
   Definition of Done:
-  - [ ] Każdy tool call przechodzi przez policy engine.
-  - [ ] Decyzje są testowane.
-  - [ ] High/critical zawsze kończą jako approval required albo deny.
+  - [x] Low/medium/high/critical mają jawne zasady.
+  - [x] Zasady są testowane.
+
+- [x] Dodać przygotowanie pod allowlisty projektowe.
+
+  Definition of Done:
+  - [x] Projekt/target może w przyszłości wpływać na decyzję.
+  - [x] Nie trzeba jeszcze implementować pełnych projektów.
+
+- [x] Faza 3 ukończona.
+
+  Definition of Done:
+  - [x] Każdy tool call przechodzi przez policy engine.
+  - [x] Decyzje są testowane.
+  - [x] High/critical zawsze kończą jako approval required albo deny.
 
 ---
 
@@ -439,11 +439,10 @@ Cel: dodać głos jako interfejs, nie jako obejście policy.
 
 # Następne zadanie sugerowane dla agenta
 
-Faza 1 ukończona. Następna:
+Faza 3 ukończona. Następna:
 
-> **Faza 2 — Tool Manifest v1**
+> **Faza 4 — Approval Engine v1**
 
-Zastąpić luźną listę tooli formalnym rejestrem narzędzi z metadanymi ryzyka.
-Dodać typ `ToolManifest` z `id`, `version`, `provider`, `description`, `inputSchema`, `outputSchema`, `riskLevel`, `sideEffect`, `requiredScopes`, `defaultPolicy`, `redactionRules`, `idempotency`.
+Zacząć od migracji `approvals`, a potem dodać `ApprovalStore` i tworzenie approval object dla decyzji `require_approval`.
 
-Nie zaczynaj od Fazy 3 (dalszy policy engine), Fazy 4 (approval engine), UI czy nowych integracji, dopóki manifesty nie będą wszędzie używane.
+Nie zaczynaj UI, voice ani nowych integracji, dopóki approval object, TTL i idempotency execution nie będą gotowe.
