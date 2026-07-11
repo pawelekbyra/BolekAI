@@ -21,7 +21,7 @@ Nie odznaczaj zadania, jeśli zrobiono tylko część pracy.
 
 - [ ] Faza 1 — Zabezpieczenie obecnego prototypu
 - [x] Faza 2 — Tool Manifest v1
-- [ ] Faza 3 — Policy Engine v1
+- [x] Faza 3 — Policy Engine v1
 - [ ] Faza 4 — Approval Engine v1
 - [ ] Faza 5 — Audit v1
 - [ ] Faza 6 — Durable workflows
@@ -229,12 +229,12 @@ Cel: rozwinąć minimalny policy check w centralny policy engine.
   - [x] Projekt/target może w przyszłości wpływać na decyzję.
   - [x] Nie trzeba jeszcze implementować pełnych projektów.
 
-- [ ] Faza 3 ukończona.
+- [x] Faza 3 ukończona.
 
   Definition of Done:
-  - [ ] Każdy tool call przechodzi przez policy engine.
-  - [ ] Decyzje są testowane.
-  - [ ] High/critical zawsze kończą jako approval required albo deny.
+  - [x] Każdy tool call przechodzi przez policy engine.
+  - [x] Decyzje są testowane.
+  - [x] High/critical zawsze kończą jako approval required albo deny.
 
 ---
 
@@ -439,10 +439,10 @@ Cel: dodać głos jako interfejs, nie jako obejście policy.
 
 # Następne zadanie sugerowane dla agenta
 
-Faza 2 ukończona. Następna:
+Faza 3 ukończona. Następna:
 
-> **Faza 3 — Policy Engine v1**
+> **Faza 4 — Approval Engine v1**
 
-Wydzielić obecny minimalny policy check do centralnego `src/policy/`, a potem rozwijać go przez `PolicyContext`, jawne polityki per risk level i przygotowanie pod allowlisty projektowe.
+Zacząć od migracji `approvals`, a potem dodać `ApprovalStore` i tworzenie approval object dla decyzji `require_approval`.
 
-Nie zaczynaj od Fazy 4 (approval engine), UI, voice ani nowych integracji, dopóki centralny policy engine nie będzie gotowy i testowany.
+Nie zaczynaj UI, voice ani nowych integracji, dopóki approval object, TTL i idempotency execution nie będą gotowe.
