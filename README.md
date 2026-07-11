@@ -1,10 +1,12 @@
-# AGENT BOLEK
+# AGENT BOLEK — Personal AI Operations Platform
 
-Osobisty asystent AI. Działa przez Telegram i przeglądarkę. Pamięta wszystko. Zarządza kodem, projektami i życiem. Rośnie bez końca.
+Osobisty asystent AI. Działa przez Telegram i głos. Pamięta wszystko. Zarządza kodem, projektami i życiem. Rośnie bez końca.
 
-Obsługuje też aplikację **[polutek.pl](https://polutek.pl)** — monitoring (Stripe, Clerk, Vercel, mail), dzienny raport i wybrane akcje operacyjne (np. refund) za bramką zgody. Pełna mapa budowy: **[`docs/POLUTEK-INTEGRATION.md`](docs/POLUTEK-INTEGRATION.md)**.
+**12 faz — UKOŃCZONE.** Od zabezpieczenia po głos. Każda akcja wymaga zgody. Wszystko audytowane.
 
-Docelowy nowy web UI Bolka powstaje jako osobny fork LibreChat: **[`pawelekbyra/BolekCzat`](https://github.com/pawelekbyra/BolekCzat)**. `kulfon` zostaje mózgiem Bolka, a LibreChat/BolekCzat będzie tylko produkcyjnym interfejsem webowym podłączonym przez OpenAI-compatible adapter. Plan integracji: **[`docs/LIBRECHAT-INTEGRATION.md`](docs/LIBRECHAT-INTEGRATION.md)**.
+👉 **[Dokumentacja systemu: `docs/SYSTEM.md`](docs/SYSTEM.md)** ← Start here
+
+Obsługuje też aplikację **[polutek.pl](https://polutek.pl)** — monitoring (Stripe, Clerk, Vercel, mail), dzienny raport i refundy za bramką zgody. **[`docs/POLUTEK-INTEGRATION.md`](docs/POLUTEK-INTEGRATION.md)**.
 
 ---
 
