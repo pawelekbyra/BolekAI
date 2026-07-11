@@ -170,12 +170,12 @@ Cel: zastąpić luźną listę tooli formalnym rejestrem narzędzi z metadanymi 
   - [x] Manifest zawiera `riskLevel`, `sideEffect`, `requiredScopes`, `defaultPolicy`.
   - [x] Manifest zawiera `redactionRules` i `idempotency`.
 
-- [ ] Zmigrować istniejące `ToolDefinition` do manifestów.
+- [x] Zmigrować istniejące `ToolDefinition` do manifestów.
 
   Definition of Done:
-  - [ ] Istniejące toole są dostępne przez manifest registry.
-  - [ ] Dispatcher potrafi znaleźć manifest po nazwie toola.
-  - [ ] Nie zniknęła żadna istniejąca funkcjonalność.
+  - [x] Istniejące toole są dostępne przez manifest registry.
+  - [x] Dispatcher potrafi znaleźć manifest po nazwie toola.
+  - [x] Nie zniknęła żadna istniejąca funkcjonalność.
 
 - [ ] Dodać hook `redactToolOutput()`.
 

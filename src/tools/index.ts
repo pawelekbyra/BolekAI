@@ -20,6 +20,7 @@ import type { ActionExecutionOptions } from '../agent-mode'
 import { getMode } from '../agent-mode'
 import type { RiskLevel } from '../security/types'
 import { decideToolPolicy } from '../security/policy'
+import { buildToolManifestRegistry } from './manifest-registry'
 export type { RiskLevel } from '../security/types'
 export type { PolicyDecision } from '../security/policy'
 
@@ -132,6 +133,8 @@ export const tools: ToolDefinition[] = [
   ...knowledgeServiceTools,
 ]
 
+export const toolManifestRegistry = buildToolManifestRegistry(tools)
+
 export async function executeTool(
   name: string,
   args: unknown,
@@ -141,13 +144,19 @@ export async function executeTool(
   options: ActionExecutionOptions = {}
 ): Promise<unknown> {
   const tool = tools.find((candidate) => candidate.name === name)
+  const manifest = toolManifestRegistry[name]
 
   // Policy check: must happen before any execution
-  if (tool && !options.approved) {
+  if (tool && manifest && !options.approved) {
     const agentMode = await getMode(db)
-    const metadata = getToolSafetyMetadata(tool)
+    const metadata = getToolSafetyMetadata({
+      ...tool,
+      riskLevel: manifest.riskLevel,
+      sideEffect: manifest.sideEffect,
+      requiresApproval: manifest.defaultPolicy === 'require_approval',
+    })
     const decision = decideToolPolicy({
-      tool: { name: tool.name, metadata },
+      tool: { name: manifest.name, metadata },
       agentMode,
       env,
     })

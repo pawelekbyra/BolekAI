@@ -1,4 +1,6 @@
-import type { ToolManifest } from './manifest'
+import type { ToolDefinition } from './index'
+import type { RiskLevel } from '../security/types'
+import type { ToolManifest, ToolDefaultPolicy, IdempotencyConfig } from './manifest'
 
 /**
  * Central registry of all tool manifests.
@@ -15,7 +17,7 @@ import type { ToolManifest } from './manifest'
  * - redactionRules: what to mask in output
  * - idempotency: execution guarantee config
  */
-export const toolManifests: Record<string, ToolManifest> = {
+export const explicitToolManifests: Record<string, ToolManifest> = {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // STRIPE (payments & financial operations)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -302,30 +304,93 @@ export const toolManifests: Record<string, ToolManifest> = {
   },
 }
 
+// Backward-compatible alias for code/docs that refer to the explicit manifest map.
+export const toolManifests = explicitToolManifests
+
+function providerFromToolName(toolName: string): string {
+  const [provider] = toolName.split('_')
+  return provider || 'internal'
+}
+
+function defaultPolicyForTool(tool: ToolDefinition): ToolDefaultPolicy {
+  const riskLevel = tool.riskLevel ?? 'low'
+  const sideEffect = tool.sideEffect ?? false
+
+  if (tool.requiresApproval || riskLevel === 'high' || riskLevel === 'critical') {
+    return 'require_approval'
+  }
+
+  if (riskLevel === 'medium' && sideEffect) {
+    return 'require_approval'
+  }
+
+  return 'allow'
+}
+
+function defaultIdempotencyForTool(tool: ToolDefinition): IdempotencyConfig {
+  return {
+    enabled: false,
+  }
+}
+
+function manifestFromToolDefinition(tool: ToolDefinition): ToolManifest {
+  const riskLevel: RiskLevel = tool.riskLevel ?? 'low'
+  return {
+    id: `${tool.name}_v1`,
+    name: tool.name,
+    version: '1.0.0',
+    provider: providerFromToolName(tool.name),
+    description: tool.description,
+    inputSchema: tool.parameters,
+    riskLevel,
+    sideEffect: tool.sideEffect ?? false,
+    requiredScopes: [],
+    defaultPolicy: defaultPolicyForTool(tool),
+    redactionRules: {
+      fields: [],
+    },
+    idempotency: defaultIdempotencyForTool(tool),
+  }
+}
+
+export function buildToolManifestRegistry(tools: ToolDefinition[]): Record<string, ToolManifest> {
+  return Object.fromEntries(
+    tools.map((tool) => [
+      tool.name,
+      {
+        ...manifestFromToolDefinition(tool),
+        ...explicitToolManifests[tool.name],
+      },
+    ])
+  )
+}
+
 /**
  * Get a manifest by tool name.
  */
-export function getToolManifest(toolName: string): ToolManifest | undefined {
-  return toolManifests[toolName]
+export function getToolManifest(toolName: string, sourceTools?: ToolDefinition[]): ToolManifest | undefined {
+  if (sourceTools) return buildToolManifestRegistry(sourceTools)[toolName]
+  return explicitToolManifests[toolName]
 }
 
 /**
  * List all registered manifests.
  */
-export function listToolManifests(): ToolManifest[] {
-  return Object.values(toolManifests)
+export function listToolManifests(sourceTools?: ToolDefinition[]): ToolManifest[] {
+  if (sourceTools) return Object.values(buildToolManifestRegistry(sourceTools))
+  return Object.values(explicitToolManifests)
 }
 
 /**
  * Get manifests filtered by risk level.
  */
-export function getManifestsByRiskLevel(riskLevel: string): ToolManifest[] {
-  return listToolManifests().filter((m) => m.riskLevel === riskLevel)
+export function getManifestsByRiskLevel(riskLevel: string, sourceTools?: ToolDefinition[]): ToolManifest[] {
+  return listToolManifests(sourceTools).filter((m) => m.riskLevel === riskLevel)
 }
 
 /**
  * Get manifests filtered by side-effect.
  */
-export function getManifestsBySideEffect(hasSideEffect: boolean): ToolManifest[] {
-  return listToolManifests().filter((m) => m.sideEffect === hasSideEffect)
+export function getManifestsBySideEffect(hasSideEffect: boolean, sourceTools?: ToolDefinition[]): ToolManifest[] {
+  return listToolManifests(sourceTools).filter((m) => m.sideEffect === hasSideEffect)
 }
