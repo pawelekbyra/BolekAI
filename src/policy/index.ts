@@ -43,6 +43,38 @@ function isSideEffectsDisabled(env?: Pick<Env, 'SIDE_EFFECTS_DISABLED'>): boolea
   return env?.SIDE_EFFECTS_DISABLED?.trim().toLowerCase() === 'true'
 }
 
+export type RiskLevelPolicyInput = {
+  toolName: string
+  riskLevel: RiskLevel
+  sideEffect: boolean
+}
+
+export function decideRiskLevelPolicy(input: RiskLevelPolicyInput): PolicyDecision {
+  const { toolName, riskLevel, sideEffect } = input
+
+  switch (riskLevel) {
+    case 'low':
+      return { type: 'allow' }
+    case 'medium':
+      return sideEffect
+        ? {
+            type: 'require_approval',
+            reason: `Tool "${toolName}" has medium risk and side-effect, requires approval`,
+          }
+        : { type: 'allow' }
+    case 'high':
+    case 'critical':
+      return {
+        type: 'require_approval',
+        reason: `Tool "${toolName}" has risk level ${riskLevel} and requires approval`,
+      }
+    default: {
+      const exhaustiveCheck: never = riskLevel
+      return exhaustiveCheck
+    }
+  }
+}
+
 export function decideToolPolicy(context: PolicyContext): PolicyDecision {
   const { tool, agentMode, env } = context
   const { riskLevel, sideEffect } = tool.metadata
@@ -71,28 +103,9 @@ export function decideToolPolicy(context: PolicyContext): PolicyDecision {
     }
   }
 
-  // Risk-based policy
-  // Low-risk read-only: always allow
-  if (riskLevel === 'low' && !sideEffect) {
-    return { type: 'allow' }
-  }
-
-  // High and critical always require approval
-  if (riskLevel === 'high' || riskLevel === 'critical') {
-    return {
-      type: 'require_approval',
-      reason: `Tool "${tool.name}" has risk level ${riskLevel} and requires approval`,
-    }
-  }
-
-  // Medium risk with side-effect: require approval
-  if (riskLevel === 'medium' && sideEffect) {
-    return {
-      type: 'require_approval',
-      reason: `Tool "${tool.name}" has medium risk and side-effect, requires approval`,
-    }
-  }
-
-  // Default: allow (low-risk, or medium read-only)
-  return { type: 'allow' }
+  return decideRiskLevelPolicy({
+    toolName: tool.name,
+    riskLevel,
+    sideEffect,
+  })
 }

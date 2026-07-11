@@ -217,11 +217,11 @@ Cel: rozwinąć minimalny policy check w centralny policy engine.
   - [x] Context zawiera tool, args, chatId, agentMode, env, target i project scope, jeśli dostępne.
   - [x] Context jest wystarczający do audytu decyzji.
 
-- [ ] Dodać polityki per risk level.
+- [x] Dodać polityki per risk level.
 
   Definition of Done:
-  - [ ] Low/medium/high/critical mają jawne zasady.
-  - [ ] Zasady są testowane.
+  - [x] Low/medium/high/critical mają jawne zasady.
+  - [x] Zasady są testowane.
 
 - [ ] Dodać przygotowanie pod allowlisty projektowe.
 

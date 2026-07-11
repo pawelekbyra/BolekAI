@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { decideToolPolicy, type PolicyContext } from './index'
+import { decideRiskLevelPolicy, decideToolPolicy, type PolicyContext } from './index'
 
 describe('Policy central export', () => {
   it('allows low-risk read-only tools from src/policy', () => {
@@ -39,5 +39,38 @@ describe('Policy central export', () => {
     }
 
     expect(decideToolPolicy(context)).toMatchObject({ type: 'deny' })
+  })
+})
+
+
+describe('Risk-level policies', () => {
+  it('allows low-risk tools explicitly', () => {
+    expect(decideRiskLevelPolicy({ toolName: 'web_search', riskLevel: 'low', sideEffect: false })).toEqual({
+      type: 'allow',
+    })
+  })
+
+  it('allows medium read-only tools explicitly', () => {
+    expect(decideRiskLevelPolicy({ toolName: 'report_preview', riskLevel: 'medium', sideEffect: false })).toEqual({
+      type: 'allow',
+    })
+  })
+
+  it('requires approval for medium side-effect tools explicitly', () => {
+    expect(decideRiskLevelPolicy({ toolName: 'task_add', riskLevel: 'medium', sideEffect: true })).toMatchObject({
+      type: 'require_approval',
+    })
+  })
+
+  it('requires approval for high-risk tools explicitly', () => {
+    expect(decideRiskLevelPolicy({ toolName: 'email_send_reply', riskLevel: 'high', sideEffect: true })).toMatchObject({
+      type: 'require_approval',
+    })
+  })
+
+  it('requires approval for critical-risk tools explicitly', () => {
+    expect(decideRiskLevelPolicy({ toolName: 'stripe_refund', riskLevel: 'critical', sideEffect: true })).toMatchObject({
+      type: 'require_approval',
+    })
   })
 })
