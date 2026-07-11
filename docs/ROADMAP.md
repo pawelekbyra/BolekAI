@@ -102,7 +102,9 @@ Zatrzymać ryzyko zanim dojdą kolejne mocne narzędzia.
 
 ### Definition of done
 
-- [✓] żaden endpoint operatorski nie jest publicznie używalny bez kontroli;
+- [✓] żaden endpoint operatorski nie jest publicznie używalny bez kontroli
+  (⚠️ było błędnie zaznaczone jako zrobione — do 2026-07-11 wszystkie `/api/*` były bez
+  autentykacji; naprawione `src/security/owner-guard.ts`, patrz "Corrections" w `docs/SYSTEM.md`);
 - [✓] jest globalny kill switch (`SIDE_EFFECTS_DISABLED`);
 - [✓] można wymusić read-only mode (`READ_ONLY_MODE`);
 - [✓] high/critical nie wykonują się automatycznie (policy engine);

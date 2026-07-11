@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { bolekFetch } from '@/lib/bolek-api'
 
 type Character = {
   name: string
@@ -34,16 +35,14 @@ const MSG_COLORS: Record<string, string> = {
   Zofia: 'bg-teal-900 border-teal-800',
 }
 
-const BOLEK_API = process.env.NEXT_PUBLIC_BOLEK_API_URL ?? 'http://localhost:8787'
-
 export default function CharactersPage() {
   const [characters, setCharacters] = useState<Character[]>([])
   const [messages, setMessages]     = useState<Message[]>([])
 
   async function fetchData() {
     const [c, m] = await Promise.all([
-      fetch(`${BOLEK_API}/api/characters`).then((r) => r.json()),
-      fetch(`${BOLEK_API}/api/characters/messages`).then((r) => r.json()),
+      bolekFetch('/api/characters').then((r) => r.json()),
+      bolekFetch('/api/characters/messages').then((r) => r.json()),
     ])
     setCharacters(c)
     setMessages(m)
