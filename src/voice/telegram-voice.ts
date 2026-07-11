@@ -52,16 +52,19 @@ export class TelegramVoiceHandler {
   }
 
   async transcribeVoiceNote(audioBuffer: ArrayBuffer): Promise<VoiceTranscriptionResult> {
-    // Use Cloudflare Workers AI or external transcription service
-    // For now, return mock response with the pattern that would be used
-    const blob = new Blob([audioBuffer], { type: 'audio/ogg' })
+    const audio = Array.from(new Uint8Array(audioBuffer))
+    const result = await this.env.AI.run('@cf/openai/whisper', { audio }) as {
+      text?: string
+      word_count?: number
+      vtt?: string
+    }
 
-    // In production, integrate with Cloudflare Workers AI or Deepgram/Assembly AI
-    // This is a placeholder for the interface
+    if (!result?.text) throw new Error('Workers AI whisper returned no transcription text')
+
     return {
-      text: '[Transcribed audio content would go here]',
-      confidence: 0.95,
-      language: 'pl',
+      text: result.text,
+      confidence: 1,
+      language: 'auto',
       duration: Math.floor(audioBuffer.byteLength / 48000), // estimate
     }
   }

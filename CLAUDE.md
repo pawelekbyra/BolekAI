@@ -9,12 +9,12 @@
 - ✅ Faza 6-7 — Durable workflows (`task_runs`/`task_steps` ledger, Inngest as target engine) + Postgres schema draft (`docs/POSTGRES-SCHEMA-DRAFT.sql`)
 - ✅ Faza 8 — Memory System v1: proposal flow, consent, edit/delete, secret redaction before write
 - ✅ Faza 9-10 — Command Center UI scaffold + 6 production integrations (GitHub, Vercel, Email, Stripe, Clerk, Polutek) as tools under `src/tools/*.ts`
-- ✅ Faza 11 — Eval framework: 85+ regression tests across security categories (`evals/`)
-- ✅ Faza 12 — Voice interface: Telegram voice notes → transcription → same policy/approval pipeline as text (`src/voice/`)
+- ✅ Faza 11 — Eval framework: 6 real end-to-end security scenarios driving `executeTool`/`decideToolPolicy`/`ApprovalStore`/`executeMemoryTool` against a real SQLite-backed D1 fake (`evals/`)
+- ✅ Faza 12 — Voice interface: Telegram voice notes → real Workers AI (Whisper) transcription → same policy/approval pipeline as text, wired into the live webhook (`src/voice/`)
 
-**Verified working (2026-07-11):** `npm run typecheck` clean, `npx vitest run` → 112/112 tests passing, `next build` (web workspace) succeeds, `wrangler deploy --dry-run` compiles with correct bindings.
+**Verified working (2026-07-11):** `npm run typecheck` clean, `npx vitest run` → 84/84 tests passing across 10 files, `next build` (web workspace) succeeds, `wrangler deploy --dry-run` compiles with correct bindings.
 
-**Corrected same day:** a status review found `/api/*` had no authentication at all despite Faza 1's DoD claiming otherwise, and `src/connectors/` was an unused duplicate of the real `src/tools/*.ts` integrations. Both fixed — see "Corrections" in [`docs/SYSTEM.md`](docs/SYSTEM.md) for details. **Manual step required:** set the `BOLEK_API_KEY` secret (`wrangler secret put BOLEK_API_KEY`) and `NEXT_PUBLIC_BOLEK_API_KEY` (web build env) before deploying, or the dashboard/`/api/*` will 401.
+**Corrected same day (two passes):** first pass found `/api/*` had no authentication at all despite Faza 1's DoD claiming otherwise, and `src/connectors/` was an unused duplicate of the real `src/tools/*.ts` integrations — both fixed. A second, independent pass found the "85+ regression tests" eval suite was tautological (compared hardcoded fixtures to themselves, called no production code), the voice interface was a hardcoded mock never wired into the webhook despite being marked ✅, and — found only *because* real evals were written — five approval-gated tools (`stripe_refund`, `email_send_reply`, `github_push_file`, `github_create_issue`, `vercel_redeploy`) had manifests requiring input fields that didn't match their actual parameters, meaning every real call to them would have been rejected before reaching the policy engine. All fixed — see "Corrections" (both dates) in [`docs/SYSTEM.md`](docs/SYSTEM.md) for details. **Manual step required:** set the `BOLEK_API_KEY` secret (`wrangler secret put BOLEK_API_KEY`) and `NEXT_PUBLIC_BOLEK_API_KEY` (web build env) before deploying, or the dashboard/`/api/*` will 401.
 
 **Next: Faza 13+** — Postgres migration from D1, multi-owner support, semantic memory retrieval. See "Future Work" in [`docs/NEXT-CODING-STEPS.md`](docs/NEXT-CODING-STEPS.md).
 

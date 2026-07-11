@@ -1,28 +1,35 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { TelegramVoiceHandler, type VoiceNoteMessage } from './telegram-voice'
 import type { Env } from '../env'
 
 describe('Voice Interface — Faza 12', () => {
   let env: Env
   let handler: TelegramVoiceHandler
+  let aiRun: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
+    aiRun = vi.fn().mockResolvedValue({ text: 'Zwróć klientowi ostatnią płatność' })
     env = {
       TELEGRAM_BOT_TOKEN: 'test-token',
+      AI: { run: aiRun },
     } as unknown as Env
     handler = new TelegramVoiceHandler(env)
   })
 
   describe('Voice Transcription', () => {
-    it('transcribes voice notes to text', async () => {
-      // Mock audio buffer
+    it('transcribes voice notes via Workers AI Whisper', async () => {
       const mockAudio = new ArrayBuffer(100)
       const result = await handler.transcribeVoiceNote(mockAudio)
 
-      expect(result.text).toBeDefined()
-      expect(result.confidence).toBeGreaterThan(0)
-      expect(result.language).toBe('pl')
+      expect(aiRun).toHaveBeenCalledWith('@cf/openai/whisper', { audio: expect.any(Array) })
+      expect(result.text).toBe('Zwróć klientowi ostatnią płatność')
       expect(result.duration).toBeGreaterThanOrEqual(0)
+    })
+
+    it('throws when Whisper returns no transcription text', async () => {
+      aiRun.mockResolvedValue({})
+      const mockAudio = new ArrayBuffer(100)
+      await expect(handler.transcribeVoiceNote(mockAudio)).rejects.toThrow('no transcription text')
     })
   })
 

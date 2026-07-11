@@ -60,7 +60,7 @@ const SECRET_PATTERNS: RegExp[] = [
   /\bghp_[A-Za-z0-9_]{20,}\b/g,
   /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g,
   /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
-  /\b(?:password|hasło|token|secret|api[_-]?key)\s*[:=]\s*\S+/gi,
+  /\b(?:password|hasło|haslo|token|secret|api[_-]?key)\b[^\n:=]{0,25}[:=]\s*[^\s,;.!?]+/gi,
 ]
 
 export function redactMemoryContent(content: string): string {
