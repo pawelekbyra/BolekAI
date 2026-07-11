@@ -22,7 +22,13 @@ Nie zakłada, że wszystko trzeba zrobić naraz. Zakłada, że każda kolejna pr
   - `require_approval` tworzy approval object zamiast wykonywać tool
   - `/approve <id>` i `/deny <id>` w operator command path
   - Approval wykonuje się maksymalnie raz i wygasa po TTL
-- **[- PLANOWANA]** Faza 5+ — Audit, durable workflows, Postgres, memory system, UI, integracje, voice
+- **[✓ UKOŃCZONA]** Faza 5 — Audit v1 (2026-07-11)
+  - Migracja `audit_events` dla policy, approvali i tool execution
+  - `auditEvent()` helper z bezpiecznym fallbackiem przy błędzie zapisu
+  - Policy decisions trafiają do audytu
+  - Lifecycle approvali trafia do audytu
+  - Sukcesy/błędy tooli i side-effect blocked trafiają do audytu
+- **[- PLANOWANA]** Faza 6+ — Durable workflows, Postgres, memory system, UI, integracje, voice
 
 ## Zasada nadrzędna
 

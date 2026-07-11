@@ -23,6 +23,7 @@ import { decideToolPolicy } from '../policy'
 import { buildToolManifestRegistry } from './manifest-registry'
 import { normalizeToolArgs, redactToolOutput, validateToolArgs } from './manifest'
 import { ApprovalStore, buildApprovalImpact, buildApprovalPreview } from '../approvals'
+import { auditEvent } from '../audit'
 export type { RiskLevel } from '../security/types'
 export type { PolicyDecision } from '../policy'
 
@@ -82,8 +83,6 @@ function readOnlyBlockedResult(tool: ToolDefinition): ToolBlockedResult {
 }
 
 function sideEffectsDisabledBlockedResult(tool: ToolDefinition): ToolBlockedResult {
-  // Faza 5 (audit_events) will replace this with a real audit write; for now this is the
-  // single choke point where a kill-switch block becomes visible for future audit wiring.
   console.warn(`[kill-switch] SIDE_EFFECTS_DISABLED=true blocked tool "${tool.name}"`)
   return {
     ok: false,
@@ -265,7 +264,33 @@ export async function executeTool(
       },
     })
 
+    await auditEvent(db, {
+      chatId,
+      eventType: 'policy_decision',
+      toolName: manifest.name,
+      riskLevel: manifest.riskLevel,
+      policyDecision: decision.type,
+      status: decision.type,
+      data: {
+        reason: decision.type === 'allow' ? undefined : decision.reason,
+        agentMode,
+        sideEffect: manifest.sideEffect,
+        target: { type: manifest.provider, id: manifest.name },
+      },
+    })
+
     if (decision.type === 'deny') {
+      if (manifest.sideEffect) {
+        await auditEvent(db, {
+          chatId,
+          eventType: 'side_effect_blocked',
+          toolName: manifest.name,
+          riskLevel: manifest.riskLevel,
+          policyDecision: decision.type,
+          status: 'blocked',
+          data: { reason: decision.reason },
+        })
+      }
       return policyBlockedResult(tool, decision.reason)
     }
     if (decision.type === 'require_approval') {
@@ -280,6 +305,23 @@ export async function executeTool(
         impact,
       })
 
+      await auditEvent(db, {
+        chatId,
+        eventType: 'approval_created',
+        toolName: manifest.name,
+        riskLevel: manifest.riskLevel,
+        policyDecision: decision.type,
+        approvalId: approval.id,
+        status: approval.status,
+        data: {
+          reason: decision.reason,
+          expiresAt: approval.expires_at,
+          idempotencyKey: approval.idempotency_key,
+          preview: approval.preview,
+          impact: approval.impact,
+        },
+      })
+
       return requiresApprovalResult(tool, decision.reason, {
         id: approval.id,
         expiresAt: approval.expires_at,
@@ -290,6 +332,38 @@ export async function executeTool(
     // decision.type === 'allow' continues below
   }
 
-  const result = await executeToolWithoutOutputRedaction(name, preparedArgs.args, db, chatId, env, options)
-  return redactToolResult(name, result)
+  try {
+    const result = await executeToolWithoutOutputRedaction(name, preparedArgs.args, db, chatId, env, options)
+    const redactedResult = redactToolResult(name, result)
+
+    await auditEvent(db, {
+      chatId,
+      eventType: 'tool_executed',
+      toolName: manifest?.name ?? name,
+      riskLevel: manifest?.riskLevel,
+      approvalId: options.approvalId,
+      status: 'success',
+      data: {
+        approved: options.approved === true,
+        result: redactedResult,
+      },
+    })
+
+    return redactedResult
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    await auditEvent(db, {
+      chatId,
+      eventType: 'tool_failed',
+      toolName: manifest?.name ?? name,
+      riskLevel: manifest?.riskLevel,
+      approvalId: options.approvalId,
+      status: 'failed',
+      data: {
+        approved: options.approved === true,
+        error: message,
+      },
+    })
+    throw err
+  }
 }

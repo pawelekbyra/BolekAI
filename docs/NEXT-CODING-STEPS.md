@@ -23,7 +23,7 @@ Nie odznaczaj zadania, jeśli zrobiono tylko część pracy.
 - [x] Faza 2 — Tool Manifest v1
 - [x] Faza 3 — Policy Engine v1
 - [x] Faza 4 — Approval Engine v1
-- [ ] Faza 5 — Audit v1
+- [x] Faza 5 — Audit v1
 - [ ] Faza 6 — Durable workflows
 - [ ] Faza 7 — Postgres source of truth
 - [ ] Faza 8 — Memory System v1
@@ -295,40 +295,40 @@ Cel: zastąpić prototypowe `pending_actions` bezpiecznym approval flow.
 
 Cel: każda istotna akcja ma być odtwarzalna i wyjaśnialna.
 
-- [ ] Dodać migrację `audit_events`.
+- [x] Dodać migrację `audit_events`.
 
   Definition of Done:
-  - [ ] Tabela zawiera `id`, `chat_id`, `event_type`, `tool_name`, `risk_level`, `policy_decision`, `approval_id`, `status`, `data`, `created_at`.
-  - [ ] `data` może przechowywać JSON jako tekst.
+  - [x] Tabela zawiera `id`, `chat_id`, `event_type`, `tool_name`, `risk_level`, `policy_decision`, `approval_id`, `status`, `data`, `created_at`.
+  - [x] `data` może przechowywać JSON jako tekst.
 
-- [ ] Dodać `auditEvent()` helper.
-
-  Definition of Done:
-  - [ ] Helper zapisuje eventy w jednym miejscu.
-  - [ ] Helper radzi sobie z błędem zapisu bez rozwalenia głównego flow, jeśli to bezpieczne.
-
-- [ ] Logować policy decisions.
+- [x] Dodać `auditEvent()` helper.
 
   Definition of Done:
-  - [ ] `allow`, `deny`, `require_approval` trafiają do audytu.
-  - [ ] Event zawiera tool name i risk level.
+  - [x] Helper zapisuje eventy w jednym miejscu.
+  - [x] Helper radzi sobie z błędem zapisu bez rozwalenia głównego flow, jeśli to bezpieczne.
 
-- [ ] Logować lifecycle approvali.
-
-  Definition of Done:
-  - [ ] `approval_created`, `approval_approved`, `approval_denied`, `approval_expired`, `approval_executed`, `approval_failed` trafiają do audytu.
-
-- [ ] Logować wykonania tooli.
+- [x] Logować policy decisions.
 
   Definition of Done:
-  - [ ] Sukces i błąd toola trafiają do audytu.
-  - [ ] Side-effect blocked trafia do audytu.
+  - [x] `allow`, `deny`, `require_approval` trafiają do audytu.
+  - [x] Event zawiera tool name i risk level.
 
-- [ ] Faza 5 ukończona.
+- [x] Logować lifecycle approvali.
 
   Definition of Done:
-  - [ ] Policy, approvals i tool execution mają audyt.
-  - [ ] Widok lub endpoint audytu może zostać zbudowany na zapisanych eventach.
+  - [x] `approval_created`, `approval_approved`, `approval_denied`, `approval_expired`, `approval_executed`, `approval_failed` trafiają do audytu.
+
+- [x] Logować wykonania tooli.
+
+  Definition of Done:
+  - [x] Sukces i błąd toola trafiają do audytu.
+  - [x] Side-effect blocked trafia do audytu.
+
+- [x] Faza 5 ukończona.
+
+  Definition of Done:
+  - [x] Policy, approvals i tool execution mają audyt.
+  - [x] Widok lub endpoint audytu może zostać zbudowany na zapisanych eventach.
 
 ---
 
@@ -439,10 +439,10 @@ Cel: dodać głos jako interfejs, nie jako obejście policy.
 
 # Następne zadanie sugerowane dla agenta
 
-Faza 4 ukończona. Następna:
+Faza 5 ukończona. Następna:
 
-> **Faza 5 — Audit v1**
+> **Faza 6 — Durable workflows**
 
-Zacząć od migracji `audit_events`, a potem dodać `auditEvent()` helper i logowanie policy decisions oraz lifecycle approvali.
+Zacząć od modeli `task_runs` i `task_steps`, statusów durable workflow oraz pól lock/attempt dla obecnego runnera.
 
-Nie zaczynaj UI, voice ani nowych integracji, dopóki audit events dla policy, approvali i tool execution nie będą gotowe.
+Nie zaczynaj UI, voice ani nowych integracji, dopóki durable workflow fundamenty nie będą gotowe.
