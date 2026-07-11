@@ -177,12 +177,12 @@ Cel: zastąpić luźną listę tooli formalnym rejestrem narzędzi z metadanymi 
   - [x] Dispatcher potrafi znaleźć manifest po nazwie toola.
   - [x] Nie zniknęła żadna istniejąca funkcjonalność.
 
-- [ ] Dodać hook `redactToolOutput()`.
+- [x] Dodać hook `redactToolOutput()`.
 
   Definition of Done:
-  - [ ] Funkcja przyjmuje manifest i output.
-  - [ ] Redaguje globalne pola typu `token`, `secret`, `password`, `authorization`, `cookie`, `videoUrl`.
-  - [ ] Tool może mieć własne reguły redakcji.
+  - [x] Funkcja przyjmuje manifest i output.
+  - [x] Redaguje globalne pola typu `token`, `secret`, `password`, `authorization`, `cookie`, `videoUrl`.
+  - [x] Tool może mieć własne reguły redakcji.
 
 - [ ] Dodać hook walidacji/normalizacji argumentów.
 

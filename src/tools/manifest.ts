@@ -19,7 +19,6 @@ export const GLOBAL_REDACTION_FIELDS = [
   'session',
   'videoUrl',
   'video_url',
-  'url', // broad but conservative in API contexts
 ]
 
 /**
@@ -86,52 +85,55 @@ export type ToolManifest = {
  * Redacts sensitive fields from tool output.
  * Applies global + tool-specific rules.
  */
-export function redactToolOutput(manifest: ToolManifest, output: unknown): unknown {
-  if (output === null || output === undefined) return output
+function redactStringValue(manifest: ToolManifest, value: string): string {
+  let redacted = value
 
-  // Get all fields to redact
-  const fieldsToRedact = new Set([
-    ...GLOBAL_REDACTION_FIELDS,
-    ...(manifest.redactionRules?.fields ?? []),
-  ])
-
-  // Apply custom redaction if provided
-  if (manifest.redactionRules?.customRedact) {
-    return manifest.redactionRules.customRedact(output)
+  for (const pattern of manifest.redactionRules.patterns ?? []) {
+    redacted = redacted.replace(pattern, '[REDACTED]')
   }
 
-  // Redact object
-  if (typeof output === 'object' && !Array.isArray(output)) {
-    const obj = output as Record<string, unknown>
-    const redacted = { ...obj }
+  return redacted
+}
 
-    for (const field of fieldsToRedact) {
-      if (field in redacted) {
-        redacted[field] = '[REDACTED]'
-      }
-    }
+function redactValue(manifest: ToolManifest, value: unknown, fieldsToRedact: Set<string>): unknown {
+  if (value === null || value === undefined) return value
 
-    // Apply regex patterns
-    if (manifest.redactionRules?.patterns) {
-      for (const key in redacted) {
-        const val = redacted[key]
-        if (typeof val === 'string') {
-          for (const pattern of manifest.redactionRules.patterns) {
-            redacted[key] = val.replace(pattern, '[REDACTED]')
-          }
-        }
-      }
+  if (typeof value === 'string') {
+    return redactStringValue(manifest, value)
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => redactValue(manifest, item, fieldsToRedact))
+  }
+
+  if (typeof value === 'object') {
+    const redacted: Record<string, unknown> = {}
+
+    for (const [key, nestedValue] of Object.entries(value as Record<string, unknown>)) {
+      redacted[key] = fieldsToRedact.has(key)
+        ? '[REDACTED]'
+        : redactValue(manifest, nestedValue, fieldsToRedact)
     }
 
     return redacted
   }
 
-  // Redact array
-  if (Array.isArray(output)) {
-    return output.map((item) => redactToolOutput(manifest, item))
+  return value
+}
+
+export function redactToolOutput(manifest: ToolManifest, output: unknown): unknown {
+  const fieldsToRedact = new Set([
+    ...GLOBAL_REDACTION_FIELDS,
+    ...(manifest.redactionRules.fields ?? []),
+  ])
+
+  const redacted = redactValue(manifest, output, fieldsToRedact)
+
+  if (manifest.redactionRules.customRedact) {
+    return manifest.redactionRules.customRedact(redacted)
   }
 
-  return output
+  return redacted
 }
 
 /**

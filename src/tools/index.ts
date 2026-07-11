@@ -21,6 +21,7 @@ import { getMode } from '../agent-mode'
 import type { RiskLevel } from '../security/types'
 import { decideToolPolicy } from '../security/policy'
 import { buildToolManifestRegistry } from './manifest-registry'
+import { redactToolOutput } from './manifest'
 export type { RiskLevel } from '../security/types'
 export type { PolicyDecision } from '../security/policy'
 
@@ -135,6 +136,41 @@ export const tools: ToolDefinition[] = [
 
 export const toolManifestRegistry = buildToolManifestRegistry(tools)
 
+export function redactToolResult(name: string, output: unknown): unknown {
+  const manifest = toolManifestRegistry[name]
+  return manifest ? redactToolOutput(manifest, output) : output
+}
+
+async function executeToolWithoutOutputRedaction(
+  name: string,
+  args: unknown,
+  db: D1Database,
+  chatId: number,
+  env: Env | undefined,
+  options: ActionExecutionOptions
+): Promise<unknown> {
+  if (name.startsWith('task_'))     return executeTaskTool(name, args, db)
+  if (name.startsWith('note_'))     return executeNoteTool(name, args, db)
+  if (name.startsWith('fact_'))     return executeFactTool(name, args, db)
+  if (name.startsWith('reminder_')) return executeReminderTool(name, args, db, chatId)
+  if (name.startsWith('github_'))   return executeGithubTool(name, args, env!, chatId, options)
+  if (name.startsWith('vercel_'))   return executeVercelTool(name, args, env!, chatId, options)
+  if (name.startsWith('coding_'))   return executeCodingTool(name, args, env!, chatId, options)
+  if (name.startsWith('agent_'))     return executeAgentTool(name, args, env!, chatId)
+  if (name.startsWith('character_')) return executeCharacterTool(name, args, env!, chatId)
+  if (name.startsWith('stripe_'))    return executeStripeTool(name, args, env!, chatId, options)
+  if (name.startsWith('clerk_'))     return executeClerkTool(name, args, env!)
+  if (name.startsWith('polutek_'))   return executePolutekTool(name, args, env!)
+  if (name.startsWith('email_'))     return executeEmailTool(name, args, env!, chatId, options)
+  if (name.startsWith('web_'))       return executeWebTool(name, args, env)
+  // External services (tri-tier architecture)
+  if (name.startsWith('chat_'))      return executeChatServiceTool(name, args, env!)
+  if (name.startsWith('flow_'))      return executeWorkflowServiceTool(name, args, env!)
+  if (name.startsWith('kb_'))        return executeKnowledgeServiceTool(name, args, env!)
+  throw new Error(`Unknown tool: ${name}`)
+}
+
+
 export async function executeTool(
   name: string,
   args: unknown,
@@ -170,23 +206,6 @@ export async function executeTool(
     // decision.type === 'allow' continues below
   }
 
-  if (name.startsWith('task_'))     return executeTaskTool(name, args, db)
-  if (name.startsWith('note_'))     return executeNoteTool(name, args, db)
-  if (name.startsWith('fact_'))     return executeFactTool(name, args, db)
-  if (name.startsWith('reminder_')) return executeReminderTool(name, args, db, chatId)
-  if (name.startsWith('github_'))   return executeGithubTool(name, args, env!, chatId, options)
-  if (name.startsWith('vercel_'))   return executeVercelTool(name, args, env!, chatId, options)
-  if (name.startsWith('coding_'))   return executeCodingTool(name, args, env!, chatId, options)
-  if (name.startsWith('agent_'))     return executeAgentTool(name, args, env!, chatId)
-  if (name.startsWith('character_')) return executeCharacterTool(name, args, env!, chatId)
-  if (name.startsWith('stripe_'))    return executeStripeTool(name, args, env!, chatId, options)
-  if (name.startsWith('clerk_'))     return executeClerkTool(name, args, env!)
-  if (name.startsWith('polutek_'))   return executePolutekTool(name, args, env!)
-  if (name.startsWith('email_'))     return executeEmailTool(name, args, env!, chatId, options)
-  if (name.startsWith('web_'))       return executeWebTool(name, args, env)
-  // External services (tri-tier architecture)
-  if (name.startsWith('chat_'))      return executeChatServiceTool(name, args, env!)
-  if (name.startsWith('flow_'))      return executeWorkflowServiceTool(name, args, env!)
-  if (name.startsWith('kb_'))        return executeKnowledgeServiceTool(name, args, env!)
-  throw new Error(`Unknown tool: ${name}`)
+  const result = await executeToolWithoutOutputRedaction(name, args, db, chatId, env, options)
+  return redactToolResult(name, result)
 }
