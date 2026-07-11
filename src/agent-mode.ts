@@ -1,6 +1,7 @@
 import type { Env } from './env'
 import { send } from './telegram'
 import { executeTool } from './tools'
+import { ApprovalStore } from './approvals'
 
 export type AgentMode = 'autonomous' | 'confirm' | 'manual'
 
@@ -11,6 +12,7 @@ export type ActionIntent = {
 
 export type ActionExecutionOptions = {
   approved?: boolean
+  approvalId?: string
 }
 
 export async function getMode(db: D1Database): Promise<AgentMode> {
@@ -74,7 +76,58 @@ export async function runAction({ env, chatId, description, action, intent, appr
 }
 
 export async function handleActionConfirmation(text: string, chatId: number, env: Env): Promise<string | null> {
-  const normalized = text.trim().toLowerCase()
+  const trimmed = text.trim()
+  const approvalCommand = trimmed.match(/^\/(approve|deny)\s+([0-9a-fA-F-]{36})$/)
+
+  if (approvalCommand) {
+    const [, command, approvalId] = approvalCommand
+    const store = new ApprovalStore(env.DB)
+    const approval = await store.get(approvalId)
+
+    if (!approval || approval.chat_id !== chatId) {
+      return `Nie znalazłem approvala ${approvalId} dla tego chatu.`
+    }
+
+    if (command === 'deny') {
+      const denied = await store.deny(approvalId, chatId)
+      return denied
+        ? `Odrzuciłem approval ${approvalId} dla ${approval.tool_name}.`
+        : `Nie mogę odrzucić approvala ${approvalId}, bo ma status ${approval.status}.`
+    }
+
+    if (approval.status === 'executed') {
+      return `Approval ${approvalId} został już wykonany. Nie wykonuję go drugi raz.`
+    }
+    if (approval.status !== 'pending') {
+      return `Approval ${approvalId} nie jest pending (status: ${approval.status}).`
+    }
+    if (new Date(approval.expires_at).getTime() <= Date.now()) {
+      await store.markExpired(approvalId)
+      return `Approval ${approvalId} wygasł ${approval.expires_at}. Utwórz nowy approval, jeśli akcja nadal ma być wykonana.`
+    }
+
+    const approved = await store.approve(approvalId, chatId)
+    if (!approved) {
+      const current = await store.get(approvalId)
+      return `Nie mogę zatwierdzić approvala ${approvalId} (status: ${current?.status ?? 'unknown'}).`
+    }
+
+    try {
+      const args = JSON.parse(approval.normalized_args) as unknown
+      const result = await executeTool(approval.tool_name, args, env.DB, chatId, env, { approved: true, approvalId })
+      const marked = await store.markExecuted(approvalId, result)
+      if (!marked) {
+        return `Approval ${approvalId} został wykonany, ale nie udało się oznaczyć go jako executed. Sprawdź audyt/logi przed ponowieniem.`
+      }
+      return `Zatwierdzone i wykonane approval ${approvalId}: ${approval.tool_name}\n\n${typeof result === 'string' ? result : JSON.stringify(result)}`
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      await store.markFailed(approvalId, message)
+      throw err
+    }
+  }
+
+  const normalized = trimmed.toLowerCase()
   const isYes = ['tak', 't', 'yes', 'y'].includes(normalized)
   const isNo = ['nie', 'n', 'no'].includes(normalized)
   if (!isYes && !isNo) return null

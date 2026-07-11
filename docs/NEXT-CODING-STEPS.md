@@ -22,7 +22,7 @@ Nie odznaczaj zadania, jeśli zrobiono tylko część pracy.
 - [ ] Faza 1 — Zabezpieczenie obecnego prototypu
 - [x] Faza 2 — Tool Manifest v1
 - [x] Faza 3 — Policy Engine v1
-- [ ] Faza 4 — Approval Engine v1
+- [x] Faza 4 — Approval Engine v1
 - [ ] Faza 5 — Audit v1
 - [ ] Faza 6 — Durable workflows
 - [ ] Faza 7 — Postgres source of truth
@@ -242,52 +242,52 @@ Cel: rozwinąć minimalny policy check w centralny policy engine.
 
 Cel: zastąpić prototypowe `pending_actions` bezpiecznym approval flow.
 
-- [ ] Dodać migrację `approvals`.
+- [x] Dodać migrację `approvals`.
 
   Definition of Done:
-  - [ ] Tabela zawiera `id`, `chat_id`, `tool_name`, `risk_level`, `normalized_args`, `preview`, `impact`, `status`, `idempotency_key`, `expires_at`, timestamps.
-  - [ ] Statusy obejmują `pending`, `approved`, `denied`, `expired`, `executed`, `failed`.
+  - [x] Tabela zawiera `id`, `chat_id`, `tool_name`, `risk_level`, `normalized_args`, `preview`, `impact`, `status`, `idempotency_key`, `expires_at`, timestamps.
+  - [x] Statusy obejmują `pending`, `approved`, `denied`, `expired`, `executed`, `failed`.
 
-- [ ] Dodać `ApprovalStore`.
-
-  Definition of Done:
-  - [ ] Istnieją metody `create`, `get`, `approve`, `deny`, `markExecuted`, `markFailed`.
-  - [ ] Implementacja działa na obecnym storage.
-  - [ ] Interfejs pozwala później przenieść storage do Postgresa.
-
-- [ ] Tworzyć approval zamiast wykonywać high/critical tool.
+- [x] Dodać `ApprovalStore`.
 
   Definition of Done:
-  - [ ] `require_approval` tworzy approval object.
-  - [ ] Tool nie wykonuje się automatycznie.
-  - [ ] Użytkownik dostaje preview i approval id.
+  - [x] Istnieją metody `create`, `get`, `approve`, `deny`, `markExecuted`, `markFailed`.
+  - [x] Implementacja działa na obecnym storage.
+  - [x] Interfejs pozwala później przenieść storage do Postgresa.
 
-- [ ] Dodać `/approve <id>` i `/deny <id>`.
-
-  Definition of Done:
-  - [ ] Komendy działają przez Telegram/operator command path.
-  - [ ] Approval po `deny` nie może zostać wykonany.
-  - [ ] Approval po `approve` może zostać wykonany tylko raz.
-
-- [ ] Dodać TTL approvala.
+- [x] Tworzyć approval zamiast wykonywać high/critical tool.
 
   Definition of Done:
-  - [ ] Wygasły approval nie wykonuje się.
-  - [ ] Użytkownik dostaje czytelny komunikat.
+  - [x] `require_approval` tworzy approval object.
+  - [x] Tool nie wykonuje się automatycznie.
+  - [x] Użytkownik dostaje preview i approval id.
 
-- [ ] Dodać idempotency key dla side-effect execution.
-
-  Definition of Done:
-  - [ ] Ten sam approval nie wykonuje side-effectu drugi raz.
-  - [ ] Próba ponownego wykonania zwraca status już wykonany albo blokadę.
-
-- [ ] Faza 4 ukończona.
+- [x] Dodać `/approve <id>` i `/deny <id>`.
 
   Definition of Done:
-  - [ ] High/critical wymagają approval object.
-  - [ ] Approval ma TTL.
-  - [ ] Approval wykonuje się maksymalnie raz.
-  - [ ] Wynik jest gotowy do audytu.
+  - [x] Komendy działają przez Telegram/operator command path.
+  - [x] Approval po `deny` nie może zostać wykonany.
+  - [x] Approval po `approve` może zostać wykonany tylko raz.
+
+- [x] Dodać TTL approvala.
+
+  Definition of Done:
+  - [x] Wygasły approval nie wykonuje się.
+  - [x] Użytkownik dostaje czytelny komunikat.
+
+- [x] Dodać idempotency key dla side-effect execution.
+
+  Definition of Done:
+  - [x] Ten sam approval nie wykonuje side-effectu drugi raz.
+  - [x] Próba ponownego wykonania zwraca status już wykonany albo blokadę.
+
+- [x] Faza 4 ukończona.
+
+  Definition of Done:
+  - [x] High/critical wymagają approval object.
+  - [x] Approval ma TTL.
+  - [x] Approval wykonuje się maksymalnie raz.
+  - [x] Wynik jest gotowy do audytu.
 
 ---
 
@@ -439,10 +439,10 @@ Cel: dodać głos jako interfejs, nie jako obejście policy.
 
 # Następne zadanie sugerowane dla agenta
 
-Faza 3 ukończona. Następna:
+Faza 4 ukończona. Następna:
 
-> **Faza 4 — Approval Engine v1**
+> **Faza 5 — Audit v1**
 
-Zacząć od migracji `approvals`, a potem dodać `ApprovalStore` i tworzenie approval object dla decyzji `require_approval`.
+Zacząć od migracji `audit_events`, a potem dodać `auditEvent()` helper i logowanie policy decisions oraz lifecycle approvali.
 
-Nie zaczynaj UI, voice ani nowych integracji, dopóki approval object, TTL i idempotency execution nie będą gotowe.
+Nie zaczynaj UI, voice ani nowych integracji, dopóki audit events dla policy, approvali i tool execution nie będą gotowe.
