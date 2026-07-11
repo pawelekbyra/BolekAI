@@ -235,8 +235,14 @@ export async function executeTool(
     })
     const decision = decideToolPolicy({
       tool: { name: manifest.name, metadata },
+      args: preparedArgs.args,
+      chatId,
       agentMode,
       env,
+      target: {
+        type: manifest.provider,
+        id: manifest.name,
+      },
     })
 
     if (decision.type === 'deny') {

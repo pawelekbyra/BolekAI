@@ -10,13 +10,29 @@ export type PolicyToolMetadata = {
   requiresApproval?: boolean
 }
 
+export type PolicyTarget = {
+  type: string
+  id?: string
+  displayName?: string
+}
+
+export type PolicyProjectScope = {
+  projectId?: string
+  projectName?: string
+  environment?: string
+}
+
 export interface PolicyContext {
   tool: {
     name: string
     metadata: PolicyToolMetadata
   }
+  args?: unknown
+  chatId?: number
   agentMode: AgentMode
   env?: Env
+  target?: PolicyTarget
+  projectScope?: PolicyProjectScope
 }
 
 function isReadOnlyModeEnabled(env?: Pick<Env, 'READ_ONLY_MODE'>): boolean {

@@ -211,11 +211,11 @@ Cel: rozwinąć minimalny policy check w centralny policy engine.
   - [x] Policy logic nie siedzi przypadkowo w orchestratorze.
   - [x] Istnieje centralny eksport policy.
 
-- [ ] Dodać `PolicyContext`.
+- [x] Dodać `PolicyContext`.
 
   Definition of Done:
-  - [ ] Context zawiera tool, args, chatId, agentMode, env, target i project scope, jeśli dostępne.
-  - [ ] Context jest wystarczający do audytu decyzji.
+  - [x] Context zawiera tool, args, chatId, agentMode, env, target i project scope, jeśli dostępne.
+  - [x] Context jest wystarczający do audytu decyzji.
 
 - [ ] Dodać polityki per risk level.
 
