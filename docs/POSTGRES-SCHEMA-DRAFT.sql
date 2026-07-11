@@ -85,3 +85,33 @@ CREATE TABLE task_steps (
 );
 
 CREATE INDEX task_steps_run_order_idx ON task_steps(task_run_id, step_order);
+
+CREATE TYPE memory_type AS ENUM ('profile', 'project', 'decision', 'operational', 'episodic');
+CREATE TYPE memory_status AS ENUM ('proposed', 'active', 'rejected', 'deleted');
+CREATE TYPE memory_sensitivity AS ENUM ('low', 'medium', 'high');
+CREATE TYPE embedding_status AS ENUM ('not_indexed', 'queued', 'indexed', 'failed');
+
+CREATE TABLE memory_items (
+  id UUID PRIMARY KEY,
+  memory_type memory_type NOT NULL,
+  status memory_status NOT NULL DEFAULT 'proposed',
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  redacted_content TEXT NOT NULL,
+  source TEXT NOT NULL,
+  source_ref TEXT,
+  confidence DOUBLE PRECISION NOT NULL DEFAULT 0.7,
+  sensitivity memory_sensitivity NOT NULL DEFAULT 'medium',
+  proposed_by TEXT NOT NULL DEFAULT 'agent',
+  approved_at TIMESTAMPTZ,
+  rejected_at TIMESTAMPTZ,
+  deleted_at TIMESTAMPTZ,
+  embedding_status embedding_status NOT NULL DEFAULT 'not_indexed',
+  embedding_model TEXT,
+  embedding_ref TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX memory_items_status_type_idx ON memory_items(status, memory_type, updated_at DESC);
+CREATE INDEX memory_items_embedding_status_idx ON memory_items(embedding_status, updated_at DESC);

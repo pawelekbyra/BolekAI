@@ -1,6 +1,7 @@
 import { taskTools, executeTaskTool } from './tasks'
 import { noteTools, executeNoteTool } from './notes'
 import { factTools, executeFactTool } from './facts'
+import { memoryTools, executeMemoryTool } from './memory-items'
 import { reminderTools, executeReminderTool } from './reminders'
 import { githubTools, executeGithubTool } from './github'
 import { vercelTools, executeVercelTool } from './vercel'
@@ -136,6 +137,7 @@ export const tools: ToolDefinition[] = [
   ...taskTools,
   ...noteTools,
   ...factTools,
+  ...memoryTools,
   ...reminderTools,
   ...githubTools,
   ...vercelTools,
@@ -208,6 +210,7 @@ async function executeToolWithoutOutputRedaction(
   if (name.startsWith('task_'))     return executeTaskTool(name, args, db)
   if (name.startsWith('note_'))     return executeNoteTool(name, args, db)
   if (name.startsWith('fact_'))     return executeFactTool(name, args, db)
+  if (name.startsWith('memory_'))   return executeMemoryTool(name, args, db)
   if (name.startsWith('reminder_')) return executeReminderTool(name, args, db, chatId)
   if (name.startsWith('github_'))   return executeGithubTool(name, args, env!, chatId, options)
   if (name.startsWith('vercel_'))   return executeVercelTool(name, args, env!, chatId, options)

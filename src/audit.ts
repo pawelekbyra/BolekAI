@@ -11,6 +11,8 @@ export type AuditEventType =
   | 'approval_failed'
   | 'tool_executed'
   | 'tool_failed'
+  | 'memory_written'
+  | 'memory_changed'
 
 export type AuditEventInput = {
   chatId?: number
