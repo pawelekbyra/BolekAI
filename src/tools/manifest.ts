@@ -36,6 +36,8 @@ export type RedactionRules = {
  * Idempotency configuration for a tool.
  * Ensures the same approval doesn't execute side-effects twice.
  */
+export type ToolDefaultPolicy = PolicyDecision['type']
+
 export type IdempotencyConfig = {
   enabled: boolean
   keyField?: string // Field in args that serves as idempotency key (e.g., "approval_id")
@@ -70,14 +72,14 @@ export type ToolManifest = {
   // Security & Policy
   riskLevel: RiskLevel
   sideEffect: boolean
-  requiredScopes?: string[] // OAuth scopes, permissions, or resource scopes (e.g., "user:repo", "stripe:write_refund")
-  defaultPolicy?: 'allow' | 'deny' | 'require_approval' // Override for specific scenarios
+  requiredScopes: string[] // OAuth scopes, permissions, or resource scopes (e.g., "user:repo", "stripe:write_refund")
+  defaultPolicy: ToolDefaultPolicy // Baseline policy before runtime context/env overrides
 
   // Redaction & Compliance
-  redactionRules?: RedactionRules
+  redactionRules: RedactionRules
 
   // Execution guarantees
-  idempotency?: IdempotencyConfig
+  idempotency: IdempotencyConfig
 }
 
 /**

@@ -162,13 +162,13 @@ Cel: zatrzymać ryzyko zanim dojdą kolejne mocne narzędzia.
 
 Cel: zastąpić luźną listę tooli formalnym rejestrem narzędzi z metadanymi ryzyka.
 
-- [ ] Dodać typ `ToolManifest`.
+- [x] Dodać typ `ToolManifest`.
 
   Definition of Done:
-  - [ ] Manifest zawiera `id`, `name`, `version`, `provider`, `description`.
-  - [ ] Manifest zawiera `inputSchema` i opcjonalne `outputSchema`.
-  - [ ] Manifest zawiera `riskLevel`, `sideEffect`, `requiredScopes`, `defaultPolicy`.
-  - [ ] Manifest zawiera `redactionRules` i `idempotency`.
+  - [x] Manifest zawiera `id`, `name`, `version`, `provider`, `description`.
+  - [x] Manifest zawiera `inputSchema` i opcjonalne `outputSchema`.
+  - [x] Manifest zawiera `riskLevel`, `sideEffect`, `requiredScopes`, `defaultPolicy`.
+  - [x] Manifest zawiera `redactionRules` i `idempotency`.
 
 - [ ] Zmigrować istniejące `ToolDefinition` do manifestów.
 

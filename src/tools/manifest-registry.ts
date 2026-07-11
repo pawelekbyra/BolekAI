@@ -46,6 +46,7 @@ export const toolManifests: Record<string, ToolManifest> = {
     riskLevel: 'critical',
     sideEffect: true,
     requiredScopes: ['stripe:write_refund'],
+    defaultPolicy: 'require_approval',
     redactionRules: {
       fields: ['charge_id', 'refund_id', 'receipt_number'],
     },
@@ -87,6 +88,7 @@ export const toolManifests: Record<string, ToolManifest> = {
     riskLevel: 'high',
     sideEffect: true,
     requiredScopes: ['email:send'],
+    defaultPolicy: 'require_approval',
     redactionRules: {
       fields: ['api_key'],
       patterns: [/[\w\.-]+@[\w\.-]+\.\w+/g], // Email addresses
@@ -130,6 +132,7 @@ export const toolManifests: Record<string, ToolManifest> = {
     riskLevel: 'high',
     sideEffect: true,
     requiredScopes: ['repo:write'],
+    defaultPolicy: 'require_approval',
     redactionRules: {
       fields: [],
       patterns: [/token[=:]\s*[\w\-]+/gi], // Don't accidentally log tokens
@@ -168,6 +171,7 @@ export const toolManifests: Record<string, ToolManifest> = {
     riskLevel: 'high',
     sideEffect: true,
     requiredScopes: ['repo:write'],
+    defaultPolicy: 'require_approval',
     redactionRules: {
       fields: [],
     },
@@ -207,6 +211,7 @@ export const toolManifests: Record<string, ToolManifest> = {
     riskLevel: 'high',
     sideEffect: true,
     requiredScopes: ['vercel:deploy'],
+    defaultPolicy: 'require_approval',
     redactionRules: {
       fields: ['deployment_id'],
     },
@@ -254,8 +259,12 @@ export const toolManifests: Record<string, ToolManifest> = {
     riskLevel: 'low',
     sideEffect: false,
     requiredScopes: ['web:read'],
+    defaultPolicy: 'allow',
     redactionRules: {
       fields: [],
+    },
+    idempotency: {
+      enabled: false,
     },
   },
 
@@ -283,8 +292,12 @@ export const toolManifests: Record<string, ToolManifest> = {
     riskLevel: 'low',
     sideEffect: false,
     requiredScopes: ['web:read'],
+    defaultPolicy: 'allow',
     redactionRules: {
       fields: [],
+    },
+    idempotency: {
+      enabled: false,
     },
   },
 }
