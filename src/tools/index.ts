@@ -22,6 +22,7 @@ import type { RiskLevel } from '../security/types'
 import { decideToolPolicy } from '../policy'
 import { buildToolManifestRegistry } from './manifest-registry'
 import { normalizeToolArgs, redactToolOutput, validateToolArgs } from './manifest'
+import { ApprovalStore, buildApprovalImpact, buildApprovalPreview } from '../approvals'
 export type { RiskLevel } from '../security/types'
 export type { PolicyDecision } from '../policy'
 
@@ -64,6 +65,8 @@ export type ToolBlockedResult = {
   ok: false
   blocked: true
   reason: 'read_only_mode' | 'side_effects_disabled' | 'policy_deny' | 'requires_approval'
+  approvalId?: string
+  expiresAt?: string
   tool: string
   message: string
 }
@@ -102,14 +105,31 @@ function policyBlockedResult(tool: ToolDefinition, reason: string): ToolBlockedR
   }
 }
 
-function requiresApprovalResult(tool: ToolDefinition, reason: string): ToolBlockedResult {
+function requiresApprovalResult(tool: ToolDefinition, reason: string, approval?: { id: string; expiresAt: string; preview: string; impact: string }): ToolBlockedResult {
   console.warn(`[policy] tool "${tool.name}" requires approval: ${reason}`)
+  const approvalHint = approval
+    ? `
+
+Approval ID: ${approval.id}
+Wygasa: ${approval.expiresAt}
+
+Preview:
+${approval.preview}
+
+Impact:
+${approval.impact}
+
+Użyj /approve ${approval.id}, aby wykonać raz, albo /deny ${approval.id}, aby odrzucić.`
+    : ''
+
   return {
     ok: false,
     blocked: true,
     reason: 'requires_approval',
     tool: tool.name,
-    message: `Narzędzie ${tool.name} wymaga potwierdzenia: ${reason}`,
+    approvalId: approval?.id,
+    expiresAt: approval?.expiresAt,
+    message: `Narzędzie ${tool.name} wymaga potwierdzenia: ${reason}${approvalHint}`,
   }
 }
 
@@ -249,7 +269,23 @@ export async function executeTool(
       return policyBlockedResult(tool, decision.reason)
     }
     if (decision.type === 'require_approval') {
-      return requiresApprovalResult(tool, decision.reason)
+      const preview = buildApprovalPreview(manifest.name, preparedArgs.args)
+      const impact = buildApprovalImpact(manifest.name, manifest.riskLevel, manifest.sideEffect)
+      const approval = await new ApprovalStore(db).create({
+        chatId,
+        toolName: manifest.name,
+        riskLevel: manifest.riskLevel,
+        normalizedArgs: preparedArgs.args,
+        preview,
+        impact,
+      })
+
+      return requiresApprovalResult(tool, decision.reason, {
+        id: approval.id,
+        expiresAt: approval.expires_at,
+        preview: approval.preview,
+        impact: approval.impact,
+      })
     }
     // decision.type === 'allow' continues below
   }

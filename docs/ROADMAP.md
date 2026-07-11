@@ -16,7 +16,12 @@ Nie zakłada, że wszystko trzeba zrobić naraz. Zakłada, że każda kolejna pr
   - Policy decisions przygotowane do audytu (Faza 5)
 - **[- PLANOWANA]** Faza 2 — Tool Manifest v1
 - **[- PLANOWANA]** Faza 3 — Policy Engine v1
-- **[- PLANOWANA]** Faza 4 — Approval Engine v1
+- **[✓ UKOŃCZONA]** Faza 4 — Approval Engine v1 (2026-07-11)
+  - Migracja `approvals` z TTL, statusami lifecycle i idempotency key
+  - `ApprovalStore` dla obecnego D1 storage z interfejsem pod przyszłą abstrakcję
+  - `require_approval` tworzy approval object zamiast wykonywać tool
+  - `/approve <id>` i `/deny <id>` w operator command path
+  - Approval wykonuje się maksymalnie raz i wygasa po TTL
 - **[- PLANOWANA]** Faza 5+ — Audit, durable workflows, Postgres, memory system, UI, integracje, voice
 
 ## Zasada nadrzędna
