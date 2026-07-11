@@ -2,6 +2,7 @@ import type { Env } from './env'
 import { send } from './telegram'
 import { executeTool } from './tools'
 import { ApprovalStore } from './approvals'
+import { auditEvent } from './audit'
 
 export type AgentMode = 'autonomous' | 'confirm' | 'manual'
 
@@ -90,9 +91,18 @@ export async function handleActionConfirmation(text: string, chatId: number, env
 
     if (command === 'deny') {
       const denied = await store.deny(approvalId, chatId)
-      return denied
-        ? `Odrzuciłem approval ${approvalId} dla ${approval.tool_name}.`
-        : `Nie mogę odrzucić approvala ${approvalId}, bo ma status ${approval.status}.`
+      if (denied) {
+        await auditEvent(env.DB, {
+          chatId,
+          eventType: 'approval_denied',
+          toolName: approval.tool_name,
+          riskLevel: approval.risk_level,
+          approvalId,
+          status: 'denied',
+        })
+        return `Odrzuciłem approval ${approvalId} dla ${approval.tool_name}.`
+      }
+      return `Nie mogę odrzucić approvala ${approvalId}, bo ma status ${approval.status}.`
     }
 
     if (approval.status === 'executed') {
@@ -103,10 +113,29 @@ export async function handleActionConfirmation(text: string, chatId: number, env
     }
     if (new Date(approval.expires_at).getTime() <= Date.now()) {
       await store.markExpired(approvalId)
+      await auditEvent(env.DB, {
+        chatId,
+        eventType: 'approval_expired',
+        toolName: approval.tool_name,
+        riskLevel: approval.risk_level,
+        approvalId,
+        status: 'expired',
+        data: { expiresAt: approval.expires_at },
+      })
       return `Approval ${approvalId} wygasł ${approval.expires_at}. Utwórz nowy approval, jeśli akcja nadal ma być wykonana.`
     }
 
     const approved = await store.approve(approvalId, chatId)
+    if (approved) {
+      await auditEvent(env.DB, {
+        chatId,
+        eventType: 'approval_approved',
+        toolName: approval.tool_name,
+        riskLevel: approval.risk_level,
+        approvalId,
+        status: 'approved',
+      })
+    }
     if (!approved) {
       const current = await store.get(approvalId)
       return `Nie mogę zatwierdzić approvala ${approvalId} (status: ${current?.status ?? 'unknown'}).`
@@ -116,13 +145,34 @@ export async function handleActionConfirmation(text: string, chatId: number, env
       const args = JSON.parse(approval.normalized_args) as unknown
       const result = await executeTool(approval.tool_name, args, env.DB, chatId, env, { approved: true, approvalId })
       const marked = await store.markExecuted(approvalId, result)
+      if (marked) {
+        await auditEvent(env.DB, {
+          chatId,
+          eventType: 'approval_executed',
+          toolName: approval.tool_name,
+          riskLevel: approval.risk_level,
+          approvalId,
+          status: 'executed',
+        })
+      }
       if (!marked) {
         return `Approval ${approvalId} został wykonany, ale nie udało się oznaczyć go jako executed. Sprawdź audyt/logi przed ponowieniem.`
       }
       return `Zatwierdzone i wykonane approval ${approvalId}: ${approval.tool_name}\n\n${typeof result === 'string' ? result : JSON.stringify(result)}`
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      await store.markFailed(approvalId, message)
+      const failed = await store.markFailed(approvalId, message)
+      if (failed) {
+        await auditEvent(env.DB, {
+          chatId,
+          eventType: 'approval_failed',
+          toolName: approval.tool_name,
+          riskLevel: approval.risk_level,
+          approvalId,
+          status: 'failed',
+          data: { error: message },
+        })
+      }
       throw err
     }
   }
