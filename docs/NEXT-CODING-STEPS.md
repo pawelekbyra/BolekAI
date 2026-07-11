@@ -205,11 +205,11 @@ Cel: zastąpić luźną listę tooli formalnym rejestrem narzędzi z metadanymi 
 
 Cel: rozwinąć minimalny policy check w centralny policy engine.
 
-- [ ] Wydzielić `src/policy/`.
+- [x] Wydzielić `src/policy/`.
 
   Definition of Done:
-  - [ ] Policy logic nie siedzi przypadkowo w orchestratorze.
-  - [ ] Istnieje centralny eksport policy.
+  - [x] Policy logic nie siedzi przypadkowo w orchestratorze.
+  - [x] Istnieje centralny eksport policy.
 
 - [ ] Dodać `PolicyContext`.
 

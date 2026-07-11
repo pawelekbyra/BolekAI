@@ -19,11 +19,11 @@ import type { Env } from '../env'
 import type { ActionExecutionOptions } from '../agent-mode'
 import { getMode } from '../agent-mode'
 import type { RiskLevel } from '../security/types'
-import { decideToolPolicy } from '../security/policy'
+import { decideToolPolicy } from '../policy'
 import { buildToolManifestRegistry } from './manifest-registry'
 import { normalizeToolArgs, redactToolOutput, validateToolArgs } from './manifest'
 export type { RiskLevel } from '../security/types'
-export type { PolicyDecision } from '../security/policy'
+export type { PolicyDecision } from '../policy'
 
 export const DEFAULT_TOOL_RISK_LEVEL: RiskLevel = 'low'
 export const DEFAULT_TOOL_SIDE_EFFECT = false
