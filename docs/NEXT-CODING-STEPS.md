@@ -13,6 +13,8 @@ All planned functionality for Bolek phase 1 (owner-only operations platform) is 
 - [x] Kill switches (READ_ONLY_MODE, SIDE_EFFECTS_DISABLED)
 - [x] Policy engine before tool execution
 - [x] Agent mode constraints (manual/confirm/autonomous)
+- [x] Owner guard on every `/api/*` route (added 2026-07-11, see "Corrections" in `docs/SYSTEM.md` —
+  this was previously marked done but the endpoints were unauthenticated)
 
 ### Phase 4-8: Runtime Core
 - [x] Approval Engine v1 with TTL and idempotency
@@ -22,10 +24,14 @@ All planned functionality for Bolek phase 1 (owner-only operations platform) is 
 - [x] Memory system with consent flow
 
 ### Phase 9-10: Production Connectors
-- [x] 12 unified connectors (GitHub, Vercel, Email, Stripe, Clerk, Polutek)
-- [x] Each connector: manifest, risk profile, redaction, audit
+- [x] 6 integrations (GitHub, Vercel, Email, Stripe, Clerk, Polutek), implemented as tools in
+  `src/tools/*.ts` and registered in `src/tools/index.ts`
+- [x] Each integration: manifest, risk profile, redaction, audit (`src/tools/manifest.ts`)
 - [x] Command Center UI components
 - [x] Integration status tracking
+
+*(A parallel `src/connectors/` class-based scaffold from this phase was never wired into the tool
+registry - dead code, removed 2026-07-11. See "Corrections" in `docs/SYSTEM.md`.)*
 
 ### Phase 11: Quality Gates
 - [x] Eval framework with YAML fixtures
@@ -63,11 +69,11 @@ All planned functionality for Bolek phase 1 (owner-only operations platform) is 
 ## Integration Points
 
 ### Adding a New Connector
-1. Create `src/connectors/yourservice.ts` extending `BaseConnector`
-2. Define manifest with scopes, risk profiles, redaction rules
-3. Implement `execute(toolName, args)` method
-4. Register in `src/connectors/registry.ts`
-5. Add tests to `src/connectors/connectors.test.ts`
+1. Create `src/tools/yourservice.ts`
+2. Define manifest fields via `src/tools/manifest.ts` helpers: scopes, risk profile, redaction rules
+3. Implement and export the tool(s) + an `executeYourserviceTool` dispatcher
+4. Register in `src/tools/index.ts` (tool list + dispatcher `if (name.startsWith('yourservice_'))`)
+5. Add tests alongside the tool file
 
 ### Adding New Tools
 1. Define in `src/tools/index.ts` or create new file `src/tools/domain.ts`

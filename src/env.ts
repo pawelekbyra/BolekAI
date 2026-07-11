@@ -26,6 +26,7 @@ export type Env = {
   EMAIL_SMTP_USER?: string
   EMAIL_SMTP_PASSWORD?: string
   BOLEK_OPENAI_ADAPTER_KEY?: string
+  BOLEK_API_KEY?: string
   BOLEK_CORS_ORIGIN?: string
   READ_ONLY_MODE?: string
   SIDE_EFFECTS_DISABLED?: string

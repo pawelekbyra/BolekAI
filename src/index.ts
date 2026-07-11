@@ -7,10 +7,18 @@ import { runPendingTasks } from './agents/runner'
 import { buildPolutekBriefing, sendDailyPolutekBriefing } from './briefing'
 import { buildPolutekConfigStatus } from './tools/polutek'
 import { handleAdapterOptions, handleOpenAIChatCompletions } from './openai-adapter'
+import { isOwnerRequest } from './security/owner-guard'
 
 const app = new Hono<{ Bindings: Env }>()
 
 app.use('/api/*', cors())
+
+app.use('/api/*', async (c, next) => {
+  if (!isOwnerRequest(c.req.raw, c.env)) {
+    return c.text('Unauthorized', 401)
+  }
+  await next()
+})
 
 app.options('/v1/chat/completions', handleAdapterOptions)
 

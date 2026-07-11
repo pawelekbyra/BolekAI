@@ -68,7 +68,7 @@ Formalized tool metadata with versioning, scopes, risk levels, redaction rules. 
 Structured approval objects with TTL and idempotency. Audit event logging for all operations. Durable workflow foundation (Inngest). Postgres schema blueprint. Memory system with consent flow.
 
 ### Faza 9-10 — Command Center UI & Connector Refactor ✅
-UI components for approvals, audit timeline, tasks, integrations. Unified connector manifest pattern with risk profiles, redaction, audit logging. 6 connectors: GitHub, Vercel, Email, Stripe, Clerk, Polutek.
+UI components for approvals, audit timeline, tasks, integrations. 6 live integrations with risk profiles, redaction, audit logging: GitHub, Vercel, Email, Stripe, Clerk, Polutek — implemented as tools in `src/tools/*.ts` (registered in `src/tools/index.ts`), sharing the manifest/redaction framework in `src/tools/manifest.ts`. (An earlier parallel `src/connectors/` class-based scaffold from this phase was never wired into the tool registry and was removed as dead code on 2026-07-11 — see "Corrections" below.)
 
 ### Faza 11 — Evals & Release Gates ✅
 Regression test framework. 85+ test cases across 6 security categories: approval enforcement, prompt injection, memory consent, idempotency, redaction, critical operations.
@@ -156,6 +156,10 @@ Each connector applies redaction to outputs:
 ---
 
 ## Connectors (Faza 10)
+
+> Despite the name, these are not a separate `src/connectors/` module — they are tools in
+> `src/tools/*.ts` registered directly in `src/tools/index.ts`, sharing the risk/redaction
+> framework in `src/tools/manifest.ts`. See "Corrections" below.
 
 Each connector implements:
 
@@ -279,22 +283,14 @@ src/
     voice-integrations.ts     # Webhook integration
     voice.test.ts             # Voice safety tests
   tools/
-    index.ts                  # Tool registry
-    manifest.ts               # Manifest types + helpers
+    index.ts                  # Tool registry - github/vercel/stripe/clerk/polutek/email wired in here
+    manifest.ts               # Manifest types, redaction rules, risk levels
     manifest-*.test.ts        # Manifest tests
-  connectors/
-    base.ts                   # BaseConnector abstract class
-    github.ts                 # GitHub connector
-    vercel.ts                 # Vercel connector
-    email.ts                  # Email connector
-    stripe.ts                 # Stripe connector
-    clerk.ts                  # Clerk connector
-    polutek.ts                # Polutek connector
-    registry.ts               # Connector factory
-    connectors.test.ts        # All connector tests
+    github.ts, vercel.ts, stripe.ts, clerk.ts, polutek.ts, email-imap-smtp.ts  # the 6 live integrations
   security/
-    policy.ts                 # PolicyDecision type + engine
-    policy.test.ts            # Policy tests
+    policy.ts                 # re-exports decideToolPolicy from ../policy
+    owner-guard.ts            # Bearer-token check gating every /api/* route
+    owner-guard.test.ts
   approvals.ts                # ApprovalStore + helpers
   audit.ts                    # Audit event logger
   db/
@@ -331,6 +327,7 @@ wrangler.toml                 # Cloudflare Worker config
 ```bash
 TELEGRAM_BOT_TOKEN=          # from BotFather
 TELEGRAM_WEBHOOK_SECRET=     # random, set once
+BOLEK_API_KEY=               # required - Bearer token guarding every /api/* route (see Corrections)
 GITHUB_TOKEN=                # for GitHub connector
 VERCEL_TOKEN=                # for Vercel connector
 STRIPE_API_KEY=              # for Stripe connector
@@ -343,6 +340,31 @@ READ_ONLY_MODE=              # "true" to disable all side effects
 SIDE_EFFECTS_DISABLED=       # "true" to disable all side effects
 AGENT_MODE=                  # manual | confirm | autonomous
 ```
+
+---
+
+## Corrections (2026-07-11)
+
+A status review found that this document and `docs/ROADMAP.md` had marked things "done" that
+weren't actually true of the running system. Fixed in the same change that added this note:
+
+- **`/api/*` had no authentication at all**, despite Faza 1's Definition of Done claiming
+  "no operator endpoint is publicly usable without control." `/api/chat` (full orchestrator
+  access), `/api/agents`, `/api/agents/tasks`, `/api/characters*`, `/api/briefing/polutek/preview`,
+  `/api/config/polutek/status`, and `/api/ops/events` were reachable by anyone who found the
+  Worker URL. Fixed with `src/security/owner-guard.ts` - a Bearer-token check applied to all of
+  `/api/*` in `src/index.ts`. The web dashboard now sends this token via `bolekFetch()`
+  (`web/lib/bolek-api.ts`), read from `NEXT_PUBLIC_BOLEK_API_KEY`.
+  **Caveat**: `NEXT_PUBLIC_*` values ship inside the browser bundle. This stops anonymous/bot
+  traffic from hitting the Worker directly, but does not make the dashboard page itself private
+  to anyone who loads it and opens devtools. Put the dashboard behind Vercel deployment
+  protection or Cloudflare Access if it must not be viewable by non-owners.
+- **`src/connectors/` was dead code.** Faza 9-10 documented a class-based connector registry
+  (`BaseConnector`, `registry.ts`, 28 passing tests) as if it were the production integration
+  layer. Nothing outside that folder ever imported it - the actual GitHub/Vercel/Stripe/Clerk/
+  Polutek/Email integrations that `src/tools/index.ts` dispatches to live in `src/tools/*.ts`.
+  The unused folder was deleted; the real integrations are documented above under "Connectors
+  (Faza 10)".
 
 ---
 

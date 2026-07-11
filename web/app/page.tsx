@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Send, Bot, User, Loader2, Users, Theater } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { bolekFetch } from '@/lib/bolek-api'
 
 type Message = {
   id: string
@@ -11,8 +12,6 @@ type Message = {
   content: string
   pending?: boolean
 }
-
-const BOLEK_API = process.env.NEXT_PUBLIC_BOLEK_API_URL ?? 'http://localhost:8787'
 
 export default function Page() {
   const [messages, setMessages] = useState<Message[]>([
@@ -43,7 +42,7 @@ export default function Page() {
     setLoading(true)
 
     try {
-      const res = await fetch(`${BOLEK_API}/api/chat`, {
+      const res = await bolekFetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

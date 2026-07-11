@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Bot, Clock, CheckCircle, XCircle, Loader2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { bolekFetch } from '@/lib/bolek-api'
 
 type Agent = {
   name: string
@@ -21,8 +22,6 @@ type Task = {
   created_at: string
   done_at: string | null
 }
-
-const BOLEK_API = process.env.NEXT_PUBLIC_BOLEK_API_URL ?? 'http://localhost:8787'
 
 const STATUS_CONFIG = {
   idle:    { label: 'Czeka',   color: 'bg-zinc-700',   dot: 'bg-zinc-400' },
@@ -43,8 +42,8 @@ export default function AgentsPage() {
 
   async function fetchData() {
     const [a, t] = await Promise.all([
-      fetch(`${BOLEK_API}/api/agents`).then((r) => r.json()),
-      fetch(`${BOLEK_API}/api/agents/tasks`).then((r) => r.json()),
+      bolekFetch('/api/agents').then((r) => r.json()),
+      bolekFetch('/api/agents/tasks').then((r) => r.json()),
     ])
     setAgents(a)
     setTasks(t)
