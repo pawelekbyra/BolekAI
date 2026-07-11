@@ -22,11 +22,11 @@ Nie odznaczaj zadania, jeśli zrobiono tylko część pracy.
 - [ ] Faza 1 — Zabezpieczenie obecnego prototypu
 - [x] Faza 2 — Tool Manifest v1
 - [x] Faza 3 — Policy Engine v1
-- [ ] Faza 4 — Approval Engine v1
-- [ ] Faza 5 — Audit v1
-- [ ] Faza 6 — Durable workflows
-- [ ] Faza 7 — Postgres source of truth
-- [ ] Faza 8 — Memory System v1
+- [x] Faza 4 — Approval Engine v1
+- [x] Faza 5 — Audit v1
+- [x] Faza 6 — Durable workflows
+- [x] Faza 7 — Postgres source of truth
+- [x] Faza 8 — Memory System v1
 - [ ] Faza 9 — Command Center UI
 - [ ] Faza 10 — Integracje produkcyjne
 - [ ] Faza 11 — Evals i release gates
@@ -242,52 +242,52 @@ Cel: rozwinąć minimalny policy check w centralny policy engine.
 
 Cel: zastąpić prototypowe `pending_actions` bezpiecznym approval flow.
 
-- [ ] Dodać migrację `approvals`.
+- [x] Dodać migrację `approvals`.
 
   Definition of Done:
-  - [ ] Tabela zawiera `id`, `chat_id`, `tool_name`, `risk_level`, `normalized_args`, `preview`, `impact`, `status`, `idempotency_key`, `expires_at`, timestamps.
-  - [ ] Statusy obejmują `pending`, `approved`, `denied`, `expired`, `executed`, `failed`.
+  - [x] Tabela zawiera `id`, `chat_id`, `tool_name`, `risk_level`, `normalized_args`, `preview`, `impact`, `status`, `idempotency_key`, `expires_at`, timestamps.
+  - [x] Statusy obejmują `pending`, `approved`, `denied`, `expired`, `executed`, `failed`.
 
-- [ ] Dodać `ApprovalStore`.
-
-  Definition of Done:
-  - [ ] Istnieją metody `create`, `get`, `approve`, `deny`, `markExecuted`, `markFailed`.
-  - [ ] Implementacja działa na obecnym storage.
-  - [ ] Interfejs pozwala później przenieść storage do Postgresa.
-
-- [ ] Tworzyć approval zamiast wykonywać high/critical tool.
+- [x] Dodać `ApprovalStore`.
 
   Definition of Done:
-  - [ ] `require_approval` tworzy approval object.
-  - [ ] Tool nie wykonuje się automatycznie.
-  - [ ] Użytkownik dostaje preview i approval id.
+  - [x] Istnieją metody `create`, `get`, `approve`, `deny`, `markExecuted`, `markFailed`.
+  - [x] Implementacja działa na obecnym storage.
+  - [x] Interfejs pozwala później przenieść storage do Postgresa.
 
-- [ ] Dodać `/approve <id>` i `/deny <id>`.
-
-  Definition of Done:
-  - [ ] Komendy działają przez Telegram/operator command path.
-  - [ ] Approval po `deny` nie może zostać wykonany.
-  - [ ] Approval po `approve` może zostać wykonany tylko raz.
-
-- [ ] Dodać TTL approvala.
+- [x] Tworzyć approval zamiast wykonywać high/critical tool.
 
   Definition of Done:
-  - [ ] Wygasły approval nie wykonuje się.
-  - [ ] Użytkownik dostaje czytelny komunikat.
+  - [x] `require_approval` tworzy approval object.
+  - [x] Tool nie wykonuje się automatycznie.
+  - [x] Użytkownik dostaje preview i approval id.
 
-- [ ] Dodać idempotency key dla side-effect execution.
-
-  Definition of Done:
-  - [ ] Ten sam approval nie wykonuje side-effectu drugi raz.
-  - [ ] Próba ponownego wykonania zwraca status już wykonany albo blokadę.
-
-- [ ] Faza 4 ukończona.
+- [x] Dodać `/approve <id>` i `/deny <id>`.
 
   Definition of Done:
-  - [ ] High/critical wymagają approval object.
-  - [ ] Approval ma TTL.
-  - [ ] Approval wykonuje się maksymalnie raz.
-  - [ ] Wynik jest gotowy do audytu.
+  - [x] Komendy działają przez Telegram/operator command path.
+  - [x] Approval po `deny` nie może zostać wykonany.
+  - [x] Approval po `approve` może zostać wykonany tylko raz.
+
+- [x] Dodać TTL approvala.
+
+  Definition of Done:
+  - [x] Wygasły approval nie wykonuje się.
+  - [x] Użytkownik dostaje czytelny komunikat.
+
+- [x] Dodać idempotency key dla side-effect execution.
+
+  Definition of Done:
+  - [x] Ten sam approval nie wykonuje side-effectu drugi raz.
+  - [x] Próba ponownego wykonania zwraca status już wykonany albo blokadę.
+
+- [x] Faza 4 ukończona.
+
+  Definition of Done:
+  - [x] High/critical wymagają approval object.
+  - [x] Approval ma TTL.
+  - [x] Approval wykonuje się maksymalnie raz.
+  - [x] Wynik jest gotowy do audytu.
 
 ---
 
@@ -295,40 +295,40 @@ Cel: zastąpić prototypowe `pending_actions` bezpiecznym approval flow.
 
 Cel: każda istotna akcja ma być odtwarzalna i wyjaśnialna.
 
-- [ ] Dodać migrację `audit_events`.
+- [x] Dodać migrację `audit_events`.
 
   Definition of Done:
-  - [ ] Tabela zawiera `id`, `chat_id`, `event_type`, `tool_name`, `risk_level`, `policy_decision`, `approval_id`, `status`, `data`, `created_at`.
-  - [ ] `data` może przechowywać JSON jako tekst.
+  - [x] Tabela zawiera `id`, `chat_id`, `event_type`, `tool_name`, `risk_level`, `policy_decision`, `approval_id`, `status`, `data`, `created_at`.
+  - [x] `data` może przechowywać JSON jako tekst.
 
-- [ ] Dodać `auditEvent()` helper.
-
-  Definition of Done:
-  - [ ] Helper zapisuje eventy w jednym miejscu.
-  - [ ] Helper radzi sobie z błędem zapisu bez rozwalenia głównego flow, jeśli to bezpieczne.
-
-- [ ] Logować policy decisions.
+- [x] Dodać `auditEvent()` helper.
 
   Definition of Done:
-  - [ ] `allow`, `deny`, `require_approval` trafiają do audytu.
-  - [ ] Event zawiera tool name i risk level.
+  - [x] Helper zapisuje eventy w jednym miejscu.
+  - [x] Helper radzi sobie z błędem zapisu bez rozwalenia głównego flow, jeśli to bezpieczne.
 
-- [ ] Logować lifecycle approvali.
-
-  Definition of Done:
-  - [ ] `approval_created`, `approval_approved`, `approval_denied`, `approval_expired`, `approval_executed`, `approval_failed` trafiają do audytu.
-
-- [ ] Logować wykonania tooli.
+- [x] Logować policy decisions.
 
   Definition of Done:
-  - [ ] Sukces i błąd toola trafiają do audytu.
-  - [ ] Side-effect blocked trafia do audytu.
+  - [x] `allow`, `deny`, `require_approval` trafiają do audytu.
+  - [x] Event zawiera tool name i risk level.
 
-- [ ] Faza 5 ukończona.
+- [x] Logować lifecycle approvali.
 
   Definition of Done:
-  - [ ] Policy, approvals i tool execution mają audyt.
-  - [ ] Widok lub endpoint audytu może zostać zbudowany na zapisanych eventach.
+  - [x] `approval_created`, `approval_approved`, `approval_denied`, `approval_expired`, `approval_executed`, `approval_failed` trafiają do audytu.
+
+- [x] Logować wykonania tooli.
+
+  Definition of Done:
+  - [x] Sukces i błąd toola trafiają do audytu.
+  - [x] Side-effect blocked trafia do audytu.
+
+- [x] Faza 5 ukończona.
+
+  Definition of Done:
+  - [x] Policy, approvals i tool execution mają audyt.
+  - [x] Widok lub endpoint audytu może zostać zbudowany na zapisanych eventach.
 
 ---
 
@@ -336,12 +336,12 @@ Cel: każda istotna akcja ma być odtwarzalna i wyjaśnialna.
 
 Cel: odejść od prostego cronowego pollera dla długich i wieloetapowych zadań.
 
-- [ ] Dodać `task_runs` i `task_steps`.
-- [ ] Dodać statusy `queued`, `running`, `waiting_for_approval`, `done`, `failed`, `cancelled`.
-- [ ] Dodać `attempt_count`, `locked_at`, `locked_by` dla obecnego runnera.
-- [ ] Ograniczyć równoległość side-effect tasks.
-- [ ] Wybrać Inngest albo Trigger.dev dla docelowego workflow engine.
-- [ ] Faza 6 ukończona.
+- [x] Dodać `task_runs` i `task_steps`.
+- [x] Dodać statusy `queued`, `running`, `waiting_for_approval`, `done`, `failed`, `cancelled`.
+- [x] Dodać `attempt_count`, `locked_at`, `locked_by` dla obecnego runnera.
+- [x] Ograniczyć równoległość side-effect tasks.
+- [x] Wybrać Inngest albo Trigger.dev dla docelowego workflow engine.
+- [x] Faza 6 ukończona.
 
 ---
 
@@ -349,12 +349,12 @@ Cel: odejść od prostego cronowego pollera dla długich i wieloetapowych zadań
 
 Cel: przygotować migrację z D1 do docelowego storage.
 
-- [ ] Dodać storage abstraction dla approvals.
-- [ ] Dodać storage abstraction dla audit events.
-- [ ] Dodać storage abstraction dla task runs.
-- [ ] Przygotować Postgres schema draft.
-- [ ] Nie pisać nowego core bezpośrednio pod `env.DB.prepare(...)`, jeśli można użyć store interface.
-- [ ] Faza 7 ukończona.
+- [x] Dodać storage abstraction dla approvals.
+- [x] Dodać storage abstraction dla audit events.
+- [x] Dodać storage abstraction dla task runs.
+- [x] Przygotować Postgres schema draft.
+- [x] Nie pisać nowego core bezpośrednio pod `env.DB.prepare(...)`, jeśli można użyć store interface.
+- [x] Faza 7 ukończona.
 
 ---
 
@@ -362,13 +362,13 @@ Cel: przygotować migrację z D1 do docelowego storage.
 
 Cel: oddzielić pamięć od historii rozmów.
 
-- [ ] Dodać model `memory_items`.
-- [ ] Dodać typy pamięci: `profile`, `project`, `decision`, `operational`, `episodic`.
-- [ ] Dodać memory proposal flow.
-- [ ] Dodać edit/delete pamięci.
-- [ ] Dodać redakcję sekretów przed zapisem pamięci.
-- [ ] Przygotować miejsce pod embeddings/pgvector, ale nie wektoryzować wszystkiego automatycznie.
-- [ ] Faza 8 ukończona.
+- [x] Dodać model `memory_items`.
+- [x] Dodać typy pamięci: `profile`, `project`, `decision`, `operational`, `episodic`.
+- [x] Dodać memory proposal flow.
+- [x] Dodać edit/delete pamięci.
+- [x] Dodać redakcję sekretów przed zapisem pamięci.
+- [x] Przygotować miejsce pod embeddings/pgvector, ale nie wektoryzować wszystkiego automatycznie.
+- [x] Faza 8 ukończona.
 
 ---
 
@@ -439,10 +439,10 @@ Cel: dodać głos jako interfejs, nie jako obejście policy.
 
 # Następne zadanie sugerowane dla agenta
 
-Faza 3 ukończona. Następna:
+Faza 8 ukończona. Następna:
 
-> **Faza 4 — Approval Engine v1**
+> **Faza 9 — Command Center UI**
 
-Zacząć od migracji `approvals`, a potem dodać `ApprovalStore` i tworzenie approval object dla decyzji `require_approval`.
+Zacząć od approval inbox i audit timeline, bez dokładania nowych integracji.
 
-Nie zaczynaj UI, voice ani nowych integracji, dopóki approval object, TTL i idempotency execution nie będą gotowe.
+Nie zaczynaj voice ani produkcyjnych integracji, dopóki podstawowy Command Center UI nie będzie gotowy.

@@ -16,8 +16,34 @@ Nie zakłada, że wszystko trzeba zrobić naraz. Zakłada, że każda kolejna pr
   - Policy decisions przygotowane do audytu (Faza 5)
 - **[- PLANOWANA]** Faza 2 — Tool Manifest v1
 - **[- PLANOWANA]** Faza 3 — Policy Engine v1
-- **[- PLANOWANA]** Faza 4 — Approval Engine v1
-- **[- PLANOWANA]** Faza 5+ — Audit, durable workflows, Postgres, memory system, UI, integracje, voice
+- **[✓ UKOŃCZONA]** Faza 4 — Approval Engine v1 (2026-07-11)
+  - Migracja `approvals` z TTL, statusami lifecycle i idempotency key
+  - `ApprovalStore` dla obecnego D1 storage z interfejsem pod przyszłą abstrakcję
+  - `require_approval` tworzy approval object zamiast wykonywać tool
+  - `/approve <id>` i `/deny <id>` w operator command path
+  - Approval wykonuje się maksymalnie raz i wygasa po TTL
+- **[✓ UKOŃCZONA]** Faza 5 — Audit v1 (2026-07-11)
+  - Migracja `audit_events` dla policy, approvali i tool execution
+  - `auditEvent()` helper z bezpiecznym fallbackiem przy błędzie zapisu
+  - Policy decisions trafiają do audytu
+  - Lifecycle approvali trafia do audytu
+  - Sukcesy/błędy tooli i side-effect blocked trafiają do audytu
+- **[✓ UKOŃCZONA]** Faza 6 — Durable workflows (2026-07-11)
+  - Modele `task_runs` i `task_steps` jako durable workflow ledger
+  - Statusy `queued`, `running`, `waiting_for_approval`, `done`, `failed`, `cancelled`
+  - Obecny agent task runner ma `attempt_count`, `locked_at`, `locked_by` i `run_id`
+  - Równoległość side-effect tasks ograniczona do jednego slotu
+  - Docelowy workflow engine wybrany: Inngest
+- **[✓ UKOŃCZONA]** Faza 7 — Postgres source of truth prep (2026-07-11)
+  - Storage abstractions dla approvals, audit events i task runs
+  - Runtime używa store interfaces dla nowych approval/audit/task-run ścieżek
+  - Draft Postgres schema w `docs/POSTGRES-SCHEMA-DRAFT.sql`
+- **[✓ UKOŃCZONA]** Faza 8 — Memory System v1 (2026-07-11)
+  - Model `memory_items` z typami pamięci i statusem proposal/active/rejected/deleted
+  - Memory proposal flow przez narzędzia `memory_*`
+  - Edit/delete pamięci i redakcja sekretów przed zapisem
+  - Pola pod embeddings/pgvector bez automatycznego wektoryzowania
+- **[- PLANOWANA]** Faza 9+ — Command Center UI, integracje, voice
 
 ## Zasada nadrzędna
 
@@ -330,6 +356,8 @@ Przenieść długie i wieloetapowe zadania poza cronowy poller.
 ### Zakres
 
 Wybrać i podłączyć Inngest albo Trigger.dev.
+
+**Decyzja (2026-07-11):** docelowym workflow engine będzie Inngest, ponieważ pasuje do event-driven durable workflow i może zastąpić cronowy poller bez mieszania integracji z runtime policy.
 
 Workflowy do migracji:
 

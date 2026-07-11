@@ -1,6 +1,7 @@
 import { taskTools, executeTaskTool } from './tasks'
 import { noteTools, executeNoteTool } from './notes'
 import { factTools, executeFactTool } from './facts'
+import { memoryTools, executeMemoryTool } from './memory-items'
 import { reminderTools, executeReminderTool } from './reminders'
 import { githubTools, executeGithubTool } from './github'
 import { vercelTools, executeVercelTool } from './vercel'
@@ -22,6 +23,8 @@ import type { RiskLevel } from '../security/types'
 import { decideToolPolicy } from '../policy'
 import { buildToolManifestRegistry } from './manifest-registry'
 import { normalizeToolArgs, redactToolOutput, validateToolArgs } from './manifest'
+import { ApprovalStore, buildApprovalImpact, buildApprovalPreview } from '../approvals'
+import { auditEvent } from '../audit'
 export type { RiskLevel } from '../security/types'
 export type { PolicyDecision } from '../policy'
 
@@ -64,6 +67,8 @@ export type ToolBlockedResult = {
   ok: false
   blocked: true
   reason: 'read_only_mode' | 'side_effects_disabled' | 'policy_deny' | 'requires_approval'
+  approvalId?: string
+  expiresAt?: string
   tool: string
   message: string
 }
@@ -79,8 +84,6 @@ function readOnlyBlockedResult(tool: ToolDefinition): ToolBlockedResult {
 }
 
 function sideEffectsDisabledBlockedResult(tool: ToolDefinition): ToolBlockedResult {
-  // Faza 5 (audit_events) will replace this with a real audit write; for now this is the
-  // single choke point where a kill-switch block becomes visible for future audit wiring.
   console.warn(`[kill-switch] SIDE_EFFECTS_DISABLED=true blocked tool "${tool.name}"`)
   return {
     ok: false,
@@ -102,14 +105,31 @@ function policyBlockedResult(tool: ToolDefinition, reason: string): ToolBlockedR
   }
 }
 
-function requiresApprovalResult(tool: ToolDefinition, reason: string): ToolBlockedResult {
+function requiresApprovalResult(tool: ToolDefinition, reason: string, approval?: { id: string; expiresAt: string; preview: string; impact: string }): ToolBlockedResult {
   console.warn(`[policy] tool "${tool.name}" requires approval: ${reason}`)
+  const approvalHint = approval
+    ? `
+
+Approval ID: ${approval.id}
+Wygasa: ${approval.expiresAt}
+
+Preview:
+${approval.preview}
+
+Impact:
+${approval.impact}
+
+Użyj /approve ${approval.id}, aby wykonać raz, albo /deny ${approval.id}, aby odrzucić.`
+    : ''
+
   return {
     ok: false,
     blocked: true,
     reason: 'requires_approval',
     tool: tool.name,
-    message: `Narzędzie ${tool.name} wymaga potwierdzenia: ${reason}`,
+    approvalId: approval?.id,
+    expiresAt: approval?.expiresAt,
+    message: `Narzędzie ${tool.name} wymaga potwierdzenia: ${reason}${approvalHint}`,
   }
 }
 
@@ -117,6 +137,7 @@ export const tools: ToolDefinition[] = [
   ...taskTools,
   ...noteTools,
   ...factTools,
+  ...memoryTools,
   ...reminderTools,
   ...githubTools,
   ...vercelTools,
@@ -189,6 +210,7 @@ async function executeToolWithoutOutputRedaction(
   if (name.startsWith('task_'))     return executeTaskTool(name, args, db)
   if (name.startsWith('note_'))     return executeNoteTool(name, args, db)
   if (name.startsWith('fact_'))     return executeFactTool(name, args, db)
+  if (name.startsWith('memory_'))   return executeMemoryTool(name, args, db)
   if (name.startsWith('reminder_')) return executeReminderTool(name, args, db, chatId)
   if (name.startsWith('github_'))   return executeGithubTool(name, args, env!, chatId, options)
   if (name.startsWith('vercel_'))   return executeVercelTool(name, args, env!, chatId, options)
@@ -245,15 +267,106 @@ export async function executeTool(
       },
     })
 
+    await auditEvent(db, {
+      chatId,
+      eventType: 'policy_decision',
+      toolName: manifest.name,
+      riskLevel: manifest.riskLevel,
+      policyDecision: decision.type,
+      status: decision.type,
+      data: {
+        reason: decision.type === 'allow' ? undefined : decision.reason,
+        agentMode,
+        sideEffect: manifest.sideEffect,
+        target: { type: manifest.provider, id: manifest.name },
+      },
+    })
+
     if (decision.type === 'deny') {
+      if (manifest.sideEffect) {
+        await auditEvent(db, {
+          chatId,
+          eventType: 'side_effect_blocked',
+          toolName: manifest.name,
+          riskLevel: manifest.riskLevel,
+          policyDecision: decision.type,
+          status: 'blocked',
+          data: { reason: decision.reason },
+        })
+      }
       return policyBlockedResult(tool, decision.reason)
     }
     if (decision.type === 'require_approval') {
-      return requiresApprovalResult(tool, decision.reason)
+      const preview = buildApprovalPreview(manifest.name, preparedArgs.args)
+      const impact = buildApprovalImpact(manifest.name, manifest.riskLevel, manifest.sideEffect)
+      const approval = await new ApprovalStore(db).create({
+        chatId,
+        toolName: manifest.name,
+        riskLevel: manifest.riskLevel,
+        normalizedArgs: preparedArgs.args,
+        preview,
+        impact,
+      })
+
+      await auditEvent(db, {
+        chatId,
+        eventType: 'approval_created',
+        toolName: manifest.name,
+        riskLevel: manifest.riskLevel,
+        policyDecision: decision.type,
+        approvalId: approval.id,
+        status: approval.status,
+        data: {
+          reason: decision.reason,
+          expiresAt: approval.expires_at,
+          idempotencyKey: approval.idempotency_key,
+          preview: approval.preview,
+          impact: approval.impact,
+        },
+      })
+
+      return requiresApprovalResult(tool, decision.reason, {
+        id: approval.id,
+        expiresAt: approval.expires_at,
+        preview: approval.preview,
+        impact: approval.impact,
+      })
     }
     // decision.type === 'allow' continues below
   }
 
-  const result = await executeToolWithoutOutputRedaction(name, preparedArgs.args, db, chatId, env, options)
-  return redactToolResult(name, result)
+  try {
+    const result = await executeToolWithoutOutputRedaction(name, preparedArgs.args, db, chatId, env, options)
+    const redactedResult = redactToolResult(name, result)
+
+    await auditEvent(db, {
+      chatId,
+      eventType: 'tool_executed',
+      toolName: manifest?.name ?? name,
+      riskLevel: manifest?.riskLevel,
+      approvalId: options.approvalId,
+      status: 'success',
+      data: {
+        approved: options.approved === true,
+        result: redactedResult,
+      },
+    })
+
+    return redactedResult
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    await auditEvent(db, {
+      chatId,
+      eventType: 'tool_failed',
+      toolName: manifest?.name ?? name,
+      riskLevel: manifest?.riskLevel,
+      approvalId: options.approvalId,
+      status: 'failed',
+      data: {
+        approved: options.approved === true,
+        error: message,
+      },
+    })
+    throw err
+  }
 }

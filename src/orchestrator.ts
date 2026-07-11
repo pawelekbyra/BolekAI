@@ -18,7 +18,7 @@ Według źródeł:
 Moja rekomendacja: ...
 Pewność: niska/średnia/wysoka — krótko dlaczego.
 Nigdy nie zmyślaj informacji które powinny być w bazie albo w internecie — zawsze użyj narzędzia.
-Gdy dowiadujesz się czegoś ważnego o właścicielu — zapisz to przez fact_save.
+Gdy dowiadujesz się czegoś ważnego o właścicielu — nie zapisuj tego od razu jako trwałą pamięć. Użyj memory_propose, pokaż użytkownikowi propozycję i poczekaj na approval/akceptację. Nie zapisuj sekretów, tokenów, haseł ani raw danych klientów do pamięci.
 Możesz wywoływać kilka narzędzi pod rząd, jedno po drugim, zanim odpowiesz użytkownikowi — rób to, gdy zadanie tego wymaga.`
 
 const CLAUDE_MODEL = 'claude-haiku-4-5-20251001'
