@@ -242,11 +242,11 @@ Cel: rozwinąć minimalny policy check w centralny policy engine.
 
 Cel: zastąpić prototypowe `pending_actions` bezpiecznym approval flow.
 
-- [ ] Dodać migrację `approvals`.
+- [x] Dodać migrację `approvals`.
 
   Definition of Done:
-  - [ ] Tabela zawiera `id`, `chat_id`, `tool_name`, `risk_level`, `normalized_args`, `preview`, `impact`, `status`, `idempotency_key`, `expires_at`, timestamps.
-  - [ ] Statusy obejmują `pending`, `approved`, `denied`, `expired`, `executed`, `failed`.
+  - [x] Tabela zawiera `id`, `chat_id`, `tool_name`, `risk_level`, `normalized_args`, `preview`, `impact`, `status`, `idempotency_key`, `expires_at`, timestamps.
+  - [x] Statusy obejmują `pending`, `approved`, `denied`, `expired`, `executed`, `failed`.
 
 - [ ] Dodać `ApprovalStore`.
 
