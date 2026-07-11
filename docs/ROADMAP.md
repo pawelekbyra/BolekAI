@@ -28,7 +28,13 @@ Nie zakłada, że wszystko trzeba zrobić naraz. Zakłada, że każda kolejna pr
   - Policy decisions trafiają do audytu
   - Lifecycle approvali trafia do audytu
   - Sukcesy/błędy tooli i side-effect blocked trafiają do audytu
-- **[- PLANOWANA]** Faza 6+ — Durable workflows, Postgres, memory system, UI, integracje, voice
+- **[✓ UKOŃCZONA]** Faza 6 — Durable workflows (2026-07-11)
+  - Modele `task_runs` i `task_steps` jako durable workflow ledger
+  - Statusy `queued`, `running`, `waiting_for_approval`, `done`, `failed`, `cancelled`
+  - Obecny agent task runner ma `attempt_count`, `locked_at`, `locked_by` i `run_id`
+  - Równoległość side-effect tasks ograniczona do jednego slotu
+  - Docelowy workflow engine wybrany: Inngest
+- **[- PLANOWANA]** Faza 7+ — Postgres, memory system, UI, integracje, voice
 
 ## Zasada nadrzędna
 
@@ -341,6 +347,8 @@ Przenieść długie i wieloetapowe zadania poza cronowy poller.
 ### Zakres
 
 Wybrać i podłączyć Inngest albo Trigger.dev.
+
+**Decyzja (2026-07-11):** docelowym workflow engine będzie Inngest, ponieważ pasuje do event-driven durable workflow i może zastąpić cronowy poller bez mieszania integracji z runtime policy.
 
 Workflowy do migracji:
 
