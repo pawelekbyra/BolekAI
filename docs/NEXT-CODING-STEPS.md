@@ -20,7 +20,7 @@ Nie odznaczaj zadania, jeśli zrobiono tylko część pracy.
 ## Status faz
 
 - [ ] Faza 1 — Zabezpieczenie obecnego prototypu
-- [ ] Faza 2 — Tool Manifest v1
+- [x] Faza 2 — Tool Manifest v1
 - [ ] Faza 3 — Policy Engine v1
 - [ ] Faza 4 — Approval Engine v1
 - [ ] Faza 5 — Audit v1
@@ -191,13 +191,13 @@ Cel: zastąpić luźną listę tooli formalnym rejestrem narzędzi z metadanymi 
   - [x] Błędne args nie odpalają toola.
   - [x] Użytkownik dostaje czytelny komunikat o błędzie.
 
-- [ ] Faza 2 ukończona.
+- [x] Faza 2 ukończona.
 
   Definition of Done:
-  - [ ] Każdy tool ma manifest.
-  - [ ] Policy korzysta z manifestu.
-  - [ ] Output może być redagowany.
-  - [ ] Dispatcher nie polega wyłącznie na luźnej nazwie bez metadanych.
+  - [x] Każdy tool ma manifest.
+  - [x] Policy korzysta z manifestu.
+  - [x] Output może być redagowany.
+  - [x] Dispatcher nie polega wyłącznie na luźnej nazwie bez metadanych.
 
 ---
 
@@ -439,11 +439,10 @@ Cel: dodać głos jako interfejs, nie jako obejście policy.
 
 # Następne zadanie sugerowane dla agenta
 
-Faza 1 ukończona. Następna:
+Faza 2 ukończona. Następna:
 
-> **Faza 2 — Tool Manifest v1**
+> **Faza 3 — Policy Engine v1**
 
-Zastąpić luźną listę tooli formalnym rejestrem narzędzi z metadanymi ryzyka.
-Dodać typ `ToolManifest` z `id`, `version`, `provider`, `description`, `inputSchema`, `outputSchema`, `riskLevel`, `sideEffect`, `requiredScopes`, `defaultPolicy`, `redactionRules`, `idempotency`.
+Wydzielić obecny minimalny policy check do centralnego `src/policy/`, a potem rozwijać go przez `PolicyContext`, jawne polityki per risk level i przygotowanie pod allowlisty projektowe.
 
-Nie zaczynaj od Fazy 3 (dalszy policy engine), Fazy 4 (approval engine), UI czy nowych integracji, dopóki manifesty nie będą wszędzie używane.
+Nie zaczynaj od Fazy 4 (approval engine), UI, voice ani nowych integracji, dopóki centralny policy engine nie będzie gotowy i testowany.
