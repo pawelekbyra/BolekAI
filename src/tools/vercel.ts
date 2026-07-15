@@ -15,6 +15,28 @@ async function vFetch(token: string, path: string, options?: RequestInit) {
   return res.json()
 }
 
+async function vAnalyticsFetch(token: string, params: Record<string, string>) {
+  const url = new URL(`${VERCEL}/v1/query/web-analytics/visits/count`)
+  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value)
+  const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` } })
+  if (!res.ok) throw new Error(`Vercel Web Analytics ${res.status}: ${await res.text()}`)
+  return res.json() as Promise<{ data: { pageviews: number; visitors: number } }>
+}
+
+export async function fetchPolutekPageviews(
+  env: Env,
+  since: Date,
+  until: Date
+): Promise<{ pageviews: number; visitors: number }> {
+  const data = await vAnalyticsFetch(env.VERCEL_TOKEN, {
+    teamId: env.POLUTEK_VERCEL_TEAM_ID ?? DEFAULT_POLUTEK_VERCEL_TEAM_ID,
+    projectId: env.POLUTEK_VERCEL_PROJECT_ID ?? DEFAULT_POLUTEK_VERCEL_PROJECT_ID,
+    since: since.toISOString(),
+    until: until.toISOString(),
+  })
+  return { pageviews: data.data.pageviews, visitors: data.data.visitors }
+}
+
 export const vercelTools: ToolDefinition[] = [
   {
     name: 'vercel_list_projects',
@@ -76,9 +98,24 @@ export const vercelTools: ToolDefinition[] = [
       required: ['project'],
     },
   },
+  {
+    name: 'vercel_get_pageviews',
+    riskLevel: 'low',
+    sideEffect: false,
+    description: 'Pobierz liczbę odsłon (pageviews) i unikalnych odwiedzających z Vercel Web Analytics dla projektu Polutka za ostatnie N dni. Wymaga VERCEL_TOKEN oraz włączonego Web Analytics.',
+    parameters: {
+      type: 'object',
+      properties: {
+        days: { type: 'number', description: 'Liczba dni wstecz, domyślnie 1 (wczoraj)' },
+      },
+    },
+  },
 ]
 
-type Args = { project?: string; deployment_id?: string }
+type Args = { project?: string; deployment_id?: string; days?: number }
+
+const DEFAULT_POLUTEK_VERCEL_PROJECT_ID = 'prj_e7YawXp53b22uIMsiyW2NkccZgMz'
+const DEFAULT_POLUTEK_VERCEL_TEAM_ID = 'team_sc16PptMTGc4ip47phctR79J'
 
 export async function executeVercelTool(
   name: string,
@@ -146,6 +183,14 @@ export async function executeVercelTool(
       }>
       const errors = logs.filter((e) => e.type === 'error' || e.text?.toLowerCase().includes('error'))
       return errors.slice(-20).map((e) => ({ text: e.text, date: new Date(e.date).toISOString() }))
+    }
+
+    case 'vercel_get_pageviews': {
+      const days = Math.max(1, Math.min(Math.floor(a.days ?? 1), 90))
+      const until = new Date()
+      const since = new Date(until.getTime() - days * 24 * 60 * 60 * 1000)
+      const data = await fetchPolutekPageviews(env, since, until)
+      return { days, ...data }
     }
 
     default:

@@ -53,6 +53,10 @@ npm run deploy
 - Message formatting
 - Command parsing
 
+### Layer 6: Multi-Channel Connectors (`src/mcp.ts`, `src/visits-report.ts`)
+- **MCP Server** (`src/mcp.ts`): Exposes all tools via Model Context Protocol for Claude Code (Bearer auth) and claude.ai web UI (path-secret auth)
+- **Scheduled Reports** (`src/visits-report.ts`): Daily automated briefings (Polutek visits at 9 AM Warsaw time) with DST-aware scheduling
+
 ---
 
 ## Adding a Built-in Tool
@@ -388,3 +392,4 @@ See [`CLAUDE.md`](CLAUDE.md) for the current build status banner, and [`docs/NEX
 
 - [`docs/MULTI-AGENT-ARCHITECTURE.md`](docs/MULTI-AGENT-ARCHITECTURE.md) — How the service network works together (includes the ecosystem map)
 - [`docs/POLUTEK-INTEGRATION.md`](docs/POLUTEK-INTEGRATION.md) — Polutek-specific ops
+- [`docs/BOLEK-COMPUTE-IDEAS.md`](docs/BOLEK-COMPUTE-IDEAS.md) — Multi-channel integration (MCP connector, daily reports) + planned Phase 13 (remote Claude Code on Oracle VM)

@@ -18,6 +18,8 @@ id = "8683744b08e3472ca144d7fb3b646a1c"
 
 [vars]
 AI_MODEL = "@cf/meta/llama-3.2-3b-instruct"
+POLUTEK_VERCEL_PROJECT_ID = "prj_e7YawXp53b22uIMsiyW2NkccZgMz"
+POLUTEK_VERCEL_TEAM_ID = "team_sc16PptMTGc4ip47phctR79J"
 
 [triggers]
 crons = ["* * * * *"]

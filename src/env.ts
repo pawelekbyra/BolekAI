@@ -15,6 +15,9 @@ export type Env = {
   POLUTEK_BRIEFING_CHAT_ID?: string
   POLUTEK_BRIEFING_HOUR_UTC?: string
   POLUTEK_VERCEL_PROJECT?: string
+  POLUTEK_VERCEL_PROJECT_ID?: string
+  POLUTEK_VERCEL_TEAM_ID?: string
+  POLUTEK_VISITS_CHAT_ID?: string
   RESEND_API_KEY?: string
   EMAIL_SUPPORT_FROM?: string
   EMAIL_IMAP_HOST?: string
@@ -27,6 +30,7 @@ export type Env = {
   EMAIL_SMTP_PASSWORD?: string
   BOLEK_OPENAI_ADAPTER_KEY?: string
   BOLEK_API_KEY?: string
+  BOLEK_OWNER_CHAT_ID?: string
   BOLEK_CORS_ORIGIN?: string
   READ_ONLY_MODE?: string
   SIDE_EFFECTS_DISABLED?: string

@@ -5,9 +5,11 @@ import { handleUpdate, send } from './telegram'
 import { orchestrateStream } from './orchestrator'
 import { runPendingTasks } from './agents/runner'
 import { buildPolutekBriefing, sendDailyPolutekBriefing } from './briefing'
+import { buildVisitsReportMessage, sendDailyVisitsReport } from './visits-report'
 import { buildPolutekConfigStatus } from './tools/polutek'
 import { handleAdapterOptions, handleOpenAIChatCompletions } from './openai-adapter'
 import { isOwnerRequest } from './security/owner-guard'
+import { handleMcpRequest } from './mcp'
 
 const app = new Hono<{ Bindings: Env }>()
 
@@ -34,6 +36,22 @@ app.post('/webhook/:secret', async (c) => {
 })
 
 app.post('/v1/chat/completions', handleOpenAIChatCompletions)
+
+app.all('/mcp', async (c) => {
+  if (!isOwnerRequest(c.req.raw, c.env)) {
+    return c.text('Unauthorized', 401)
+  }
+  return handleMcpRequest(c.req.raw, c.env)
+})
+
+// URL-secret variant for MCP clients (e.g. claude.ai custom connectors) that only accept a bare URL,
+// with no way to attach an Authorization header. Same trust model as /webhook/:secret above.
+app.all('/mcp/:secret', async (c) => {
+  if (c.req.param('secret') !== c.env.BOLEK_API_KEY) {
+    return c.text('Unauthorized', 401)
+  }
+  return handleMcpRequest(c.req.raw, c.env)
+})
 
 app.post('/api/chat', async (c) => {
   const { messages, chatId = 0 } = await c.req.json<{
@@ -74,6 +92,11 @@ app.get('/api/characters/messages', async (c) => {
   return c.json(msgs.results)
 })
 
+
+app.get('/api/briefing/visits/preview', async (c) => {
+  const report = await buildVisitsReportMessage(c.env)
+  return c.text(report)
+})
 
 app.get('/api/briefing/polutek/preview', async (c) => {
   const briefing = await buildPolutekBriefing(c.env)
@@ -134,6 +157,7 @@ export default {
       checkReminders(env),
       runPendingTasks(env),
       sendDailyPolutekBriefing(env),
+      sendDailyVisitsReport(env),
     ]))
   },
 }
