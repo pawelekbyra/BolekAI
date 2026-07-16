@@ -6,6 +6,7 @@ import { orchestrateStream } from './orchestrator'
 import { runPendingTasks } from './agents/runner'
 import { buildPolutekBriefing, sendDailyPolutekBriefing } from './briefing'
 import { buildVisitsReportMessage, sendDailyVisitsReport } from './visits-report'
+import { buildVercelHealthPreview, checkVercelHealth } from './log-monitor'
 import { buildPolutekConfigStatus } from './tools/polutek'
 import { handleAdapterOptions, handleOpenAIChatCompletions } from './openai-adapter'
 import { isOwnerRequest } from './security/owner-guard'
@@ -103,6 +104,11 @@ app.get('/api/briefing/polutek/preview', async (c) => {
   return c.text(briefing)
 })
 
+app.get('/api/monitor/vercel/preview', async (c) => {
+  const preview = await buildVercelHealthPreview(c.env)
+  return c.text(preview)
+})
+
 app.get('/api/config/polutek/status', (c) => {
   return c.json(buildPolutekConfigStatus(c.env))
 })
@@ -158,6 +164,7 @@ export default {
       runPendingTasks(env),
       sendDailyPolutekBriefing(env),
       sendDailyVisitsReport(env),
+      checkVercelHealth(env),
     ]))
   },
 }
