@@ -6,6 +6,7 @@ import { reminderTools, executeReminderTool } from './reminders'
 import { githubTools, executeGithubTool } from './github'
 import { vercelTools, executeVercelTool } from './vercel'
 import { codingTools, executeCodingTool } from './coding'
+import { vmClaudeCodeTools, executeVmClaudeCodeTool } from './vm-claude-code'
 import { agentTools, executeAgentTool } from './agents'
 import { characterTools, executeCharacterTool } from './characters'
 import { stripeTools, executeStripeTool } from './stripe'
@@ -142,6 +143,7 @@ export const tools: ToolDefinition[] = [
   ...githubTools,
   ...vercelTools,
   ...codingTools,
+  ...vmClaudeCodeTools,
   ...agentTools,
   ...characterTools,
   ...stripeTools,
@@ -215,6 +217,7 @@ async function executeToolWithoutOutputRedaction(
   if (name.startsWith('github_'))   return executeGithubTool(name, args, env!, chatId, options)
   if (name.startsWith('vercel_'))   return executeVercelTool(name, args, env!, chatId, options)
   if (name.startsWith('coding_'))   return executeCodingTool(name, args, env!, chatId, options)
+  if (name.startsWith('vm_'))       return executeVmClaudeCodeTool(name, args, env!, chatId, options)
   if (name.startsWith('agent_'))     return executeAgentTool(name, args, env!, chatId)
   if (name.startsWith('character_')) return executeCharacterTool(name, args, env!, chatId)
   if (name.startsWith('stripe_'))    return executeStripeTool(name, args, env!, chatId, options)

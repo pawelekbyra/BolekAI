@@ -31,6 +31,8 @@ export type Env = {
   BOLEK_OPENAI_ADAPTER_KEY?: string
   BOLEK_API_KEY?: string
   BOLEK_OWNER_CHAT_ID?: string
+  VM_AGENT_URL?: string
+  VM_AGENT_TOKEN?: string
   BOLEK_CORS_ORIGIN?: string
   READ_ONLY_MODE?: string
   SIDE_EFFECTS_DISABLED?: string
