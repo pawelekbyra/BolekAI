@@ -77,7 +77,9 @@ export async function runAction({ env, chatId, description, action, intent, appr
 }
 
 export async function handleActionConfirmation(text: string, chatId: number, env: Env): Promise<string | null> {
-  const trimmed = text.trim()
+  // Strip markdown code-fence backticks, bold/italic markers, and surrounding punctuation that
+  // survive a copy-paste from a chat client rendering "/approve <id>" as formatted code.
+  const trimmed = text.trim().replace(/^[`*_"'\s]+|[`*_"'\s]+$/g, '')
   const approvalCommand = trimmed.match(/^\/(approve|deny)\s+([0-9a-fA-F-]{36})$/)
 
   if (approvalCommand) {
