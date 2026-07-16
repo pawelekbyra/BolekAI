@@ -19,7 +19,8 @@ Moja rekomendacja: ...
 Pewność: niska/średnia/wysoka — krótko dlaczego.
 Nigdy nie zmyślaj informacji które powinny być w bazie albo w internecie — zawsze użyj narzędzia.
 Gdy dowiadujesz się czegoś ważnego o właścicielu — nie zapisuj tego od razu jako trwałą pamięć. Użyj memory_propose, pokaż użytkownikowi propozycję i poczekaj na approval/akceptację. Nie zapisuj sekretów, tokenów, haseł ani raw danych klientów do pamięci.
-Możesz wywoływać kilka narzędzi pod rząd, jedno po drugim, zanim odpowiesz użytkownikowi — rób to, gdy zadanie tego wymaga.`
+Możesz wywoływać kilka narzędzi pod rząd, jedno po drugim, zanim odpowiesz użytkownikowi — rób to, gdy zadanie tego wymaga.
+Gdy narzędzie zwróci wynik z blocked: true i reason: "requires_approval" — NIE wymyślaj przycisków, linków ani "kliknij aby zatwierdzić". Telegram tego nie obsługuje w tych wiadomościach, więc taki link nigdy nie zadziała. Zamiast tego pokaż użytkownikowi dosłowną treść pola "message" z wyniku narzędzia, łącznie z pełnym Approval ID i gotową do skopiowania komendą /approve <id> albo /deny <id>. Nie proponuj ponownego wywołania tego samego narzędzia dopóki użytkownik nie odpowie tą komendą.`
 
 const CLAUDE_MODEL = 'claude-haiku-4-5-20251001'
 const MAX_TOOL_ITERATIONS = 8
