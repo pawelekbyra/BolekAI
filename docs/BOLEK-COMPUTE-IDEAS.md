@@ -1,8 +1,8 @@
-# Bolek dostaje komputer — pomysły z sesji 2026-07-15
+# Bolek dostaje komputer — od pomysłu do działającego systemu (sesja 2026-07-15/16)
 
 ## Status dokumentu
 
-Notatka z brainstormu, nie specyfikacja gotowa do wdrożenia. Część rzeczy poniżej jest **już zbudowana i wdrożona**, część to **pomysły do zrobienia**. Oznaczenia jak w `ROADMAP.md`.
+Zaczęło się jako notatka z brainstormu. Od nocy 2026-07-15/16 **cała ta sekcja jest zbudowana, wdrożona i zweryfikowana end-to-end** — nie tylko zaplanowana. Oznaczenia jak w `ROADMAP.md`. Sekcja "Odchylenia od pierwotnego planu" niżej dokumentuje uczciwie, gdzie rzeczywista implementacja różni się od tego, co było pierwotnie zaprojektowane.
 
 Kontekst: Bolek żyje na Cloudflare Workers — szybkie, tanie, ale sandboxowane (brak trwałego dysku, brak procesów, brak SSH). Ta sesja szukała odpowiedzi na pytanie "jak dać Bolkowi realną moc wykonawczą, nie tracąc bezpieczeństwa, które już ma".
 
@@ -21,34 +21,37 @@ To zamyka pętlę: **Ty ↔ Bolek ↔ Claude (Telegram, Claude Code, claude.ai)*
 
 Codziennie o 9:00 czasu warszawskiego (`src/visits-report.ts`, z automatycznym uwzględnieniem DST przez `Intl.DateTimeFormat`) Bolek liczy wczorajszy dzień kalendarzowy z Vercel Web Analytics (`vercel_get_pageviews` tool, `/v1/query/web-analytics/visits/count`) i wysyła podsumowanie na Telegram.
 
-## [- POMYSŁ] Bolek dostaje własny komputer — zdalny Claude Code
+## [✓ ZBUDOWANE] Bolek dostaje własny komputer — zdalny Claude Code
 
-**To jest ten zajebisty pomysł.** Zamiast dorzucać Bolkowi pojedyncze narzędzia jedno po drugim (jak dziś: Vercel, Stripe, GitHub...), dajemy mu dostęp do **pełnego agenta kodującego** na zawsze-włączonej maszynie — czyli realnie tę samą moc, jaką ma teraz Claude Code w tej sesji, tylko wywoływaną z Telegrama.
+Zamiast dorzucać Bolkowi pojedyncze narzędzia jedno po drugim (jak wcześniej: Vercel, Stripe, GitHub...), dostał dostęp do **pełnego agenta kodującego** na zawsze-włączonej maszynie — realnie tę samą moc, jaką ma Claude Code w interaktywnej sesji, tylko wywoływaną z Telegrama. Zweryfikowane end-to-end w nocy 2026-07-16: prawdziwe zadanie ("napisz kalkulator w Pythonie") przeszło przez Telegram → policy engine → `/approve <id>` → VM → plik zapisany na dysku (zweryfikowany ręcznie) → wynik i koszt ($0.0249, Haiku) z powrotem na Telegram.
 
-### Architektura (zaplanowana, nie wdrożona)
+### Architektura (wdrożona)
 
-1. **Maszyna**: Oracle Cloud Free Tier VM (`141.253.103.172`, 2 vCPU, 11GB RAM, Ubuntu 22.04) — już istnieje, ale współdzielona z żywym sklepem produkcyjnym (`sklepik`: Rails/Puma + Sidekiq + Postgres + Redis + nginx w Dockerze, z backupami i watchdogiem na cronie)
-2. **Izolacja** — Bolek NIE dostaje konta `ubuntu` (ma sudo, dostęp do kontenerów sklepiku). Osobny user systemowy bez sudo, bez dostępu do `~/sklepik`, ewentualnie osobny kontener Docker bez sieci do reszty
-3. **Silnik**: Node.js + Claude Code CLI w trybie **headless/print** (`claude -p "prompt" --output-format json`), nie live-session-hijacking przez tmux (to było pierwotne złe podejście — kruche, brak sposobu na ominięcie promptów o zgodę)
-4. **Ciągłość rozmowy**: `--resume <session-id>`, Bolek trzyma session ID w D1 tak jak dziś trzyma historię czatu
-5. **Ekspozycja**: mały serwer HTTP na VM (nowy user) → Cloudflare Tunnel → Bolek woła go zwykłym `fetch()`. Brak SSH-z-Workera (Workers nie mają pełnego klienta SSH), brak otwierania portów na Oracle firewallu
-6. **Nowe narzędzie**: `vm_claude_code` w rejestrze Bolka, wołające tunel
-7. **Asynchroniczność**: pisanie appki trwa minuty, nie sekundy — Bolek musi odpowiedzieć od razu ("zaczynam") i dosłać wynik osobnym komunikatem, nie blokować na jednej odpowiedzi Telegrama
-8. **Dostarczenie wyniku**: `vm_claude_code` po skończeniu pushuje kod na GitHub (Bolek ma już `github_*` tools) i wysyła link — nie zostawiać kodu tylko na dysku serwera
+1. **Maszyna**: Oracle Cloud Free Tier VM (`141.253.103.172`, 2 vCPU, 11GB RAM, Ubuntu 22.04) — współdzielona z żywym sklepem produkcyjnym (`sklepik`: Rails/Puma + Sidekiq + Postgres + Redis + nginx w Dockerze)
+2. **Silnik**: Node.js 22 + Claude Code CLI w trybie **headless/print** (`claude -p "prompt" --model haiku --dangerously-skip-permissions --output-format json`)
+3. **Ciągłość rozmowy**: wrapper obsługuje `sessionId` → `--resume <session-id>`; `vm_claude_code` (`src/tools/vm-claude-code.ts`) przyjmuje opcjonalny `sessionId` i zwraca nowy w wyniku, do przekazania w kolejnym wywołaniu
+4. **Ekspozycja**: `bolek-agent.service` (systemd, `~/bolek-agent/server.js`) na `127.0.0.1:8899` → Cloudflare Tunnel → Bolek woła `${VM_AGENT_URL}/task` zwykłym `fetch()` z nagłówkiem `X-Auth-Token`
+5. **Narzędzie w rejestrze**: `vm_claude_code` — `riskLevel: 'high'`, `requiresApproval: true`, ten sam wzorzec `runAction()` co `coding_task`. Domyślny model: Haiku (tanio); `model: 'sonnet'` dostępny jako argument dla zadań wymagających więcej rozumowania
+6. **Sekrety Cloudflare**: `VM_AGENT_URL`, `VM_AGENT_TOKEN` (ten sam token co `WRAPPER_AUTH_TOKEN` w `.env` na VM)
 
 ### ⚠️ Świadomy kompromis bezpieczeństwa
 
-Zdecydowano (2026-07-15, decyzja właściciela): uruchamiać `claude -p` z **`--dangerously-skip-permissions`**, czyli bez pytania o zgodę na żadną komendę.
+`claude -p` na VM działa z **`--dangerously-skip-permissions`** — bez pytania o zgodę na żadną komendę wewnątrz samej sesji Claude Code.
 
-To stoi w bezpośrednim napięciu z zasadą nadrzędną z `ROADMAP.md`: *"Najpierw bezpieczeństwo, policy, approvale i audyt. Dopiero potem większa autonomia."* Cały dotychczasowy Bolek (`decideToolPolicy`, `/approve`, audit log) filtruje ryzykowne akcje pojedynczo, po nazwie narzędzia i argumentach. `vm_claude_code` z pominiętymi uprawnieniami to **jedna wielka dziura w tym modelu** — cokolwiek zostanie poproszone, wykona się w całości, bez żadnej bramki pośredniej.
+To stoi w bezpośrednim napięciu z zasadą nadrzędną z `ROADMAP.md`: *"Najpierw bezpieczeństwo, policy, approvale i audyt. Dopiero potem większa autonomia."* Mitygacja: `vm_claude_code` samo w sobie jest **`riskLevel: 'high'` + `requiresApproval: true`** w rejestrze Bolka — czyli każde wywołanie tego narzędzia (nie każda komenda wewnątrz niego) wymaga jawnego `/approve <id>` właściciela na Telegramie, zanim cokolwiek ruszy na VM. To jest bramka na poziomie "czy w ogóle to zadanie ma się wykonać", nie na poziomie pojedynczej komendy w środku — świadomie grubsza granulacja niż reszta polityki Bolka, zaakceptowana jako kompromis dla tego konkretnego narzędzia.
 
-Mitygacja przyjęta na start: **izolacja maszynowa** (osobny user/kontener bez dostępu do sklepiku) zamiast izolacji na poziomie komend. Jeśli to się rozrośnie poza eksperyment, warto wrócić do wariantu z allowlistą w `settings.json` Claude Code zamiast pełnego `--dangerously-skip-permissions`.
+### Odchylenia od pierwotnego planu (uczciwie spisane)
 
-### Realistyczne oczekiwania
+- **Izolacja maszynowa NIE została wdrożona.** Plan zakładał osobnego użytkownika systemowego bez sudo, bez dostępu do `~/sklepik`. Właściciel świadomie zdecydował się na użycie istniejącego konta `ubuntu` (ma sudo, ma dostęp do kontenerów sklepiku) zamiast tego — "sklepik to też eksperyment, nie przejmuj się". To jest realna, otwarta ekspozycja: proces na VM ma techniczną możliwość dotknięcia produkcyjnego sklepu, nawet jeśli w praktyce tego nie robi.
+- **Tunel to Cloudflare Quick Tunnel (`cloudflared tunnel --url`), nie tunel nazwany/uwierzytelniony.** Szybkie do postawienia (zero konfiguracji konta), ale bez gwarancji uptime i bez własnego uwierzytelnienia na poziomie tunelu (bezpieczeństwo opiera się wyłącznie na `X-Auth-Token`). Adres zmienia się przy restarcie tunelu. Do zamiany na nazwany tunel przed poleganiem na tym na poważnie.
+- **Brak automatycznego push na GitHub.** Plan zakładał, że `vm_claude_code` po skończeniu sam wypycha kod i wysyła link. W praktyce wynik wraca synchronicznie w odpowiedzi HTTP (działa dla zadań mieszczących się w limicie czasu wrappera, ~280s) — kod zostaje na dysku VM, nie trafia automatycznie do repo.
+- **Brak asynchronicznego "zaczynam, dam znać":** to samo co wyżej — na razie tylko zadania mieszczące się w jednym request/response, nie ma jeszcze wzorca "odpowiedz od razu, dosłij wynik osobno" dla dłuższych zadań.
 
-- To nie jest "jedno zdanie → gotowa aplikacja". Działa iteracyjnie, tak jak zwykła sesja Claude Code — pierwsza wersja, potem doprecyzowania przez kolejne wiadomości na tej samej `--resume` sesji
-- Wymaga osobnego `ANTHROPIC_API_KEY` (nie da się odczytać tego już zapisanego jako sekret Cloudflare — sekrety `wrangler secret` są jednokierunkowe)
+### Realistyczne oczekiwania (potwierdzone w praktyce)
 
-## Dlaczego to jest fajne (podsumowanie)
+- Nie jest to "jedno zdanie → gotowa aplikacja" bez nadzoru — pierwsze prawdziwe użycie wymagało dwóch poprawek błędów w samym Bolku (patrz "Corrections (2026-07-16)" w `docs/SYSTEM.md`), zanim przepływ zatwierdzania w ogóle zadziałał
+- Wymaga osobnego `ANTHROPIC_API_KEY` na VM (osobny od tego w sekretach Cloudflare) — potwierdzone, że to nie konkuruje z limitem Pro/Max właściciela, bo to osobna, płatna z góry pula API
 
-Każde narzędzie dodane do rejestru Bolka pojawia się automatycznie w Telegramie, Claude Code i claude.ai — bo wszystkie trzy kanały czytają ten sam rejestr przez ten sam silnik polityk. `vm_claude_code` byłby tylko kolejnym wpisem w tej samej liście, ale odblokowującym całą kategorię zadań (pisanie kodu, admin serwerów) zamiast pojedynczych API. Jedna zmiana w jednym miejscu, korzyść w trzech miejscach naraz.
+## Dlaczego to jest fajne (potwierdzone, nie tylko teoria)
+
+Każde narzędzie dodane do rejestru Bolka pojawia się automatycznie w Telegramie, Claude Code i claude.ai — bo wszystkie trzy kanały czytają ten sam rejestr przez ten sam silnik polityk. `vm_claude_code` jest teraz kolejnym wpisem w tej samej liście, odblokowującym całą kategorię zadań (pisanie kodu, admin serwerów) zamiast pojedynczych API — i to nie jest już hipoteza, tylko coś co faktycznie przeszło przez cały przepływ od wiadomości na Telegramie do pliku na dysku.

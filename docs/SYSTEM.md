@@ -76,6 +76,11 @@ Security regression suite (`evals/evals.test.ts`) that drives the real `executeT
 ### Faza 12 — Voice Interface ✅
 Telegram voice notes → real transcription via Cloudflare Workers AI (`@cf/openai/whisper`) → same policy pipeline as text. Wired into the live webhook in `src/telegram.ts`. Critical operations (refund, delete, deploy) require explicit approval even when spoken. All voice commands audited.
 
+### 2026-07-15/16 Session — Multi-Channel Integration + Remote Compute ✅
+MCP server (`src/mcp.ts`) exposes the full tool registry to Claude Code (`/mcp`, Bearer auth) and claude.ai (`/mcp/:secret`, path-secret auth), converting each `ToolDefinition` to a Zod schema at runtime. Vercel Web Analytics daily visits report (`src/visits-report.ts`) and hourly Vercel runtime-error monitor (`src/log-monitor.ts`) both follow the same pattern: KV-throttled, D1-audited, Telegram-alerting.
+
+Remote compute went from idea to verified-working system: a headless Claude Code instance runs on an Oracle Cloud VM behind a small HTTP wrapper (`bolek-agent.service`, systemd), reachable from Bolek via the new `vm_claude_code` tool (`src/tools/vm-claude-code.ts` — `riskLevel: 'high'`, `requiresApproval: true`, same `runAction()` confirm-gate pattern as `coding_task`). Exposed over a Cloudflare Quick Tunnel (ephemeral, no auth, no uptime guarantee — acceptable for tonight, not for production). Verified through the real path end to end: Telegram message → policy engine creates approval → `/approve <id>` → wrapper calls `claude -p --dangerously-skip-permissions` on the VM → real file written and confirmed on disk → real cost reported back to the user ($0.0249 on Haiku for a working Python calculator). See "Corrections (2026-07-16)" below for two real bugs this end-to-end test surfaced that no automated check had caught.
+
 ---
 
 ## Execution Pipeline
@@ -416,6 +421,40 @@ trusting this document, and found the same overclaiming pattern repeating:
   pass was 90/90, not 112/112, and is now 84 tests (fewer, because the old fake eval suite's 15
   tautological tests were replaced with 6 real ones) across 10 files. `npm run typecheck` and
   `npx wrangler deploy --dry-run` were independently re-verified as part of this pass.
+
+## Corrections (2026-07-16)
+
+`vm_claude_code` was the first approval-gated tool actually exercised through the real
+Telegram → policy engine → `/approve` → execution path since Faza 4 was built. Every prior
+approval-gated tool had only been unit-tested or dry-run — this was the first live fire, and it
+found two bugs that no eval, typecheck, or dry-run could have, because both are about what the
+*user* sees and types, not what the code returns:
+
+- **The orchestrator invented a UI that doesn't exist.** `BASE_SYSTEM_PROMPT` in
+  `src/orchestrator.ts` never specified how to present a `{ blocked: true, reason:
+  'requires_approval' }` tool result. Left to its own judgment, the model (Haiku,
+  `claude-haiku-4-5-20251001`) described an "Approve/Deny button" — but `send()` in
+  `src/telegram.ts` never sets `parse_mode`, so Telegram renders plain text, no clickable
+  anything. The user tapped nothing, got a friendly "OK, zatwierdzam!"-style reply that never
+  called `ApprovalStore.approve()`, and the model re-proposed the same tool call on the next
+  message, minting a fresh approval each time. Verified via direct D1 query: all 15 approvals
+  created during the incident sat at `status: 'pending'`, `approved_at: null`. Fixed by adding an
+  explicit instruction to `BASE_SYSTEM_PROMPT`: relay the approval ID and the literal
+  `/approve <id>` / `/deny <id>` command verbatim, and do not retry the tool call until the user
+  sends that command.
+- **The approval command regex was not resilient to how it's actually copied.** `handleActionConfirmation`
+  in `src/agent-mode.ts` matched `/^\/(approve|deny)\s+([0-9a-fA-F-]{36})$/` — an exact,
+  anchored match. The approval ID is naturally shown to the user wrapped in backtick
+  code-formatting for readability; copying that into Telegram carries the backticks along,
+  which breaks the anchored match. The unmatched text silently fell through to
+  `orchestrate()` as an ordinary message instead of producing an error, which is what made the
+  first bug look like it was "working" — the model just answered conversationally. Fixed by
+  stripping backticks/quotes/asterisks/whitespace from both ends of the input before matching.
+
+**Lesson recorded for future sessions:** a `requiresApproval: true` tool with a green eval suite
+and a clean dry-run is not verified until someone has actually approved and executed it through
+the real interface a real user types into. Add "manually exercise the full approval round-trip
+through Telegram" to the checklist for any new approval-gated tool, not just to its test file.
 
 ---
 
